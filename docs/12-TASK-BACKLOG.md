@@ -70,29 +70,29 @@
 ## D1. 기반 재건 + 움직임
 
 ### 스캐폴드 정리
-- [ ] **T101** `P0` 미사용 의존성 제거: `firebase`, `axios`, `@tanstack/react-query`, `react-hook-form`, `react-router-dom` (총 5개 · gzip 약 176KB)
-- [ ] **T102** `P0` `App.jsx` Vite 기본 템플릿 제거 → 게임 셸로 교체
-- [ ] **T103** `P0` `router/index.jsx`, `pages/MainPage/*` **삭제** — 라우터가 `App`을 레이아웃으로 쓰는데 `<Outlet/>`이 없어 자식 라우트가 애초에 렌더되지 않았고, `MainPage.jsx`는 `return;`(undefined 반환 → React 19 렌더 에러), `MainPage.module.css`는 0바이트. 화면 전환은 Zustand 상태로 처리
-- [ ] **T103b** `P0` `src/.env` + `getEnv.js` 삭제 — `.env`가 0바이트이고 **`src/` 아래는 Vite가 읽지 않는 위치**(루트여야 함). `getEnv()`는 미정의 시 throw → 동작한 적 없는 코드
-- [ ] **T103c** `P1` `.gitignore copy` (공백 든 백업 잔재) 삭제, `eslint.config.js`에 `globals.node` 추가(빌드 스크립트 lint용)
-- [ ] **T103d** `P1` `index.html` 수정 — `lang="ko"`, `<title>BLOODSWORN</title>`, viewport에 `viewport-fit=cover` + `user-scalable=no`
+- [x] **T101** `P0` 미사용 의존성 제거: `firebase`, `axios`, `@tanstack/react-query`, `react-hook-form`, `react-router-dom` (총 5개 · gzip 약 176KB)
+- [x] **T102** `P0` `App.jsx` Vite 기본 템플릿 제거 → 게임 셸로 교체
+- [x] **T103** `P0` `router/index.jsx`, `pages/MainPage/*` **삭제** — 라우터가 `App`을 레이아웃으로 쓰는데 `<Outlet/>`이 없어 자식 라우트가 애초에 렌더되지 않았고, `MainPage.jsx`는 `return;`(undefined 반환 → React 19 렌더 에러), `MainPage.module.css`는 0바이트. 화면 전환은 Zustand 상태로 처리
+- [x] **T103b** `P0` `src/.env` + `getEnv.js` 삭제 — `.env`가 0바이트이고 **`src/` 아래는 Vite가 읽지 않는 위치**(루트여야 함). `getEnv()`는 미정의 시 throw → 동작한 적 없는 코드
+- [x] **T103c** `P1` `.gitignore copy` (공백 든 백업 잔재) 삭제, `eslint.config.js`에 `globals.node` 추가(빌드 스크립트 lint용)
+- [x] **T103d** `P1` `index.html` 수정 — `lang="ko"`, `<title>BLOODSWORN</title>`, viewport에 `viewport-fit=cover` + `user-scalable=no`
 - [ ] **T103e** `P0` ⏰ **`targetSdk` 35 → 36 (Android 16)으로 상향하고 빌드 통과 확인** —
       **2026-08-31부터 신규 앱·업데이트는 API 36 필수**. 프로덕션 신청 예상 시점과 정확히 겹친다.
       Day 7에 발견하면 대응 불가이므로 **Day 1에 올려서 미리 깨뜨려 볼 것** (연장 신청은 11-01까지 가능)
-- [ ] **T104** `P0` **`game/config.js` 전면 교체** — 640×360 / `Scale.FIT` / `CENTER_BOTH` / `pixelArt:true` / `roundPixels:true`
-- [ ] **T105** `P0` `AUDIENCE_LAYOUT` 등 이전 프로젝트 잔재 삭제
-- [ ] **T106** `P0` **`GameManager.js` 수정** — 깨진 `AudienceRoomScene` import 제거 (**현재 빌드 불가 상태**)
-- [ ] **T107** `P0` React StrictMode 이중 마운트 대응 (`useEffect` cleanup에서 `game.destroy(true)`)
-- [ ] **T107b** `P0` 🐛 **EventBus 리스너 이중 등록 방지** — StrictMode 이중 마운트로 리스너가 2회 발화하면
+- [x] **T104** `P0` **`game/config.js` 전면 교체** — 640×360 / `Scale.FIT` / `CENTER_BOTH` / `pixelArt:true` / `roundPixels:true`
+- [x] **T105** `P0` `AUDIENCE_LAYOUT` 등 이전 프로젝트 잔재 삭제
+- [x] **T106** `P0` **`GameManager.js` 수정** — 깨진 `AudienceRoomScene` import 제거 (**현재 빌드 불가 상태**)
+- [x] **T107** `P0` React StrictMode 이중 마운트 대응 (`useEffect` cleanup에서 `game.destroy(true)`)
+- [x] **T107b** `P0` 🐛 **EventBus 리스너 이중 등록 방지** — StrictMode 이중 마운트로 리스너가 2회 발화하면
       **PACT 축복이 2번 적용된다.** 7일 개발에서 가장 흔하고, 눈치채기 어렵고, **밸런스 데이터를 통째로 오염**시킨다.
       등록 시 중복 검사 + cleanup에서 반드시 `off()`. 검증 케이스: `13-QA-TEST-PLAN.md` SC-03
 
 ### 코어 인프라
-- [ ] **T110** `P0` `EventBus` 구현 (경량 emitter)
-- [ ] **T111** `P0` Zustand 슬라이스 4종 골격: `metaSlice` / `runSlice` / `uiSlice` / `settingsSlice`
-- [ ] **T112** `P0` **60fps 값은 Zustand에 넣지 않는다** 원칙 코드로 강제 (HP/EXP/타이머는 HudScene 직접 렌더)
-- [ ] **T113** `P0` `BootScene` + `PreloadScene` + 로딩바
-- [ ] **T114** `P1` `assets.json` 매니페스트 기반 데이터 주도 preload
+- [x] **T110** `P0` `EventBus` 구현 (경량 emitter)
+- [x] **T111** `P0` Zustand 슬라이스 4종 골격: `metaSlice` / `runSlice` / `uiSlice` / `settingsSlice`
+- [x] **T112** `P0` **60fps 값은 Zustand에 넣지 않는다** 원칙 코드로 강제 (HP/EXP/타이머는 HudScene 직접 렌더)
+- [x] **T113** `P0` `BootScene` + `PreloadScene` + 로딩바
+- [x] **T114** `P1` `assets.json` 매니페스트 기반 데이터 주도 preload
 
 ### 에셋 파이프라인
 - [ ] **T120** `P0` 사용할 에셋만 `asset/` → `FE/public/assets/` 복사 (스크립트 자동화)
@@ -102,7 +102,7 @@
 - [ ] **T124** `P0` **이펙트 row 0만 크롭** — 세로 9행은 프레임이 아니라 **컬러 배리언트**. 게임 톤과 맞는 row 0(`#AE2D48` 심홍)만 뽑으면 **66MB → 약 130KB**
 - [ ] **T125** `P1` **적 10종을 64×160 단일 시트(40프레임)로 병합** — 전부 동일한 64×16 레이아웃이라 병합 가능. 드로우콜 감소
 - [ ] **T126** `P1` 촛불/횃불/가시는 **프레임마다 크기가 다름**(7×14/15/16…) → **bottom-align 패딩** 필수
-- [ ] **T127** `P1` `FE/src/index.css` 수정 — `font-weight: 100 900; /* Variable font */`는 사실과 다르고(fvar 없음), `-webkit-font-smoothing: antialiased`는 **픽셀 폰트에 정반대 설정**
+- [x] **T127** `P1` `FE/src/index.css` 수정 — `font-weight: 100 900; /* Variable font */`는 사실과 다르고(fvar 없음), `-webkit-font-smoothing: antialiased`는 **픽셀 폰트에 정반대 설정**
 
 ### 맵 & 이동
 - [ ] **T130** `P1` **Tiled 맵 제작** — 1600×1200, 16px 타일, ground/walls/deco/objects 레이어

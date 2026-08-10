@@ -1,0 +1,46 @@
+{
+    "_comment": [
+        "Phaser 로드 매니페스트 (T114). PreloadScene이 이 파일만 읽는다.",
+        "에셋을 늘릴 때 씬 코드를 고치지 말고 여기만 고친다.",
+        "url은 FE/public/ 기준 상대경로. base:'./' 이므로 앞에 슬래시를 붙이면 Capacitor에서 깨진다.",
+        "",
+        "assets/ 아래 파일은 tools/build-assets.mjs 가 asset/ 원본에서 생성한다.",
+        "손으로 고치지 말고 스크립트를 고친 뒤 npm run build:assets 를 돌린다.",
+        "",
+        "★ 카드 프레임 / 각성 인장 / 로고 / 배경 / 녹턴 초상은 React(DOM)가 CSS로 렌더하므로",
+        "  여기에 넣지 않는다. 넣으면 같은 이미지를 GPU에 두 번 올리게 된다."
+    ],
+
+    "images": [
+        { "key": "joystick_base", "url": "img/ui/joystick-base.png" },
+        { "key": "joystick_knob", "url": "img/ui/joystick-knob.png" },
+        { "key": "tiles_main", "url": "assets/tiles/tiles-main.png" }
+    ],
+
+    "spritesheets": [
+        { "key": "player-idle-down", "url": "assets/player/player-idle-down.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-idle-up", "url": "assets/player/player-idle-up.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-idle-left", "url": "assets/player/player-idle-left.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-idle-right", "url": "assets/player/player-idle-right.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-run-down", "url": "assets/player/player-run-down.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-run-up", "url": "assets/player/player-run-up.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-run-left", "url": "assets/player/player-run-left.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-run-right", "url": "assets/player/player-run-right.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk1-down", "url": "assets/player/player-atk1-down.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk1-up", "url": "assets/player/player-atk1-up.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk1-left", "url": "assets/player/player-atk1-left.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk1-right", "url": "assets/player/player-atk1-right.png", "frameWidth": 96, "frameHeight": 80 },
+
+        { "key": "enemies", "url": "assets/enemies/enemies.png", "frameWidth": 16, "frameHeight": 16 },
+        { "key": "boss", "url": "assets/boss/boss-executioner.png", "frameWidth": 140, "frameHeight": 93 },
+
+        { "key": "candle-a", "url": "assets/props/candle-a.png", "frameWidth": 16, "frameHeight": 16 },
+        { "key": "torch", "url": "assets/props/torch.png", "frameWidth": 16, "frameHeight": 16 },
+        { "key": "fx-slash", "url": "assets/fx/fx-slash.png", "frameWidth": 64, "frameHeight": 64 }
+    ],
+
+    "atlases": [],
+    "tilemaps": [],
+    "bitmapFonts": [],
+    "audio": []
+}

@@ -1,101 +1,134 @@
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
+/**
+ * 전역 리셋 + 세이프에어리어 변수.
+ * 규격 출처: 06-TECH-DESIGN.md 11.3 / 팔레트 09-ART 1 / 세이프 인셋 10-UIUX 3.3.3
+ *
+ * T127 수정 내역
+ *  - font-weight: 100 900 (Variable font) 삭제 — 이 폰트에 fvar 테이블이 없다. 사실과 달랐다.
+ *  - -webkit-font-smoothing: antialiased 삭제 — 픽셀 폰트에 정반대 설정이다. 글자가 뭉갠다.
+ *  - 이전 프로젝트의 세로 모바일 전제(max-width 430px 등) 주석 잔재 전량 제거
+ */
 
 @font-face {
     font-family: "base_font";
-    font-weight: 100 900;
-    /* Variable font */
     font-style: normal;
+    font-weight: 400;
     font-display: swap;
-    /* 폰트 로딩 중에도 텍스트 표시 */
     src: url("./assets/fonts/base_font.woff2") format("woff2");
 }
 
 :root {
-    font-family: "base_font";
+    /* ── 팔레트 (09-ART 1) ── */
+    --void: #0b0710;
+    --stone-1: #16121c;
+    --stone-2: #2a2533;
+    --stone-3: #4a4454;
+    --stone-4: #7b7488;
+    --bone: #c7c2ce;
+    --blood: #8b0f1d;
+    --blood-light: #c4182b;
+    --blood-glow: #ff3b4a;
+    --candle: #1e7e74;
+    --candle-light: #35c9b4;
+    --candle-glow: #8ff0dc;
+    --gold: #c9a227;
+    --parchment: #c9b792;
+    --ash: #9a94a3;
+
+    /* ── 세이프에어리어 인셋. 가로 모드에서는 left/right가 핵심이다 ── */
+    --safe-l: env(safe-area-inset-left, 0px);
+    --safe-r: env(safe-area-inset-right, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
+
+    font-family: "base_font", monospace;
     line-height: 1.5;
     font-weight: 400;
-
-    color-scheme: light;
-    color: var(--text);
-    background-color: var(--bg);
+    color: var(--parchment);
+    background-color: var(--void);
+    color-scheme: dark;
 
     font-synthesis: none;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    /* 픽셀 폰트이므로 안티에일리어싱을 켜지 않는다 */
+    text-rendering: optimizeSpeed;
 }
 
 html,
-body {
+body,
+#root {
+    width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background-color: rgb(15, 15, 30);
+    background: var(--void);
+    overscroll-behavior: none; /* 당겨서 새로고침 방지 */
 }
 
-#root {
-    /* 모바일 사이즈로 제한 */
-    /* width: 100%;
-    max-width: 430px;
-    height: 100dvh; */
-
-    /* 데스크탑에서 중앙 정렬 */
-    margin: 0 auto;
-
-    /* 앱 영역 배경색 */
-    /* background-color: var(--bg); */
-
-    /* 데스크탑에서 그림자로 구분감 */
-    /* box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
-
-    display: flex;
-    flex-direction: column; */
-
-    /* Safe Area 대응 */
-    /* padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
-        env(safe-area-inset-left);
-
-    overscroll-behavior: none;
-    touch-action: manipulation;
-    overflow: hidden; */
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent; /* 터치 시 파란 하이라이트 제거 */
+    -webkit-touch-callout: none; /* 롱프레스 컨텍스트 메뉴 제거 */
+    user-select: none;
+    /* ★ 이게 없으면 스크롤 제스처가 조이스틱 입력을 먹는다 */
+    touch-action: none;
 }
 
-/* 공통 버튼 스타일 */
+/* 캔버스는 Phaser의 Scale.FIT이 중앙 정렬한다. 여기서 다시 늘이지 않는다. */
+#game-root canvas {
+    display: block;
+    image-rendering: pixelated;
+}
+
+.app-root {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* ── UI 오버레이 ── */
+.ui-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none; /* 자식 중 실제 대화 요소만 pointer-events를 되살린다 */
+    padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+
+.ui-loading {
+    position: absolute;
+    left: 50%;
+    bottom: 14%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.ui-loading__label {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: var(--parchment);
+}
+
+.ui-loading__bar {
+    width: 200px;
+    height: 6px;
+    background: var(--stone-1);
+    border: 1px solid var(--stone-3);
+}
+
+.ui-loading__fill {
+    height: 100%;
+    background: var(--blood);
+    transition: width 120ms linear;
+}
+
 button {
     font-family: inherit;
     cursor: pointer;
     border: none;
     outline: none;
+    pointer-events: auto;
 }
 
 button:disabled {
     cursor: not-allowed;
     opacity: 0.6;
-}
-
-/* 공통 입력 스타일 */
-input,
-textarea,
-select {
-    font-family: inherit;
-    outline: none;
-}
-
-/* 스크롤바 스타일 */
-::-webkit-scrollbar {
-    width: 4px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border);
-    border-radius: var(--radius-full);
 }
