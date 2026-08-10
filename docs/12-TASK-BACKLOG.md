@@ -120,16 +120,16 @@
 > Capacitor가 같은 `dist/`를 쓴다. 반면 **Mac이 없어 서명·프로비저닝 오류를 로컬에서 재현할 수 없고** 1회 왕복이 길다.
 > 따라서 시행착오는 **시간이 남아 있을 때** 해야 한다. Day 7에 처음 시도하면 실패가 확정된다. (`11-ROADMAP-7DAYS.md` §0.3)
 
-- [ ] **T140** `P0` `npx cap add ios` → `ios/` 생성 후 **커밋 + 원격 푸시**.
+- [x] **T140** `P0` `npx cap add ios` → `ios/` 생성 후 **커밋 + 원격 푸시**.
       Windows에서도 **생성 자체는 된다** — macOS가 필요한 건 빌드뿐이다
-- [ ] **T141** `P0` `capacitor.config.json`에 `ios` 블록 추가 + **배포 타겟 iOS 14.0**을 Xcode 프로젝트 설정과 `ios/App/Podfile` **양쪽**에 지정
+- [x] **T141** `P0` `capacitor.config.json`에 `ios` 블록 추가 + **배포 타겟 iOS 14.0**을 Xcode 프로젝트 설정과 `ios/App/Podfile` **양쪽**에 지정
       (Capacitor 7 요구사항: Xcode **16 이상** / Node **20 이상**). **Capacitor 8로 올리지 않는다** — 7일 스코프에서 메이저 업그레이드는 순수 리스크
-- [ ] **T142** `P0` **Codemagic 워크플로 작성** — `npm ci` → `npm run build` → `cap sync ios` → **`pod install`** → `xcodebuild archive` → `exportArchive`.
+- [x] **T142** `P0` **Codemagic 워크플로 작성** — `npm ci` → `npm run build` → `cap sync ios` → **`pod install`** → `xcodebuild archive` → `exportArchive`.
       **CocoaPods 단계가 빠지면 반드시 실패한다.**
       ⚠ 확인 필요(2026-08-10 기준 미확인) — `xcodebuild`/`exportArchive`의 정확한 최신 플래그 조합. **단계 골격만 확정**이며 실제 명령은 `14-BUILD-AND-DEPLOY.md` §6.4에서 정한다
 - [ ] **T143** `P0` **CI 시크릿 4종 주입 + 첫 그린 빌드(`.ipa` 산출)** — `.p12`(base64) / `.p12` 암호 / `.mobileprovision`(base64) / `.p8`(base64)+Issuer ID+Key ID.
       ⏱ **25분 룰의 예외다**(우회 경로가 없다). 대신 **T140~T244 누적 3h를 상한**으로 두고, 넘으면 판정을 **D2 종료 게이트(T244)로 넘긴다**
-- [ ] **T144** `P0` **릴리스 설정에 `server.url`이 남아 있지 않은지 확인** — 원격 URL을 로드하는 빌드가
+- [x] **T144** `P0` **릴리스 설정에 `server.url`이 남아 있지 않은지 확인** — 원격 URL을 로드하는 빌드가
       정확히 App Store 가이드라인 **4.2.2 "web clipping"** 패턴이다. **완전 오프라인이 가장 강력한 방어**이므로 이 값이 있으면 안 된다
 
 ---
@@ -166,13 +166,13 @@
       Apple ID + 앱 암호 방식은 2FA·다중 provider 문제가 있고, **`xcrun altool` 직접 호출은 1순위로 쓰지 않는다**
       (`--upload-app` → `--upload-package` 이행 중이고 계정이 여러 provider에 걸치면 오작동 보고가 있다).
       ⚠ 확인 필요(2026-08-10 기준 미확인) — fastlane의 정확한 최신 명령·옵션 조합
-- [ ] **T241** `P0` `Info.plist`에 **`ITSAppUsesNonExemptEncryption = false`** — 수출 규정 응답.
+- [x] **T241** `P0` `Info.plist`에 **`ITSAppUsesNonExemptEncryption = false`** — 수출 규정 응답.
       미응답 시 **"Missing Compliance"로 배포가 막힌다.** 완전 오프라인 게임이므로 답은 명확하다.
       이 값을 넣어두면 **업로드마다 다시 묻지 않는다**
 - [ ] **T242** `P0` 빌드 처리 완료 확인 → **TestFlight 내부 테스터 그룹 배포**.
       내부 테스터는 **App Store Connect 사용자여야 한다**(Account Holder / Admin / App Manager / Developer / Marketing) — 아무 지인이나 안 된다.
       내부 **100명** · 테스터당 **30대** · 빌드 만료 **90일** · **UDID 등록 불필요** · **테스터 보상 금지**(가이드라인 2.2)
-- [ ] **T243** `P1` **빌드번호 자동 증가** 설정 — 같은 빌드번호는 재업로드가 거부된다. Day 7에 손으로 올리다 실수하지 않도록 지금 자동화한다
+- [x] **T243** `P1` **빌드번호 자동 증가** 설정 — 같은 빌드번호는 재업로드가 거부된다. Day 7에 손으로 올리다 실수하지 않도록 지금 자동화한다
 - [ ] **T244** `P0` 🚦 **iOS 컷 게이트 판정** — 실제 iPhone의 TestFlight에 설치되는가.
       **실기기가 없다면** AWS Device Farm 무료분(최초 1,000 디바이스분)에 `.ipa`를 올려 **부팅·크래시·세이브 유지·레이아웃만** 확인한다.
       ⚠ us-west-2 기준이라 한국에서 스트리밍 지연이 커서 **"손맛" 판정에는 쓰지 않는다.**
@@ -310,7 +310,7 @@
 - [x] **T633** `P0` **앱 백그라운드 전환 시 자동 일시정지** (`appStateChange`)
 - [ ] **T640** `P0` 🔥 **외부인 1~2명 5분 플레이테스트 + 밸런스 최종 튜닝**
 - [ ] **T641** `P0` 🔒 **18:00 기능 동결** — 이후 버그 수정만
-- [ ] **T642** `P0` 전체 회귀 테스트
+- [x] **T642** `P0` 전체 회귀 테스트
 
 ---
 
