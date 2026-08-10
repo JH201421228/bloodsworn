@@ -24,6 +24,12 @@ const BASE = {
     vision: 360,     // px
     dashCd: 1,       // 배율
     knockback: 1,
+    armor: 0,        // 받는 피해 감소 비율 (0~0.6)
+    lifeOnKill: 0,   // 처치당 HP 회복
+    crit: 0,         // 치명타 확률 (0~1)
+    critMult: 1.5,   // 치명타 배율
+    iframe: 1,       // 피격 무적 시간 배율
+    luck: 0,         // 카드 등급 상승 보정
 };
 
 /** 안전장치 S1 — 모든 대가에 하한이 있어야 한다 (04-PACT 4) */
@@ -34,6 +40,9 @@ const FLOORS = {
     expMult: { type: "mult", v: 0.40 },
     vision: { type: "abs", v: 90 },
     drain: { type: "cap", v: 4.0 },
+    // 방어율 상한 — 60%를 넘기면 후반 적 강화가 무의미해진다
+    armor: { type: "cap", v: 0.60 },
+    crit: { type: "cap", v: 0.75 },
 };
 
 export class StatSystem {

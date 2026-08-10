@@ -2,21 +2,288 @@
     "_comment": "축복. 출처 04-PACT-SYSTEM 7 / 05-COMBAT 6. op: add=가산, mul=곱연산, weapon=무기 레벨업.",
     "schemaVersion": 1,
     "blessings": [
-        { "id": "bls_w1", "name": "피의 송곳니", "op": "weapon", "target": "W1", "maxLevel": 5, "desc": "부채꼴 참격을 강화한다" },
-        { "id": "bls_w2", "name": "화염탄",     "op": "weapon", "target": "W2", "maxLevel": 5, "desc": "자동조준 투사체를 강화한다" },
-
-        { "id": "bls_hp",   "name": "꺼지지 않는 심장", "op": "add", "stat": "maxHp",     "value": [15, 27, 39], "maxLevel": 5, "desc": "최대 체력 +{v}" },
-        { "id": "bls_dmg",  "name": "굶주린 이빨",     "op": "mul", "stat": "damage",    "value": [0.08, 0.14, 0.20], "maxLevel": 5, "desc": "모든 피해 +{v}%" },
-        { "id": "bls_spd",  "name": "밤의 망토",       "op": "mul", "stat": "moveSpeed", "value": [0.06, 0.10, 0.15], "maxLevel": 5, "desc": "이동 속도 +{v}%" },
-        { "id": "bls_as",   "name": "쉬지 않는 손",    "op": "mul", "stat": "haste",     "value": [0.07, 0.12, 0.18], "maxLevel": 5, "desc": "공격 속도 +{v}%" },
-        { "id": "bls_range","name": "긴 그림자",       "op": "mul", "stat": "range",     "value": [0.10, 0.17, 0.24], "maxLevel": 5, "desc": "사거리 +{v}%" },
-        { "id": "bls_area", "name": "번지는 피",       "op": "mul", "stat": "area",      "value": [0.09, 0.15, 0.22], "maxLevel": 5, "desc": "범위 +{v}%" },
-        { "id": "bls_exp",  "name": "탐식의 기억",     "op": "mul", "stat": "expMult",   "value": [0.12, 0.20, 0.30], "maxLevel": 5, "desc": "경험치 +{v}%" },
-        { "id": "bls_magnet","name": "부르는 손짓",    "op": "mul", "stat": "magnet",    "value": [0.20, 0.35, 0.50], "maxLevel": 5, "desc": "습득 범위 +{v}%" },
-        { "id": "bls_heal", "name": "굳은 피",         "op": "add", "stat": "regen",     "value": [0.3, 0.6, 1.0], "maxLevel": 5, "desc": "초당 HP +{v}" },
-        { "id": "bls_dash", "name": "박쥐의 걸음",     "op": "mul", "stat": "dashCd",    "value": [0.12, 0.20, 0.30], "maxLevel": 3, "desc": "대시 쿨다운 −{v}%" },
-        { "id": "bls_vision","name": "밤눈",           "op": "mul", "stat": "vision",    "value": [0.15, 0.25, 0.35], "maxLevel": 3, "desc": "시야 +{v}%" },
-        { "id": "bls_kb",   "name": "밀어내는 손",     "op": "mul", "stat": "knockback", "value": [0.25, 0.40, 0.60], "maxLevel": 3, "desc": "넉백 +{v}%" }
+        {
+            "id": "bls_w1",
+            "name": "피의 송곳니",
+            "op": "weapon",
+            "target": "W1",
+            "maxLevel": 5,
+            "desc": "부채꼴 참격을 강화한다"
+        },
+        {
+            "id": "bls_w2",
+            "name": "화염탄",
+            "op": "weapon",
+            "target": "W2",
+            "maxLevel": 5,
+            "desc": "자동조준 투사체를 강화한다"
+        },
+        {
+            "id": "bls_hp",
+            "name": "꺼지지 않는 심장",
+            "op": "add",
+            "stat": "maxHp",
+            "value": [
+                15,
+                27,
+                39
+            ],
+            "maxLevel": 5,
+            "desc": "최대 체력 +{v}"
+        },
+        {
+            "id": "bls_dmg",
+            "name": "굶주린 이빨",
+            "op": "mul",
+            "stat": "damage",
+            "value": [
+                0.08,
+                0.14,
+                0.2
+            ],
+            "maxLevel": 5,
+            "desc": "모든 피해 +{v}%"
+        },
+        {
+            "id": "bls_spd",
+            "name": "밤의 망토",
+            "op": "mul",
+            "stat": "moveSpeed",
+            "value": [
+                0.06,
+                0.1,
+                0.15
+            ],
+            "maxLevel": 5,
+            "desc": "이동 속도 +{v}%"
+        },
+        {
+            "id": "bls_as",
+            "name": "쉬지 않는 손",
+            "op": "mul",
+            "stat": "haste",
+            "value": [
+                0.07,
+                0.12,
+                0.18
+            ],
+            "maxLevel": 5,
+            "desc": "공격 속도 +{v}%"
+        },
+        {
+            "id": "bls_range",
+            "name": "긴 그림자",
+            "op": "mul",
+            "stat": "range",
+            "value": [
+                0.1,
+                0.17,
+                0.24
+            ],
+            "maxLevel": 5,
+            "desc": "사거리 +{v}%"
+        },
+        {
+            "id": "bls_area",
+            "name": "번지는 피",
+            "op": "mul",
+            "stat": "area",
+            "value": [
+                0.09,
+                0.15,
+                0.22
+            ],
+            "maxLevel": 5,
+            "desc": "범위 +{v}%"
+        },
+        {
+            "id": "bls_exp",
+            "name": "탐식의 기억",
+            "op": "mul",
+            "stat": "expMult",
+            "value": [
+                0.12,
+                0.2,
+                0.3
+            ],
+            "maxLevel": 5,
+            "desc": "경험치 +{v}%"
+        },
+        {
+            "id": "bls_magnet",
+            "name": "부르는 손짓",
+            "op": "mul",
+            "stat": "magnet",
+            "value": [
+                0.2,
+                0.35,
+                0.5
+            ],
+            "maxLevel": 5,
+            "desc": "습득 범위 +{v}%"
+        },
+        {
+            "id": "bls_heal",
+            "name": "굳은 피",
+            "op": "add",
+            "stat": "regen",
+            "value": [
+                0.3,
+                0.6,
+                1
+            ],
+            "maxLevel": 5,
+            "desc": "초당 HP +{v}"
+        },
+        {
+            "id": "bls_dash",
+            "name": "박쥐의 걸음",
+            "op": "mul",
+            "stat": "dashCd",
+            "value": [
+                0.12,
+                0.2,
+                0.3
+            ],
+            "maxLevel": 3,
+            "desc": "대시 쿨다운 −{v}%"
+        },
+        {
+            "id": "bls_vision",
+            "name": "밤눈",
+            "op": "mul",
+            "stat": "vision",
+            "value": [
+                0.15,
+                0.25,
+                0.35
+            ],
+            "maxLevel": 3,
+            "desc": "시야 +{v}%"
+        },
+        {
+            "id": "bls_kb",
+            "name": "밀어내는 손",
+            "op": "mul",
+            "stat": "knockback",
+            "value": [
+                0.25,
+                0.4,
+                0.6
+            ],
+            "maxLevel": 3,
+            "desc": "넉백 +{v}%"
+        },
+        {
+            "id": "bls_w3",
+            "name": "뼈 회오리",
+            "op": "weapon",
+            "target": "W3",
+            "maxLevel": 5,
+            "desc": "몸 주위를 도는 유골을 얻는다"
+        },
+        {
+            "id": "bls_w4",
+            "name": "성수 낙하",
+            "op": "weapon",
+            "target": "W4",
+            "maxLevel": 5,
+            "desc": "주변에 성수 장판이 떨어진다"
+        },
+        {
+            "id": "bls_armor",
+            "name": "굳어진 살갗",
+            "op": "add",
+            "stat": "armor",
+            "value": [
+                0.04,
+                0.07,
+                0.1
+            ],
+            "maxLevel": 5,
+            "desc": "받는 피해 −{v}",
+            "fmt": "pct"
+        },
+        {
+            "id": "bls_leech",
+            "name": "목마른 이빨",
+            "op": "add",
+            "stat": "lifeOnKill",
+            "value": [
+                0.6,
+                1.1,
+                1.7
+            ],
+            "maxLevel": 5,
+            "desc": "처치당 체력 +{v}"
+        },
+        {
+            "id": "bls_crit",
+            "name": "급소의 감각",
+            "op": "add",
+            "stat": "crit",
+            "value": [
+                0.05,
+                0.09,
+                0.13
+            ],
+            "maxLevel": 5,
+            "desc": "치명타 확률 +{v}",
+            "fmt": "pct"
+        },
+        {
+            "id": "bls_critdmg",
+            "name": "찢는 송곳니",
+            "op": "add",
+            "stat": "critMult",
+            "value": [
+                0.2,
+                0.35,
+                0.5
+            ],
+            "maxLevel": 5,
+            "desc": "치명타 피해 +{v}",
+            "fmt": "pct"
+        },
+        {
+            "id": "bls_iframe",
+            "name": "스치는 그림자",
+            "op": "mul",
+            "stat": "iframe",
+            "value": [
+                0.1,
+                0.17,
+                0.25
+            ],
+            "maxLevel": 5,
+            "desc": "피격 무적 시간 +{v}%"
+        },
+        {
+            "id": "bls_luck",
+            "name": "불길한 운",
+            "op": "add",
+            "stat": "luck",
+            "value": [
+                0.06,
+                0.1,
+                0.15
+            ],
+            "maxLevel": 5,
+            "desc": "높은 등급 카드 확률 +{v}",
+            "fmt": "pct"
+        }
     ],
-    "fallback": { "id": "bls_crystal", "name": "피의 결정", "op": "add", "stat": "maxHp", "value": [30, 30, 30], "maxLevel": 99, "desc": "체력 30 회복 · 피해 +3%" }
+    "fallback": {
+        "id": "bls_crystal",
+        "name": "피의 결정",
+        "op": "add",
+        "stat": "maxHp",
+        "value": [
+            30,
+            30,
+            30
+        ],
+        "maxLevel": 99,
+        "desc": "체력 30 회복 · 피해 +3%"
+    }
 }

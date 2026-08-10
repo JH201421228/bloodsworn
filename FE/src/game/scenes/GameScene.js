@@ -21,6 +21,9 @@ import { installCheats } from "../debugCheats";
 import { GroundSystem } from "../systems/GroundSystem";
 import { StatSystem } from "../systems/StatSystem";
 import { PactSystem } from "../systems/PactSystem";
+import { AwakeningSystem } from "../systems/AwakeningSystem";
+import { BossSystem } from "../systems/BossSystem";
+import { AudioSystem } from "../systems/AudioSystem";
 import { EventBus } from "../EventBus";
 import { EVENTS } from "../constants";
 
@@ -45,6 +48,19 @@ export default class GameScene extends Phaser.Scene {
             this.pact = new PactSystem(this.stats);
             this.combatSystem = new CombatSystem(this, this.player, this.spawnSystem, this.playerSystem, this.stats, this.pact);
             this.playerSystem.stats = this.stats;
+
+            // ★ 각성은 CombatSystem 안쪽에서 피해·처치를 가로채므로 주입으로 연결한다.
+            //   생성자 인자로 넘기면 CombatSystem <-> AwakeningSystem 순환 참조가 된다.
+            this.awakening = new AwakeningSystem(this, {
+                stats: this.stats, pact: this.pact, combat: this.combatSystem, player: this.player,
+            });
+            this.combatSystem.awakening = this.awakening;
+
+            this.bossSystem = new BossSystem(this, {
+                player: this.player, spawn: this.spawnSystem, combat: this.combatSystem, stats: this.stats,
+            });
+            this.audio = new AudioSystem(this);
+            this.input.once("pointerdown", () => this.audio.unlock());
 
             // React -> Phaser 커맨드. key를 줘 StrictMode 이중 등록을 막는다(T107b)
             this.offCmds = [
@@ -76,6 +92,7 @@ export default class GameScene extends Phaser.Scene {
         this.spawnSystem?.update(dt);
         this.aiSystem?.update(dt);
         this.combatSystem?.update(dt);
+        this.bossSystem?.update(dt);
     }
 
     /** 끝없는 바닥 + 소품. 벽도 충돌도 없다(18번 문서 4차 개정) */

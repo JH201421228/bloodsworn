@@ -26,6 +26,10 @@ export function installCheats(scene) {
         levelup: (n = 1) => { const c = scene.combatSystem; for (let i = 0; i < n; i++) { c.exp = c.expToNext; c.checkLevelUp(); } return c.level; },
         /** 특정 대가 태그를 n중첩 주입 — 각성 직전 상태를 즉시 만든다 */
         toll: (tag, n = 2) => { const p2 = scene.pact; p2.tagCounts[tag] = n; return p2.tagCounts; },
+        /** 무기 획득/레벨업 — BS.weapon('W3',5) */
+        weapon: (id, lv = 1) => { const w = scene.combatSystem.addWeapon(id, lv); return w ? { id: w.id, level: w.level, ...w.s } : 'unknown ' + id; },
+        /** 보유 무기 목록 */
+        weapons: () => scene.combatSystem.weaponList.map((w) => w.id + ' Lv' + w.level),
         /** 스탯 스냅샷 */
         stats: () => ({ ...scene.stats.all }),
         /** 적 전멸 */

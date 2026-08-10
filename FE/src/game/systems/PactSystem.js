@@ -29,11 +29,19 @@ export class PactSystem {
         this.rerollLeft = 2;
     }
 
+    /**
+     * 등급 추첨. luck 은 common 가중치를 rare/epic 쪽으로 옮긴다.
+     * 가중치를 더하는 대신 옮기는 이유: 더하면 총합이 커져 luck 이 커질수록
+     * 체감 증가폭이 줄어든다(수확체감). 옮기면 선형으로 오른다.
+     */
     rollRarity(rng) {
         const w = this.cfg.rarityWeights;
-        const total = w.common + w.rare + w.epic;
+        const luck = Math.min(0.5, this.stats?.get("luck") ?? 0);
+        const shift = w.common * luck;
+        const cw = { common: w.common - shift, rare: w.rare + shift * 0.7, epic: w.epic + shift * 0.3 };
+        const total = cw.common + cw.rare + cw.epic;
         let r = rng() * total;
-        for (const k of RARITIES) { if (r < w[k]) return k; r -= w[k]; }
+        for (const k of RARITIES) { if (r < cw[k]) return k; r -= cw[k]; }
         return "common";
     }
 
@@ -101,7 +109,7 @@ export class PactSystem {
             value, tier,
             level: lv + 1,
             maxLevel: b.maxLevel,
-            desc: b.desc ? b.desc.replace("{v}", b.op === "mul" ? Math.round(value * 100) : value) : "",
+            desc: b.desc ? b.desc.replace("{v}", (b.op === "mul" || b.fmt === "pct") ? Math.round(value * 100) + "%" : value) : "",
         };
     }
 
@@ -130,7 +138,9 @@ export class PactSystem {
 
         if (b.op === "add") this.stats.add(b.stat, "add", b.value, "bls:" + b.id);
         else if (b.op === "mul") this.stats.add(b.stat, "mul", b.value, "bls:" + b.id);
-        // op === "weapon" 은 무기 레벨업. CombatSystem이 owned를 읽어 반영한다
+        // op === "weapon" 은 무기 획득/레벨업. 스탯이 아니므로 StatSystem 을 거치지 않고
+        // choose() 의 반환값으로 CombatSystem 에 넘긴다.
+        const weapon = b.op === "weapon" ? { target: b.target, level: b.level } : null;
 
         if (card.toll) {
             const t = card.toll;
@@ -145,6 +155,7 @@ export class PactSystem {
             awakened: card.toll?.triggersAwakening ? card.toll.tag : null,
             humanity: this.humanity,
             tagCounts: { ...this.tagCounts },
+            weapon,
         };
     }
 

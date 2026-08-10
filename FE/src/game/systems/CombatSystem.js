@@ -19,6 +19,8 @@ import { dist2 } from "../utils/math";
 import weaponsData from "@/data/weapons.json";
 
 const MAX_PROJECTILES = 200;
+const MAX_ORBIT = 5;    // W3 유골 최대 수 (Lv5)
+const MAX_ZONES = 12;   // W4 장판 최대 수 (Lv5 5곳 x 지속 1.8s / 쿨 2.6s)
 const MAX_ORBS = 300;
 const PLAYER_IFRAME = 400; // ms. 정본 05-COMBAT 1
 const ORB_MAGNET2 = 48 * 48;
@@ -42,10 +44,21 @@ export class CombatSystem {
         this.hurtUntil = 0;
         this.dead = false;
         this.godMode = false;
+        this.gold = 0;
+        /** @type {import("./AwakeningSystem").AwakeningSystem|null} 각성. GameScene이 주입한다 */
+        this.awakening = null;
 
-        const W = Object.fromEntries(weaponsData.weapons.map((w) => [w.id, w.levels[0]]));
-        this.w1 = { ...W.W1, timer: 0 };
-        this.w2 = { ...W.W2, timer: 0 };
+        /**
+         * 무기 레지스트리. id -> { def, level, s(=현재 레벨 수치), timer }
+         * ★ 하드코딩된 w1/w2 필드를 쓰지 않는 이유: 축복으로 무기를 새로 얻을 수 있고
+         *   (W3/W4), 레벨업 시 수치 전체가 교체된다. 필드 이름에 무기를 묶으면
+         *   무기 하나 추가할 때마다 update 루프를 고쳐야 한다.
+         */
+        this.wdef = Object.fromEntries(weaponsData.weapons.map((w) => [w.id, w]));
+        this.weapons = {};
+        this.weaponList = [];
+        this.addWeapon("W1", 1);
+        this.addWeapon("W2", 1);
 
         this.projectiles = new Pool(MAX_PROJECTILES, () => {
             const s = scene.add.circle(-999, -999, 3, 0xff8844);
@@ -56,6 +69,26 @@ export class CombatSystem {
             const s = scene.add.circle(-999, -999, 2, 0x35c9b4);
             s.setDepth(DEPTH.ORB).setVisible(false);
             return s;
+        });
+
+        // ── W3 뼈 회오리: 유골 스프라이트는 미리 5개 만들어 두고 보이기/숨기기만 한다
+        this.orbitBones = [];
+        for (let i = 0; i < MAX_ORBIT; i++) {
+            const b = scene.add.circle(-999, -999, 4, 0xe8e0d0);
+            b.setDepth(DEPTH.PROJECTILE).setVisible(false);
+            this.orbitBones.push(b);
+        }
+        // 재타격 쿨은 적별로 관리한다. 적 객체에 직접 시간을 박으면 풀 재사용 시
+        // 죽었다 살아난 적이 공짜 무적을 얻는다.
+        this.orbitHit = new Map();
+        this.orbitSweep = 0;
+
+        // ── W4 성수 낙하: 장판 풀
+        this.zones = new Pool(MAX_ZONES, () => {
+            const g = scene.add.circle(-999, -999, 30, 0xdfd08a, 0.22);
+            g.setStrokeStyle(1, 0xf4e9b8, 0.5);
+            g.setDepth(DEPTH.FX).setVisible(false);
+            return g;
         });
 
         this.arcFx = scene.add.graphics().setDepth(DEPTH.FX);
@@ -80,8 +113,11 @@ export class CombatSystem {
         this.moveProjectiles(dt);
         this.rebuildHash();
         this.projectileHits();
+        this.updateOrbit(dt);
+        this.updateZones(dt);
         this.contactDamage();
         this.flushDamage();
+        this.awakening?.update(dt);
         this.updateVitals(dt);
         this.updateOrbs(dt);
         this.drawArcFx();
@@ -93,40 +129,79 @@ export class CombatSystem {
         for (let i = 0; i < list.length; i++) this.hash.insert(list[i]);
     }
 
+    /**
+     * 무기 획득 / 레벨업. 축복 op:"weapon" 이 target 무기를 1레벨 올린다.
+     * 아직 없는 무기면 Lv1로 새로 얻는다 — 이것이 빌드 다양성의 축이다.
+     */
+    addWeapon(id, level = 1) {
+        const def = this.wdef[id];
+        if (!def) return null;
+        const lv = Math.max(1, Math.min(level, def.maxLevel));
+        let w = this.weapons[id];
+        if (!w) {
+            w = this.weapons[id] = { id, type: def.type, level: 0, timer: 0, angle: 0 };
+            this.weaponList.push(w);
+        }
+        w.level = lv;
+        w.s = def.levels[lv - 1];
+        if (def.type === "orbit") this.syncOrbit(w);
+        return w;
+    }
+
     fireWeapons(dt) {
         const haste = this.stats.get("haste");
-        this.w1.timer -= dt * haste;
-        if (this.w1.timer <= 0) { this.w1.timer += this.w1.cooldown; this.fireW1(); }
-        this.w2.timer -= dt * haste;
-        if (this.w2.timer <= 0) { this.w2.timer += this.w2.cooldown; this.fireW2(); }
+        for (const w of this.weaponList) {
+            switch (w.type) {
+                case "melee_arc":
+                    w.timer -= dt * haste;
+                    if (w.timer <= 0) { w.timer += w.s.cooldown; this.fireArc(w); }
+                    break;
+                case "projectile":
+                    w.timer -= dt * haste;
+                    if (w.timer <= 0) { w.timer += w.s.cooldown; this.fireProjectile(w); }
+                    break;
+                case "zone":
+                    w.timer -= dt * haste;
+                    if (w.timer <= 0) { w.timer += w.s.cooldown; this.dropZones(w); }
+                    break;
+                // orbit 은 쿨다운이 없다 — updateOrbit 이 매 프레임 처리한다
+            }
+        }
     }
 
     /** W1 피의 송곳니 — 바라보는 방향 부채꼴. 범위 내 전원 타격(관통 무한) */
-    fireW1() {
-        const w = this.w1;
+    fireArc(wp) {
+        const w = wp.s;
         const facing = this.playerSystem?.facing ?? "down";
         const base = { up: -Math.PI / 2, down: Math.PI / 2, left: Math.PI, right: 0 }[facing];
         const half = Phaser.Math.DegToRad(w.arcDeg) / 2;
-        const r2 = w.radius * w.radius;
+        const radius = w.radius * this.stats.get("area");
+        const r2 = radius * radius;
 
-        const cands = this.hash.query(this.player.x, this.player.y, w.radius, this.queryBuf);
+        const cands = this.hash.query(this.player.x, this.player.y, radius, this.queryBuf);
+        let hit = 0;
         for (const e of cands) {
             if (dist2(e.x, e.y, this.player.x, this.player.y) > r2) continue;
             const a = Math.atan2(e.y - this.player.y, e.x - this.player.x);
             if (Math.abs(Phaser.Math.Angle.Wrap(a - base)) > half) continue;
-            this.queueDamage(e, w.damage * this.stats.get("damage"), w.knockback * this.stats.get("knockback"));
+            this.queueDamage(e, w.damage * this.stats.get("damage"), w.knockback * this.stats.get("knockback"), wp);
+            hit++;
         }
+        // Lv4+ 처치 시 20% 확률로 쿨 즉시 리셋. 실제 처치 여부는 flushDamage 가 판정하므로
+        // 여기서는 "때린 대상이 있었는가"만 보고 killReset 플래그를 세워 둔다.
+        wp.pendingReset = hit > 0 && !!w.resetChance;
         this.arcBase = base;
         this.arcHalf = half;
-        this.arcRadius = w.radius;
+        this.arcRadius = radius;
         this.arcFxUntil = this.scene.time.now + 100;
     }
 
     /** W2 화염탄 — 사거리 내 최근접 적 자동조준 */
-    fireW2() {
-        const w = this.w2;
-        const cands = this.hash.query(this.player.x, this.player.y, w.range, this.queryBuf);
-        let best = null, bestD = w.range * w.range;
+    fireProjectile(wp) {
+        const w = wp.s;
+        const range = w.range * this.stats.get("range");
+        const cands = this.hash.query(this.player.x, this.player.y, range, this.queryBuf);
+        let best = null, bestD = range * range;
         for (const e of cands) {
             const d = dist2(e.x, e.y, this.player.x, this.player.y);
             if (d < bestD) { bestD = d; best = e; }
@@ -134,19 +209,30 @@ export class CombatSystem {
         if (!best) return;
 
         const a = Math.atan2(best.y - this.player.y, best.x - this.player.x);
+        // Lv3~4 는 0.08s 간격 연사, Lv5 는 10도 부채꼴 동시 확산.
+        // 같은 count 라도 연사는 이동 표적 추적에, 확산은 군중에 강하다.
+        const spread = Phaser.Math.DegToRad(w.spreadDeg ?? 0);
         for (let i = 0; i < w.count; i++) {
-            const p = this.projectiles.obtain();
-            if (!p) break;
-            p.setPosition(this.player.x, this.player.y).setVisible(true);
-            p.vx = Math.cos(a) * w.speed;
-            p.vy = Math.sin(a) * w.speed;
-            p.life = w.range / w.speed;
-            p.pierce = w.pierce;
-            p.damage = w.damage;
-            p.knockback = w.knockback;
-            if (!p.hitSet) p.hitSet = new Set();
-            p.hitSet.clear();
+            const off = w.count > 1 && spread ? (i - (w.count - 1) / 2) * spread : 0;
+            const delay = w.burstGap ? i * w.burstGap * 1000 : 0;
+            if (delay > 0) this.scene.time.delayedCall(delay, () => this.spawnBullet(a + off, w, range));
+            else this.spawnBullet(a + off, w, range);
         }
+    }
+
+    spawnBullet(angle, w, range) {
+        if (this.dead) return;
+        const p = this.projectiles.obtain();
+        if (!p) return;
+        p.setPosition(this.player.x, this.player.y).setVisible(true);
+        p.vx = Math.cos(angle) * w.speed;
+        p.vy = Math.sin(angle) * w.speed;
+        p.life = range / w.speed;
+        p.pierce = w.pierce;
+        p.damage = w.damage * this.stats.get("damage");
+        p.knockback = w.knockback * this.stats.get("knockback");
+        if (!p.hitSet) p.hitSet = new Set();
+        p.hitSet.clear();
     }
 
     moveProjectiles(dt) {
@@ -182,19 +268,23 @@ export class CombatSystem {
     }
 
     // ── 데미지
-    queueDamage(enemy, amount, knockback) {
-        this.damageQueue.push({ e: enemy, amount, knockback });
+    queueDamage(enemy, amount, knockback, src = null) {
+        this.damageQueue.push({ e: enemy, amount, knockback, src });
     }
 
     /** 큐를 한 번에 처리 — 같은 적이 여러 소스에서 맞아도 사망은 1회다 */
     flushDamage() {
+        const crit = this.stats.get("crit");
+        const critMult = this.stats.get("critMult");
         for (const d of this.damageQueue) {
             const e = d.e;
             if (!e.__active || e.hp <= 0) continue;
-            e.hp -= d.amount;
+            // 치명타는 큐를 비울 때 한 번만 굴린다 — 무기별로 굴리면 판정이 흩어진다
+            const isCrit = crit > 0 && Math.random() < crit;
+            e.hp -= isCrit ? d.amount * critMult : d.amount;
 
-            // 피격 플래시 60ms (T213)
-            e.setTintFill(0xffffff);
+            // 피격 플래시 60ms (T213). 치명타는 금색으로 구분한다.
+            e.setTintFill(isCrit ? 0xffd24a : 0xffffff);
             this.scene.time.delayedCall(60, () => { if (e.__active) e.clearTint(); });
 
             if (d.knockback) {
@@ -206,6 +296,15 @@ export class CombatSystem {
             }
 
             if (e.hp <= 0) {
+                // W1 Lv4+ — 처치 시 20% 확률로 쿨 즉시 리셋. "처치했을 때만" 이므로
+                // 발사 시점이 아니라 사망 확정 시점에 판정한다.
+                const src = d.src;
+                if (src && src.pendingReset && Math.random() < (src.s.resetChance ?? 0)) src.timer = 0;
+                this.orbitHit.delete(e);
+                this.awakening?.onKill(e);
+                this.gold += e.goldValue ?? 1;
+                const leech = this.stats.get("lifeOnKill");
+                if (leech > 0) this.hp = Math.min(this.maxHp, this.hp + leech);
                 this.dropOrb(e.x, e.y, e.expValue);
                 this.spawn.kill(e, true);
             }
@@ -226,8 +325,13 @@ export class CombatSystem {
     }
 
     hurt(amount) {
-        this.hp = Math.max(0, this.hp - amount);
-        this.hurtUntil = this.scene.time.now + PLAYER_IFRAME;
+        // 방어율은 상한 60%(S1). 100%가 되면 후반 적 강화가 통째로 무의미해진다.
+        let taken = amount * (1 - this.stats.get("armor"));
+        // 각성이 피해를 가로챌 수 있다 (불사의 껍질 = 1회 부활, 저HP 보너스 등)
+        const replaced = this.awakening?.onHurt(taken);
+        if (typeof replaced === "number") taken = replaced;
+        this.hp = Math.max(0, this.hp - taken);
+        this.hurtUntil = this.scene.time.now + PLAYER_IFRAME * this.stats.get("iframe");
         this.player.setTintFill(0xffffff);
         this.scene.time.delayedCall(60, () => this.player.clearTint());
         this.scene.cameras.main.shake(90, 0.004);
@@ -241,6 +345,9 @@ export class CombatSystem {
             time: Math.floor(this.spawn.elapsed),
             kills: this.spawn.killCount,
             level: this.level,
+            gold: Math.floor(this.gold),
+            awakenings: this.awakening ? [...this.awakening.list] : [],
+            humanity: this.pact?.humanity ?? 100,
         });
     }
 
@@ -309,15 +416,110 @@ export class CombatSystem {
         const card = cards?.[index];
         if (card) {
             const r = this.pact.choose(card);
+            if (r.weapon) this.addWeapon(r.weapon.target, r.weapon.level);
             this.hp = Math.min(this.hp, this.maxHp);
             EventBus.emit(EVENTS.PACT_APPLIED, {
                 level: this.level, humanity: r.humanity, tagCounts: r.tagCounts,
                 ownedBlessings: { ...this.pact.owned },
             });
-            if (r.awakened) EventBus.emit(EVENTS.AWAKENING_TRIGGERED, { tag: r.awakened });
+            if (r.awakened && this.awakening?.trigger(r.awakened)) {
+                EventBus.emit(EVENTS.AWAKENING_TRIGGERED, { tag: r.awakened, list: [...this.awakening.list] });
+            }
         }
         this.pendingCards = null;
         this.scene.scene.resume();
+    }
+
+    // ── W3 뼈 회오리 ────────────────────────────────────────────
+    /** 유골 개수가 바뀌면 스프라이트 표시 수를 맞춘다 */
+    syncOrbit(wp) {
+        for (let i = 0; i < MAX_ORBIT; i++) this.orbitBones[i].setVisible(i < wp.s.count);
+    }
+
+    /**
+     * 상시 발동. 쿨다운이 없는 대신 "같은 적 재타격 쿨"이 단일 대상 DPS의 상한이다.
+     * ★ haste 는 재타격 쿨만 나눈다. 회전 속도까지 올리면 화면이 어지러워진다(05-COMBAT 2.3).
+     */
+    updateOrbit(dt) {
+        const wp = this.weapons.W3;
+        if (!wp) return;
+        const w = wp.s;
+        const now = this.scene.time.now;
+        wp.angle = (wp.angle + Phaser.Math.DegToRad(w.degPerSec) * dt) % (Math.PI * 2);
+
+        const radius = w.radius * this.stats.get("area");
+        const rehitMs = (w.rehit / this.stats.get("haste")) * 1000;
+        const dmg = w.damage * this.stats.get("damage");
+        const kb = w.knockback * this.stats.get("knockback");
+        const step = (Math.PI * 2) / w.count;
+
+        for (let i = 0; i < w.count; i++) {
+            const a = wp.angle + step * i;
+            const bx = this.player.x + Math.cos(a) * radius;
+            const by = this.player.y + Math.sin(a) * radius;
+            this.orbitBones[i].setPosition(bx, by);
+
+            const cands = this.hash.query(bx, by, 10, this.queryBuf);
+            for (const e of cands) {
+                const rr = (e.radius + 5) * (e.radius + 5);
+                if (dist2(bx, by, e.x, e.y) > rr) continue;
+                if ((this.orbitHit.get(e) ?? 0) > now) continue;
+                this.orbitHit.set(e, now + rehitMs);
+                this.queueDamage(e, dmg, kb, wp);
+            }
+        }
+
+        // 만료된 항목을 2초마다 청소한다. 매 프레임 전수 순회하면 적 150체에서 낭비다.
+        this.orbitSweep -= dt;
+        if (this.orbitSweep <= 0) {
+            this.orbitSweep = 2;
+            for (const [e, t] of this.orbitHit) if (t <= now || !e.__active) this.orbitHit.delete(e);
+        }
+    }
+
+    // ── W4 성수 낙하 ────────────────────────────────────────────
+    /** 플레이어 주위 산포 반경 안에 랜덤 낙하. 조준이 개입하지 않는 대신 단일 명중률이 낮다. */
+    dropZones(wp) {
+        const w = wp.s;
+        const scatter = w.scatter * this.stats.get("range");
+        const radius = w.radius * this.stats.get("area");
+        for (let i = 0; i < w.drops; i++) {
+            const z = this.zones.obtain();
+            if (!z) break;
+            const a = Math.random() * Math.PI * 2;
+            const d = Math.sqrt(Math.random()) * scatter; // sqrt — 원 안에 고르게 뿌린다
+            z.setPosition(this.player.x + Math.cos(a) * d, this.player.y + Math.sin(a) * d);
+            z.setRadius(radius);
+            z.setVisible(true).setAlpha(0.22);
+            z.zr2 = radius * radius;
+            z.damage = w.damage * this.stats.get("damage");
+            z.life = w.duration;
+            z.tickEvery = w.tick;
+            z.tickTimer = 0; // 0 -> 진입 즉시 1틱
+        }
+    }
+
+    updateZones(dt) {
+        const list = this.zones.active;
+        for (let i = list.length - 1; i >= 0; i--) {
+            const z = list[i];
+            z.tickTimer -= dt;
+            if (z.tickTimer <= 0) {
+                z.tickTimer += z.tickEvery;
+                const cands = this.hash.query(z.x, z.y, Math.sqrt(z.zr2), this.queryBuf);
+                for (const e of cands) {
+                    if (dist2(z.x, z.y, e.x, e.y) > z.zr2) continue;
+                    this.queueDamage(e, z.damage, 0);
+                }
+            }
+            z.life -= dt;
+            if (z.life <= 0) {
+                z.setVisible(false).setPosition(-999, -999);
+                this.zones.release(z);
+            } else {
+                z.setAlpha(0.10 + 0.14 * Math.min(1, z.life)); // 사라질 때 옅어진다
+            }
+        }
     }
 
     drawArcFx() {

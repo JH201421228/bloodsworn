@@ -1,14 +1,49 @@
 {
-    "_comment": "무기 수치. 출처 05-COMBAT 2.1(W1) / 2.2(W2). Lv1만 Day 2 범위. Lv2~5는 Day 3 성장에서 채운다.",
-    "schemaVersion": 1,
+    "_comment": "무기 수치. 출처 05-COMBAT 2.1(W1) 2.2(W2) 2.3(W3) 2.4(W4). Lv1~5 전개 완료.",
+    "_note": "levels 배열 인덱스 = 레벨-1. 인게임 성장은 축복 bls_w1~bls_w4가 level을 +1 한다.",
+    "schemaVersion": 2,
     "weapons": [
         {
-            "id": "W1", "name": "피의 송곳니", "type": "melee_arc",
-            "levels": [{ "damage": 12, "cooldown": 1.0, "radius": 64, "arcDeg": 90, "knockback": 40 }]
+            "id": "W1", "name": "피의 송곳니", "type": "melee_arc", "maxLevel": 5,
+            "levels": [
+                { "damage": 12, "cooldown": 1.00, "radius": 64, "arcDeg": 90, "knockback": 40 },
+                { "damage": 15, "cooldown": 0.95, "radius": 70, "arcDeg": 90, "knockback": 40 },
+                { "damage": 18, "cooldown": 0.90, "radius": 76, "arcDeg": 110, "knockback": 46 },
+                { "damage": 22, "cooldown": 0.85, "radius": 82, "arcDeg": 110, "knockback": 46, "resetChance": 0.20 },
+                { "damage": 27, "cooldown": 0.80, "radius": 90, "arcDeg": 160, "knockback": 55, "resetChance": 0.20 }
+            ]
         },
         {
-            "id": "W2", "name": "화염탄", "type": "projectile",
-            "levels": [{ "damage": 14, "cooldown": 1.2, "range": 200, "count": 1, "pierce": 0, "speed": 220, "knockback": 12 }]
+            "id": "W2", "name": "화염탄", "type": "projectile", "maxLevel": 5,
+            "levels": [
+                { "damage": 14, "cooldown": 1.20, "range": 200, "count": 1, "pierce": 0, "speed": 220, "knockback": 12, "spreadDeg": 0 },
+                { "damage": 17, "cooldown": 1.15, "range": 210, "count": 1, "pierce": 0, "speed": 220, "knockback": 12, "spreadDeg": 0 },
+                { "damage": 20, "cooldown": 1.10, "range": 220, "count": 2, "pierce": 0, "speed": 235, "knockback": 12, "spreadDeg": 0, "burstGap": 0.08 },
+                { "damage": 24, "cooldown": 1.05, "range": 230, "count": 2, "pierce": 1, "speed": 235, "knockback": 14, "spreadDeg": 0, "burstGap": 0.08 },
+                { "damage": 29, "cooldown": 1.00, "range": 240, "count": 3, "pierce": 1, "speed": 250, "knockback": 16, "spreadDeg": 10 }
+            ]
+        },
+        {
+            "id": "W3", "name": "뼈 회오리", "type": "orbit", "maxLevel": 5,
+            "_note": "쿨다운 없는 상시 발동. 단일 DPS 상한은 rehit(재타격 쿨)이 정하고 유골 수는 군중 DPS에만 기여한다. haste는 rehit을 나눈다 — 회전속도는 건드리지 않는다(눈이 어지러워짐).",
+            "levels": [
+                { "damage": 8, "radius": 46, "count": 2, "degPerSec": 120, "rehit": 0.60, "knockback": 8 },
+                { "damage": 9, "radius": 46, "count": 3, "degPerSec": 130, "rehit": 0.60, "knockback": 8 },
+                { "damage": 11, "radius": 54, "count": 3, "degPerSec": 140, "rehit": 0.55, "knockback": 10 },
+                { "damage": 13, "radius": 54, "count": 4, "degPerSec": 150, "rehit": 0.50, "knockback": 10 },
+                { "damage": 16, "radius": 62, "count": 5, "degPerSec": 170, "rehit": 0.45, "knockback": 12 }
+            ]
+        },
+        {
+            "id": "W4", "name": "성수 낙하", "type": "zone", "maxLevel": 5,
+            "_note": "낙하 위치가 랜덤 — 조준 실력이 개입하지 않는 대신 단일 명중률 30%로 균형. 틱 수 4 = 진입 즉시 1틱 + 0.5s마다.",
+            "levels": [
+                { "damage": 6, "cooldown": 3.00, "drops": 3, "radius": 30, "duration": 1.5, "tick": 0.5, "scatter": 200 },
+                { "damage": 7, "cooldown": 3.00, "drops": 3, "radius": 34, "duration": 1.5, "tick": 0.5, "scatter": 210 },
+                { "damage": 8, "cooldown": 3.00, "drops": 4, "radius": 34, "duration": 1.5, "tick": 0.5, "scatter": 220 },
+                { "damage": 9, "cooldown": 2.80, "drops": 4, "radius": 38, "duration": 1.5, "tick": 0.5, "scatter": 230 },
+                { "damage": 11, "cooldown": 2.60, "drops": 5, "radius": 42, "duration": 1.8, "tick": 0.5, "scatter": 240 }
+            ]
         }
     ]
 }
