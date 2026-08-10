@@ -52,6 +52,8 @@ export class CombatSystem {
         this.awakening = null;
         /** @type {any} 연출. 없으면 조용히 건너뛴다 — 전투 로직이 연출에 의존하면 안 된다 */
         this.fx = null;
+        /** @type {import("./ProjectileSystem").ProjectileSystem|null} 스프라이트 투사체. GameScene 이 주입한다 */
+        this.projectiles = null;
 
         /**
          * 무기 레지스트리. id -> { def, level, s(=현재 레벨 수치), timer }
@@ -65,7 +67,7 @@ export class CombatSystem {
         this.addWeapon("W1", 1);
         this.addWeapon("W2", 1);
 
-        this.projectiles = new Pool(MAX_PROJECTILES, () => {
+        this.projectilePool = new Pool(MAX_PROJECTILES, () => {
             const s = scene.add.circle(-999, -999, 3, 0xff8844);
             s.setDepth(DEPTH.PROJECTILE).setVisible(false);
             return s;
@@ -228,22 +230,35 @@ export class CombatSystem {
 
     spawnBullet(angle, w, range) {
         if (this.dead) return;
-        const p = this.projectiles.obtain();
+        const dmg = w.damage * this.stats.get("damage");
+        const kb = w.knockback * this.stats.get("knockback");
+
+        // ProjectileSystem 이 있으면 스프라이트 투사체를 쓴다.
+        // ★ 수치는 여기서 이미 stats 를 곱해 넘긴다 — 저쪽에서 다시 곱하면 이중 적용이다.
+        if (this.projectiles && w.projectile) {
+            this.projectiles.fire(w.projectile, this.player.x, this.player.y, angle, {
+                damage: dmg, knockback: kb, speed: w.speed, range, pierce: w.pierce,
+            });
+            return;
+        }
+
+        // 폴백 — 투사체 시스템이나 정의가 없으면 예전 원으로라도 쏜다.
+        // 무기가 조용히 사라지는 것보다 못생긴 게 낫다.
+        const p = this.projectilePool.obtain();
         if (!p) return;
         p.setPosition(this.player.x, this.player.y).setVisible(true);
         p.vx = Math.cos(angle) * w.speed;
         p.vy = Math.sin(angle) * w.speed;
         p.life = range / w.speed;
         p.pierce = w.pierce;
-        p.damage = w.damage * this.stats.get("damage");
-        p.knockback = w.knockback * this.stats.get("knockback");
+        p.damage = dmg;
+        p.knockback = kb;
         if (!p.hitSet) p.hitSet = new Set();
         p.hitSet.clear();
-        this.scene.audio?.sfx("fire");
     }
 
     moveProjectiles(dt) {
-        const list = this.projectiles.active;
+        const list = this.projectilePool.active;
         for (let i = list.length - 1; i >= 0; i--) {
             const p = list[i];
             p.x += p.vx * dt;
@@ -255,11 +270,11 @@ export class CombatSystem {
 
     releaseProjectile(p) {
         p.setVisible(false).setPosition(-999, -999);
-        this.projectiles.release(p);
+        this.projectilePool.release(p);
     }
 
     projectileHits() {
-        const list = this.projectiles.active;
+        const list = this.projectilePool.active;
         for (let i = list.length - 1; i >= 0; i--) {
             const p = list[i];
             const cands = this.hash.query(p.x, p.y, 12, this.queryBuf);

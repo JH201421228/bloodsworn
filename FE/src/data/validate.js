@@ -50,9 +50,16 @@ export function validateData() {
         });
     }
 
-    // ── 적
+    // ── 적. 필드명은 08-DATA-SCHEMA 정본을 따른다 —
+    //   baseHp/contactDamage/moveSpeed/hitbox 이지 hp/damage/speed 가 아니다.
+    //   SpawnSystem.reset() 이 읽는 이름과 반드시 같아야 한다. 어긋나면 런타임에 NaN 이 되고
+    //   "적이 죽지 않는다"로 나타난다.
     for (const e of enemies.enemies ?? []) {
-        checkShape(errors, `enemy ${e.id}`, e, { id: isStr, hp: isNum, speed: isNum, damage: isNum });
+        checkShape(errors, `enemy ${e.id}`, e, {
+            id: isStr, name: isStr, baseHp: isNum, contactDamage: isNum,
+            moveSpeed: isNum, hitbox: isNum, expValue: isNum,
+        });
+        if (e.stageAffinity && !Array.isArray(e.stageAffinity)) errors.push(`enemy ${e.id}: stageAffinity 는 배열이어야 한다`);
     }
 
     // ── 축복: 등급 3단계(common/rare/epic) 값이 모두 있어야 한다.
@@ -73,14 +80,17 @@ export function validateData() {
     // ── 대가: 안전장치 S1 — 하한 없는 대가가 하나라도 있으면 밸런스가 붕괴한다
     for (const t of tolls.tolls ?? []) {
         checkShape(errors, `toll ${t.tag}`, t, { tag: isStr, stat: isStr });
-        if (!isNum(t.amount) && !Array.isArray(t.amount)) errors.push(`toll ${t.tag}: amount 누락`);
+        // 필드명은 rate 다(amount 아님). floor 는 안전장치 S1 — 하한 없는 대가가 하나라도
+        // 있으면 그 태그를 계속 쌓았을 때 스탯이 0 이나 음수로 내려가 밸런스가 붕괴한다.
+        if (!isNum(t.rate)) errors.push(`toll ${t.tag}: rate 누락/비숫자`);
+        if (!isNum(t.floor)) errors.push(`toll ${t.tag}: floor(S1 하한) 누락`);
     }
 
     // ── 페이즈: 시간 순서가 단조 증가해야 한다. 뒤집히면 구간이 영원히 안 온다.
     const segs = phases.phases ?? phases.segments ?? [];
     let prev = -1;
     segs.forEach((p, i) => {
-        const t = p.startSec ?? p.start ?? p.at;
+        const t = p.t ?? p.startSec ?? p.start ?? p.at;
         if (!isNum(t)) { errors.push(`phase[${i}]: 시작 시각이 없다`); return; }
         if (t <= prev) errors.push(`phase[${i}]: 시작 시각 ${t} 가 직전 ${prev} 이하다`);
         prev = t;

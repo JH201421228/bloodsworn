@@ -27,6 +27,7 @@ import { AwakeningSystem } from "../systems/AwakeningSystem";
 import { BossSystem } from "../systems/BossSystem";
 import { AudioSystem } from "../systems/AudioSystem";
 import { FxSystem } from "../systems/FxSystem";
+import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { QualitySystem } from "../systems/QualitySystem";
 import { EventBus } from "../EventBus";
 import { EVENTS } from "../constants";
@@ -67,6 +68,12 @@ export default class GameScene extends Phaser.Scene {
             this.bossSystem = new BossSystem(this, {
                 player: this.player, spawn: this.spawnSystem, combat: this.combatSystem, stats: this.stats,
             });
+            // 플레이어 투사체. CombatSystem 이 직접 원을 그리던 것을 대체한다 —
+            // 스프라이트·진행방향 회전·명중 이펙트·관통/유도/분열/폭발이 전부 여기 있다.
+            this.projectiles = new ProjectileSystem(this, {
+                player: this.player, combat: this.combatSystem, stats: this.stats,
+            });
+            this.combatSystem.projectiles = this.projectiles;
             this.fxSystem = new FxSystem(this, { player: this.player });
             this.combatSystem.fx = this.fxSystem;
             this.quality = new QualitySystem(this, { fx: this.fxSystem });
@@ -126,6 +133,7 @@ export default class GameScene extends Phaser.Scene {
 
         if (bs && !bs.active && !bs.defeated && this.spawnSystem.elapsed >= bs.def.spawnAt) bs.spawn();
         this.combatSystem?.update(dt);
+        this.projectiles?.update(dt); // 해시 재구축 뒤에 충돌을 본다
         this.bossSystem?.update(dt);
         this.fxSystem?.update(dt);
         this.quality?.update(dt);

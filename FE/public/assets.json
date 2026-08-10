@@ -156,6 +156,66 @@
             "url": "assets/fx/fx-slash.png",
             "frameWidth": 64,
             "frameHeight": 64
+        },
+        {
+            "key": "proj-dart-fire",
+            "url": "assets/projectile/proj-dart-fire.png",
+            "frameWidth": 10,
+            "frameHeight": 10
+        },
+        {
+            "key": "proj-spear-fire",
+            "url": "assets/projectile/proj-spear-fire.png",
+            "frameWidth": 12,
+            "frameHeight": 12
+        },
+        {
+            "key": "proj-comet-fire",
+            "url": "assets/projectile/proj-comet-fire.png",
+            "frameWidth": 32,
+            "frameHeight": 32
+        },
+        {
+            "key": "proj-dart-blood",
+            "url": "assets/projectile/proj-dart-blood.png",
+            "frameWidth": 10,
+            "frameHeight": 10
+        },
+        {
+            "key": "proj-burst-fire",
+            "url": "assets/projectile/proj-burst-fire.png",
+            "frameWidth": 16,
+            "frameHeight": 16
+        },
+        {
+            "key": "proj-ring-fire",
+            "url": "assets/projectile/proj-ring-fire.png",
+            "frameWidth": 30,
+            "frameHeight": 30
+        },
+        {
+            "key": "proj-spin-ash",
+            "url": "assets/projectile/proj-spin-ash.png",
+            "frameWidth": 24,
+            "frameHeight": 24
+        },
+        {
+            "key": "proj-shuriken-ash",
+            "url": "assets/projectile/proj-shuriken-ash.png",
+            "frameWidth": 14,
+            "frameHeight": 14
+        },
+        {
+            "key": "proj-star-gold",
+            "url": "assets/projectile/proj-star-gold.png",
+            "frameWidth": 14,
+            "frameHeight": 14
+        },
+        {
+            "key": "proj-burst-gold",
+            "url": "assets/projectile/proj-burst-gold.png",
+            "frameWidth": 16,
+            "frameHeight": 16
         }
     ],
     "atlases": [],
