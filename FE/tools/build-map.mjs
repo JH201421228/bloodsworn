@@ -140,31 +140,48 @@ const setReg = (x0, y0, w, h, r) => {
     for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (inb(x, y)) region[idx(x, y)] = r;
 };
 
-// ── 레이아웃: 하나의 큰 투기장 + 규칙적 열주 + 모서리 묘실
-//    서바이버즈는 카이팅이 생명이라 미로가 아니라 넓은 홀이어야 한다.
-//    구조는 "랜덤 배치"가 아니라 대칭 격자로 만들어 건축물로 읽히게 한다.
-const AX = 14, AY = 10, AW = 72, AH = 55;
-setReg(AX, AY, AW, AH, 1);
-setReg(AX, AY, AW, 3, 3);                 // 위 가장자리 띠
-setReg(AX, AY + AH - 3, AW, 3, 3);        // 아래 가장자리 띠
-setReg(AX, AY, 3, AH, 3);                 // 좌
-setReg(AX + AW - 3, AY, 3, AH, 3);        // 우
-// 모서리 묘실 — 색으로 구역을 나눈다
-setReg(AX + 3, AY + 3, 16, 11, 2);
-setReg(AX + AW - 19, AY + 3, 16, 11, 2);
-setReg(AX + 3, AY + AH - 14, 16, 11, 2);
-setReg(AX + AW - 19, AY + AH - 14, 16, 11, 2);
+// ── 레이아웃 — 큰 홀 4개 + 중앙 성소를 넓은 회랑으로 연결한다.
+//    레퍼런스(원작 맵)는 방과 복도가 촘촘한 탐험형 던전이지만 본작은 서바이버즈다.
+//    적 150체 동시 + 카이팅(정본 03 7 / 05)이 성립하려면 통로가 좁으면 안 된다.
+//    타협: 홀 하나하나를 카이팅 가능한 크기(34x26 타일 = 544x416px)로 유지하되,
+//    홀마다 바닥 색조와 벽면 구성을 다르게 해서 "여러 방을 도는" 밀도를 만든다.
+const HALLS = [
+    { name: "NW", x: 6,  y: 5,  w: 34, h: 26, reg: 1 },
+    { name: "NE", x: 60, y: 5,  w: 34, h: 26, reg: 2 },
+    { name: "SW", x: 6,  y: 44, w: 34, h: 26, reg: 3 },
+    { name: "SE", x: 60, y: 44, w: 34, h: 26, reg: 2 },
+];
+const SANCTUM = { x: 40, y: 31, w: 20, h: 13, reg: 1 };
+// 회랑 — 폭 10타일. 좁으면 적 무리에 갇힌다.
+const CORRIDORS = [
+    { x: 18, y: 28, w: 10, h: 20, reg: 3 }, // 좌 세로 (NW-SW)
+    { x: 72, y: 28, w: 10, h: 20, reg: 3 }, // 우 세로 (NE-SE)
+    { x: 36, y: 12, w: 28, h: 10, reg: 3 }, // 상 가로 (NW-NE)
+    { x: 36, y: 52, w: 28, h: 10, reg: 3 }, // 하 가로 (SW-SE)
+    { x: 45, y: 20, w: 10, h: 12, reg: 3 }, // 성소 -> 상 회랑
+    { x: 45, y: 43, w: 10, h: 10, reg: 3 }, // 성소 -> 하 회랑
+    { x: 26, y: 34, w: 15, h: 7,  reg: 3 }, // 성소 -> 좌 회랑
+    { x: 59, y: 34, w: 15, h: 7,  reg: 3 }, // 성소 -> 우 회랑
+];
 
-const SPAWN_T = { x: AX + Math.floor(AW / 2), y: AY + Math.floor(AH / 2) };
+for (const c of CORRIDORS) setReg(c.x, c.y, c.w, c.h, c.reg);
+for (const h of HALLS) setReg(h.x, h.y, h.w, h.h, h.reg);
+setReg(SANCTUM.x, SANCTUM.y, SANCTUM.w, SANCTUM.h, SANCTUM.reg);
 
-// 열주 — 4x3 벽 블록을 대칭 격자에 놓는다. 스폰 반경 10타일은 비운다.
+const SPAWN_T = { x: SANCTUM.x + Math.floor(SANCTUM.w / 2), y: SANCTUM.y + Math.floor(SANCTUM.h / 2) };
+
+// 열주 — 홀마다 대칭 격자로 4x3 블록을 놓는다. 홀 안에서만, 가장자리는 비운다.
 const PILLARS = [];
-for (const px of [24, 38, 60, 74]) {
-    for (const py of [18, 36, 52]) {
-        if (Math.hypot(px + 2 - SPAWN_T.x, py + 1 - SPAWN_T.y) < 10) continue;
-        PILLARS.push([px, py]);
+for (const h of HALLS) {
+    for (const fx of [0.22, 0.55, 0.88]) {
+        for (const fy of [0.25, 0.72]) {
+            const px = Math.round(h.x + h.w * fx) - 2;
+            const py = Math.round(h.y + h.h * fy) - 1;
+            PILLARS.push([px, py]);
+        }
     }
 }
+// 성소는 비워둔다 — 스폰 지점이자 각성 연출이 벌어지는 곳이다
 for (const [px, py] of PILLARS) setReg(px, py, 4, 3, 0);
 
 // ── 레이어 조립
@@ -251,8 +268,7 @@ function stampFloor(pf, x0, y0) {
 let grates = 0;
 const GRATE_AT = [
     [SPAWN_T.x - 2, SPAWN_T.y - 2],
-    [AX + 9, AY + 6], [AX + AW - 13, AY + 6],
-    [AX + 9, AY + AH - 10], [AX + AW - 13, AY + AH - 10],
+    ...HALLS.map((h) => [h.x + Math.floor(h.w / 2) - 2, h.y + Math.floor(h.h / 2) - 2]),
 ];
 for (const [gx, gy] of GRATE_AT) if (stampFloor(GRATE, gx, gy)) grates++;
 
