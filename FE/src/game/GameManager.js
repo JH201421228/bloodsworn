@@ -10,6 +10,7 @@ import Phaser from "phaser";
 import { GAME_CONFIG } from "./config";
 import { EventBus } from "./EventBus";
 import { DEBUG } from "./debug";
+import { EVENTS, SCENES } from "./constants";
 import BootScene from "./scenes/BootScene";
 import PreloadScene from "./scenes/PreloadScene";
 import GameScene from "./scenes/GameScene";
@@ -42,6 +43,21 @@ class GameManagerImpl {
             parent: container,
             scene: [BootScene, PreloadScene, GameScene, HudScene, DebugScene],
         });
+
+        // T531 재시작 3초 규칙 — location.reload() 는 에셋 재파싱만 3~5초라 규칙을 못 지킨다.
+        // ★ GameScene 안이 아니라 여기에 거는 이유: scene.restart() 가 shutdown 을 발화시켜
+        //   자기 자신의 구독을 해제하는 도중에 핸들러가 도는 경합이 생긴다.
+        EventBus.on(EVENTS.CMD_START_RUN, () => {
+            const g = this.game;
+            if (!g) return;
+            const gs = g.scene.getScene(SCENES.GAME);
+            if (!gs || !gs.scene.isActive()) { g.scene.start(SCENES.GAME); return; }
+            // 승리/카드 대기 중에는 씬이 pause 상태다. 풀지 않으면 restart 가 먹지 않는다.
+            if (gs.scene.isPaused()) gs.scene.resume();
+            g.scene.stop(SCENES.HUD);
+            g.scene.stop(SCENES.DEBUG);
+            gs.scene.restart();
+        }, { key: "gm:start-run" });
         // DEBUG일 때만 전역 노출 — 브라우저 콘솔과 자동 검증 스크립트가 게임 상태를 읽는다
         if (DEBUG && typeof window !== "undefined") window.__PHASER_GAME__ = this.game;
         return this.game;

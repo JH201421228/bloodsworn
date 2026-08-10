@@ -245,8 +245,8 @@
 - [x] **T505** `P1` 원거리 적 E6 투사체
 - [x] **T506** `P1` 돌진 적 E8 + **0.6s 텔레그래프**
 - [x] **T507** `P2` 무리 스폰 적 E7 (8체 파도)
-- [ ] **T510** `P1` **인간성 시스템** + UI 심장 5개
-- [ ] **T511** `P2` 「완전 흡혈귀화」 (인간성 0)
+- [x] **T510** `P1` **인간성 시스템** + UI 심장 5개
+- [x] **T511** `P2` 「완전 흡혈귀화」 (인간성 0)
 - [x] **T520** `P1` 보스 스프라이트 등록 (Bringer-of-Death)
 - [x] **T521** `P1` 보스 등장 연출 — 잡몹 정화 + 붉은 플래시
 - [x] **T522** `P1` 보스 P1 패턴 — 낫 휘두르기 / 3방향 사령탄
@@ -254,14 +254,14 @@
 - [x] **T524** `P2` 보스 P3 — 광폭화 + 바닥 장판
 - [x] **T525** `P1` **모든 보스 패턴 0.6s 이상 텔레그래프** (모바일 반응 가능성)
 - [x] **T526** `P1` 보스 HP바 (상단 전체 폭)
-- [ ] **T530** `P0` **결과 화면** (React) — 승/패 / 통계 / 골드
-- [ ] **T531** `P0` **재시작 버튼 3초 규칙** (사망 후 3초 안에 재시작 가능)
-- [ ] **T532** `P2` 엔딩 분기 3종 텍스트 (인간 / 서약자 / 진조)
-- [ ] **T540** `P1` 리롤 (런당 2회)
-- [ ] **T541** `P1` 스킵 (HP 25% + 골드 30)
-- [ ] **T550** `P0` **세이브 시스템** `localStorage: bloodsworn.save.v1`
-- [ ] **T551** `P1` 세이브 손상 시 복구 + 버전 마이그레이션
-- [ ] **T552** `P1` 🍎 **`@capacitor/preferences` write-through** (약 30줄 · 플러그인 1개 추가) — **iOS 때문에 기존 결정을 뒤집는다**
+- [x] **T530** `P0` **결과 화면** (React) — 승/패 / 통계 / 골드
+- [x] **T531** `P0` **재시작 버튼 3초 규칙** (사망 후 3초 안에 재시작 가능)
+- [x] **T532** `P2` 엔딩 분기 3종 텍스트 (인간 / 서약자 / 진조)
+- [x] **T540** `P1` 리롤 (런당 2회)
+- [x] **T541** `P1` 스킵 (HP 25% + 골드 30)
+- [x] **T550** `P0` **세이브 시스템** `localStorage: bloodsworn.save.v1`
+- [x] **T551** `P1` 세이브 손상 시 복구 + 버전 마이그레이션
+- [x] **T552** `P1` 🍎 **`@capacitor/preferences` write-through** (약 30줄 · 플러그인 1개 추가) — **iOS 때문에 기존 결정을 뒤집는다**
       Capacitor 공식 문서는 `localStorage`를 **transient**로 규정하고 "데이터가 결국 소실될 것을 앱이 전제해야 한다"고 쓴다.
       **저장공간이 부족하면 OS가 WebView의 로컬 저장소를 회수**하며 IndexedDB도 iOS에서 같은 위험이 있다.
       `@capacitor/preferences`는 iOS `UserDefaults` / Android `SharedPreferences`를 쓰고, **`UserDefaults`는 WebKit 저장소 회수 대상이 아니다.**
@@ -279,35 +279,35 @@
 ## D6. 메타 + 폴리시 + 성능
 
 ### 메타 & 화면
-- [ ] **T601** `P1` **성소(Sanctum)** — 영구 업그레이드 6종 + 골드 소비
-- [ ] **T602** `P1` 타이틀 화면
-- [ ] **T603** `P1` 옵션 화면 (BGM/SFX 볼륨, 화면흔들림, 데미지숫자, 조이스틱 모드, 저사양)
-- [ ] **T604** `P0` **크레딧 화면** (라이선스 의무 이행 — 배포 필수)
+- [x] **T601** `P1` **성소(Sanctum)** — 영구 업그레이드 6종 + 골드 소비
+- [x] **T602** `P1` 타이틀 화면
+- [x] **T603** `P1` 옵션 화면 (BGM/SFX 볼륨, 화면흔들림, 데미지숫자, 조이스틱 모드, 저사양)
+- [x] **T604** `P0` **크레딧 화면** (라이선스 의무 이행 — 배포 필수)
 - [ ] **T605** `P2` 스테이지 2 해금
 
 ### 오디오
-- [ ] **T610** `P1` BGM 5구간 배정 + 크로스페이드
-- [ ] **T610b** `P0` **BGM 재인코딩** — 원본 27.5MB(**2곡은 md5 동일 중복**). 사용할 **13곡만 96kbps ogg**로 → 약 4.2MB. 미처리 시 AAB가 목표(10MB)를 크게 초과
-- [ ] **T611** `P0` **모바일 자동재생 언락** — 첫 터치 시 `sound.unlock()`
-- [ ] **T612** `P1` **SFX 12종** (절차적 WebAudio 또는 CC0 확보분)
-- [ ] **T613** `P2` 동일 SFX 8ms 내 중복 재생 억제
+- [x] **T610** `P1` BGM 5구간 배정 + 크로스페이드
+- [x] **T610b** `P0` **BGM 재인코딩** — 원본 27.5MB(**2곡은 md5 동일 중복**). 사용할 **13곡만 96kbps ogg**로 → 약 4.2MB. 미처리 시 AAB가 목표(10MB)를 크게 초과
+- [x] **T611** `P0` **모바일 자동재생 언락** — 첫 터치 시 `sound.unlock()`
+- [x] **T612** `P1` **SFX 12종** (절차적 WebAudio 또는 CC0 확보분)
+- [x] **T613** `P2` 동일 SFX 8ms 내 중복 재생 억제
 
 ### 성능 ★
 - [ ] **T620** `P0` **실기기 첫 설치** (`cap sync android` → `adb install`) ← Day 5에 미리 1회 권장
 - [ ] **T621** ~~디버그 오버레이~~ → **Day 2로 이동 (T230)**
-- [ ] **T622** `P0` 병목 측정 및 제거 — 차단선은 평균 fps가 아니라 **1% Low ≥ 40fps**
+- [x] **T622** `P0` 병목 측정 및 제거 — 차단선은 평균 fps가 아니라 **1% Low ≥ 40fps**
       (서바이버즈에서 플레이어가 죽는 건 언제나 최악 구간이다)
 - [ ] **T622b** `P1` ⏰ **공간 해시 그리드 리팩터(2h)는 Day 6 이후 착수 금지** — 이 시점에 시작하면 회귀 검증 시간이 없다. 필요하면 Day 2(T210)에 이미 넣어뒀어야 한다
 - [ ] **T623** `P1` 드로우콜 통합 (단일 아틀라스), 텍스트 → BitmapText
-- [ ] **T624** `P1` 파티클 상한 / 데미지 숫자 상한
-- [ ] **T625** `P1` **적응형 품질** — fps<45 3초 지속 → 파티클 50% 감소
-- [ ] **T626** `P2` 저사양 모드 옵션
+- [x] **T624** `P1` 파티클 상한 / 데미지 숫자 상한
+- [x] **T625** `P1` **적응형 품질** — fps<45 3초 지속 → 파티클 50% 감소
+- [x] **T626** `P2` 저사양 모드 옵션
 
 ### 폴리시 & 플랫폼
-- [ ] **T630** `P1` 화면 흔들림 / 히트스톱 / 데미지 숫자 / 처치 이펙트
-- [ ] **T631** `P0` **세이프에어리어(노치) 대응** + 20:9 레이아웃 검증
-- [ ] **T632** `P0` Android 뒤로가기 버튼 처리
-- [ ] **T633** `P0` **앱 백그라운드 전환 시 자동 일시정지** (`appStateChange`)
+- [x] **T630** `P1` 화면 흔들림 / 히트스톱 / 데미지 숫자 / 처치 이펙트
+- [x] **T631** `P0` **세이프에어리어(노치) 대응** + 20:9 레이아웃 검증
+- [x] **T632** `P0` Android 뒤로가기 버튼 처리
+- [x] **T633** `P0` **앱 백그라운드 전환 시 자동 일시정지** (`appStateChange`)
 - [ ] **T640** `P0` 🔥 **외부인 1~2명 5분 플레이테스트 + 밸런스 최종 튜닝**
 - [ ] **T641** `P0` 🔒 **18:00 기능 동결** — 이후 버그 수정만
 - [ ] **T642** `P0` 전체 회귀 테스트
@@ -321,28 +321,28 @@
 > 관통에 실패해 T244에서 iOS를 잘랐다면 아래 🍎 항목은 전부 Day 7 이후로 넘긴다.
 
 ### 앱 아이덴티티
-- [ ] **T701** `P0` `capacitor.config.json` — appId `com.bloodsworn.game` / appName `BLOODSWORN`
+- [x] **T701** `P0` `capacitor.config.json` — appId `com.bloodsworn.game` / appName `BLOODSWORN`
       (**이 값 하나가 iOS `PRODUCT_BUNDLE_IDENTIFIER`와 Android `applicationId`를 함께 seed한다**)
-- [ ] **T702** `P0` `android/app/build.gradle` — `applicationId` / `namespace`
-- [ ] **T703** `P0` `res/values/strings.xml` — 앱 표시 이름
-- [ ] **T704** `P0` `index.html` `<title>` / `package.json` name
-- [ ] **T705** `P0` **`AndroidManifest.xml` — `android:screenOrientation="landscape"`** + 전체화면
-- [ ] **T706** `P0` `vite.config.js` — **`base: './'` 유지** + phaser 청크 분리.
+- [x] **T702** `P0` `android/app/build.gradle` — `applicationId` / `namespace`
+- [x] **T703** `P0` `res/values/strings.xml` — 앱 표시 이름
+- [x] **T704** `P0` `index.html` `<title>` / `package.json` name
+- [x] **T705** `P0` **`AndroidManifest.xml` — `android:screenOrientation="landscape"`** + 전체화면
+- [x] **T706** `P0` `vite.config.js` — **`base: './'` 유지** + phaser 청크 분리.
       ⚠ **근거가 바뀌었다.** itch.io 때문이 아니라 **Capacitor WebView가 커스텀 스킴으로 서빙하기 때문**이다
       (Android `https://localhost` / iOS `capacitor://localhost`). **이 값을 `'/'`로 바꾸면 양 플랫폼 모두 깨진다**
-- [ ] **T707** `P0` 🍎 **iOS 번들 식별자 — `Info.plist`의 `CFBundleIdentifier`, `project.pbxproj`의 `PRODUCT_BUNDLE_IDENTIFIER`**
+- [x] **T707** `P0` 🍎 **iOS 번들 식별자 — `Info.plist`의 `CFBundleIdentifier`, `project.pbxproj`의 `PRODUCT_BUNDLE_IDENTIFIER`**
       = `com.bloodsworn.game` (Android `applicationId`와 동일). `CFBundleDisplayName` = `BLOODSWORN`.
       ⚠ **Android 패키지명과 똑같이, 첫 빌드를 업로드하면 영구 고정된다.** App ID는 rename이 없고 **옛 ID는 재사용 불가**다
-- [ ] **T708** `P0` 🍎 **iOS `Info.plist` — `UISupportedInterfaceOrientations`를 가로 2종만**으로 제한 + 전체화면.
+- [x] **T708** `P0` 🍎 **iOS `Info.plist` — `UISupportedInterfaceOrientations`를 가로 2종만**으로 제한 + 전체화면.
       Android `screenOrientation="landscape"`(T705)와 **같은 결과를 만드는 iOS 쪽 설정**이다
 
 ### 스토어 자산
-- [ ] **T710** `P0` 앱 아이콘 512×512 + Android 적응형 아이콘(전경/배경)
-- [ ] **T711** `P0` 피처 그래픽 1024×500
+- [x] **T710** `P0` 앱 아이콘 512×512 + Android 적응형 아이콘(전경/배경)
+- [x] **T711** `P0` 피처 그래픽 1024×500
 - [ ] **T712** `P0` **가로형 스크린샷** (Play 요구 최소 장수)
-- [ ] **T713** `P0` 짧은 설명(80자) / 자세한 설명 문안
-- [ ] **T714** `P1` 스플래시 화면
-- [ ] **T715** `P0` 🍎 **iOS 앱 아이콘 1024×1024 · 알파 채널 제거** — **신규 이미지 의뢰를 만들지 않는다.**
+- [x] **T713** `P0` 짧은 설명(80자) / 자세한 설명 문안
+- [x] **T714** `P1` 스플래시 화면
+- [x] **T715** `P0` 🍎 **iOS 앱 아이콘 1024×1024 · 알파 채널 제거** — **신규 이미지 의뢰를 만들지 않는다.**
       T710의 앱 아이콘 산출물을 **후처리**해서 만든다. ⚠ Android 512와 달리 **투명도가 있으면 App Store Connect가 거부한다**
 - [ ] **T716** `P2` 🍎 **App Store 스크린샷 — Day 7 이후.** **내부 TestFlight에는 스크린샷이 필요 없으므로 이번 주 경로에 넣지 않는다.**
       정식 제출 시점 규격: 6.9인치 리드 사이즈 **가로 2868×1320**(세로 1320×2868을 뒤집은 값), 계열 허용 세로 1260×2736 / 1290×2796 / 1320×2868.

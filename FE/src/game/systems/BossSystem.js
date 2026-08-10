@@ -227,6 +227,7 @@ export class BossSystem {
         const cam = this.scene.cameras.main;
         cam.flash(d.flashDuration * 1000, 255, 43, 43);
         cam.shake(800, 0.012);
+        this.scene.fxSystem?.bossAppear(); // 등장 SFX·BGM 전환은 BOSS_SPAWNED 구독이 처리한다
 
         EventBus.emit(EVENTS.BOSS_SPAWNED, {
             id: d.id, name: d.name, hp: b.hp, maxHp: b.maxHp, phase: 1,

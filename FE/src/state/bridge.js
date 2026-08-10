@@ -13,10 +13,17 @@
  */
 import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
-import { useStore } from "./store";
+import { useStore, persistSave } from "./store";
 import { SCREENS } from "./uiSlice";
 
 let installed = false;
+
+/** 패배가 아닌 종료 사유. 이 목록에 없으면 전부 패배로 그린다(모르는 사유를 승리로 오인하지 않는다). */
+export const WIN_REASONS = ["clear", "boss", "victory", "win"];
+
+export function isWin(reason) {
+    return WIN_REASONS.includes(reason);
+}
 
 /**
  * 앱 부팅 시 1회 호출. 두 번 불러도 안전하다.
@@ -51,19 +58,33 @@ export function installBridge() {
         // rerollLeft는 성소 업그레이드로 늘어날 수 있으므로 Phaser가 계산해 실어 보낸다.
         s().resetRun(p?.rerollLeft);
         s().setScreen(SCREENS.PLAYING);
+        s().bumpStats({ runs: 1 });
     }, "bridge:run-started");
 
-    sub(EVENTS.RUN_LEVELUP, (p) => s().openPact(p ?? {}), "bridge:levelup");
+    sub(EVENTS.RUN_LEVELUP, (p) => {
+        // 리롤 응답도 같은 이벤트로 온다(GameScene 패치). 카드를 새로 열고 남은 횟수를 맞춘다.
+        if (typeof p?.rerollLeft === "number") s().setRerollLeft(p.rerollLeft);
+        if (typeof p?.humanity === "number") s().setHumanity(p.humanity);
+        s().openPact(p ?? {});
+        s().bumpStats({ sumLevelUpCount: 1 });
+    }, "bridge:levelup");
 
     sub(EVENTS.PACT_APPLIED, (p) => {
         s().applyPactResult(p);
         s().closePact();
     }, "bridge:pact-applied");
 
+    // T511 — 인간성 0. Phaser가 별도로 쏘지 않아도 PACT_APPLIED 에서 파생되지만,
+    // 각성 상한 초과 페널티(−20)처럼 카드 밖에서 깎이는 경로가 있어 전용 이벤트도 받는다.
+    sub(EVENTS.HUMANITY_ZERO, () => s().setAscended(), "bridge:humanity-zero");
+
     sub(EVENTS.AWAKENING_TRIGGERED, (a) => {
         s().pushAwakening(a);
         s().showAwakening(a);
         if (a?.awakeningId) s().addCodex(a.awakeningId);
+        s().bumpStats({ totalAwakenings: 1 });
+        // 도감은 영구 진행도다. 런이 끝나기 전에 앱이 죽어도 남아야 한다.
+        persistSave();
     }, "bridge:awakening");
 
     sub(EVENTS.BOSS_HP, (hp) => s().setBossHp(hp), "bridge:boss-hp");
@@ -71,9 +92,26 @@ export function installBridge() {
     sub(EVENTS.RUN_ENDED, (result) => {
         // T232 텔레메트리 — 밸런스를 "느낌"이 아니라 숫자로 조정하기 위한 유일한 수단
         console.log("[텔레메트리] 런 종료", JSON.stringify(result));
+        const win = isWin(result?.reason);
         s().setResult(result);
         if (typeof result?.gold === "number") s().addGold(result.gold);
+
+        // 08-DATA-SCHEMA 4.3 stats. 평균은 나중에 나눗셈으로 얻으므로 합계만 쌓는다.
+        s().bumpStats({
+            clears: win ? 1 : 0,
+            deaths: result?.reason === "death" ? 1 : 0,
+            totalKills: result?.kills ?? 0,
+            sumDeathTime: result?.reason === "death" ? (result?.time ?? 0) : 0,
+            sumFinalLevel: result?.level ?? 0,
+            sumFinalHumanity: result?.humanity ?? 0,
+            sumGoldEarned: result?.gold ?? 0,
+        });
+        s().setStatMax("bestTimeSec", result?.time ?? 0);
+        if (win) s().unlock("stage2"); // 정본 03-GDD-CORE 9.2 — 보스 처치로 스테이지2 해금
+
         s().setScreen(SCREENS.RESULT);
+        // 저장 시점 3곳 중 하나(08-DATA-SCHEMA 4.1). 런 중에는 절대 쓰지 않는다.
+        persistSave();
     }, "bridge:run-ended");
 
     sub(EVENTS.RUN_PAUSED, () => s().setModal("pause"), "bridge:paused");
@@ -92,4 +130,19 @@ export function installBridge() {
 
 export function isBridgeInstalled() {
     return installed;
+}
+
+/**
+ * 런 시작 요청. 타이틀·성소·결과 화면이 모두 이걸 부른다.
+ *
+ * ★ location.reload() 를 쓰지 않는 이유(T531): 리로드는 Phaser 재부팅 + 에셋 재파싱이라
+ *   실기기에서 3~5초가 걸린다. 정본 03-GDD-CORE 12의 "재시작 3초" 규칙을 지킬 수 없다.
+ * ★ 화면을 낙관적으로 PLAYING 으로 넘긴다. Phaser 쪽 CMD_START_RUN 핸들러(보고서의 패치)가
+ *   들어오면 RUN_STARTED 가 되돌아와 같은 상태로 다시 정착하므로 멱등이다.
+ */
+export function requestStartRun() {
+    const s = useStore.getState();
+    s.resetRun();
+    s.setScreen(SCREENS.PLAYING);
+    EventBus.emit(EVENTS.CMD_START_RUN, { meta: { upgrades: { ...s.upgrades } } });
 }

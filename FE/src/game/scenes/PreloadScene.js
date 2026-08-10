@@ -116,7 +116,8 @@ export default class PreloadScene extends Phaser.Scene {
         //   Phaser의 progress 이벤트는 로드 대상이 0개면 아예 발화하지 않는다.
         //   그 경우 React 로딩 오버레이가 영원히 남는다(실제로 겪은 버그).
         EventBus.emit(EVENTS.ASSET_PROGRESS, { progress: 1, file: "" });
-
-        this.scene.start(SCENES.GAME);
+        // ★ 여기서 GameScene 을 시작하지 않는다. 타이틀 -> [런 시작] -> CMD_START_RUN 이 시작한다.
+        //   자동 시작하면 타이틀 화면 뒤에서 런이 굴러가 타이머와 스폰이 낭비되고,
+        //   타이틀을 보는 동안 플레이어가 죽는 일까지 생긴다.
     }
 }

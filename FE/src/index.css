@@ -6,6 +6,11 @@
  *  - font-weight: 100 900 (Variable font) 삭제 — 이 폰트에 fvar 테이블이 없다. 사실과 달랐다.
  *  - -webkit-font-smoothing: antialiased 삭제 — 픽셀 폰트에 정반대 설정이다. 글자가 뭉갠다.
  *  - 이전 프로젝트의 세로 모바일 전제(max-width 430px 등) 주석 잔재 전량 제거
+ *
+ * T631 수정 내역
+ *  - 논리 픽셀 단위 `--u` 도입. 아래 "좌표계" 절 참조.
+ *  - 세이프 패딩을 .ui-layer 에서 .ui-screen 으로 옮겼다 — .ui-layer 에 패딩을 주면
+ *    그 안의 .ui-stage 가 줄어들어 Phaser 캔버스와 좌표가 어긋난다(PactOverlay 카드가 밀린다).
  */
 
 @font-face {
@@ -34,11 +39,22 @@
     --parchment: #c9b792;
     --ash: #9a94a3;
 
-    /* ── 세이프에어리어 인셋. 가로 모드에서는 left/right가 핵심이다 ── */
-    --safe-l: env(safe-area-inset-left, 0px);
-    --safe-r: env(safe-area-inset-right, 0px);
-    --safe-t: env(safe-area-inset-top, 0px);
-    --safe-b: env(safe-area-inset-bottom, 0px);
+    /* ── 좌표계 ────────────────────────────────────────────────
+       Phaser가 Scale.FIT으로 640x360을 화면 중앙에 맞춘다. 그 박스의 크기를 CSS로 똑같이 계산해
+       "논리 1px = --u" 를 만든다. 이후 모든 UI 치수를 calc(N * var(--u)) 로 쓰면
+       와이어프레임(10-UIUX 2장)의 좌표를 그대로 옮길 수 있고, 기기 해상도와 무관하게 같은 그림이 된다.
+       ★ 이게 없으면 px 로 짠 UI가 저해상도 기기에서는 화면을 덮고 고해상도에서는 좁쌀이 된다. */
+    --stage-h: min(100dvh, 56.25vw); /* 56.25vw = 100vw * 9/16 */
+    --stage-w: calc(var(--stage-h) * 16 / 9);
+    --u: calc(var(--stage-h) / 360);
+
+    /* ── 세이프에어리어 인셋 (10-UIUX 3.3.3) ──
+       ★ max() 를 쓰는 이유: iOS는 하단 인셋을 0으로 돌려줄 수 있다. env() 를 그대로 믿으면
+       홈 인디케이터 위에 버튼이 깔린다. 논리 px 하한(상8/하24/좌우16)과 큰 쪽을 취한다. */
+    --safe-t: max(env(safe-area-inset-top, 0px), calc(8 * var(--u)));
+    --safe-r: max(env(safe-area-inset-right, 0px), calc(16 * var(--u)));
+    --safe-b: max(env(safe-area-inset-bottom, 0px), calc(24 * var(--u)));
+    --safe-l: max(env(safe-area-inset-left, 0px), calc(16 * var(--u)));
 
     font-family: "base_font", monospace;
     line-height: 1.5;
@@ -73,16 +89,22 @@ body,
     touch-action: none;
 }
 
-/* 캔버스는 Phaser의 Scale.FIT이 중앙 정렬한다. 여기서 다시 늘이지 않는다. */
-#game-root canvas {
-    display: block;
-    image-rendering: pixelated;
-}
-
 .app-root {
     position: relative;
     width: 100%;
     height: 100%;
+}
+
+/* Phaser는 부모 엘리먼트 크기로 FIT을 계산한다. 높이를 주지 않으면 블록 높이 0을 기준으로 잡는다. */
+#game-root {
+    position: absolute;
+    inset: 0;
+}
+
+/* 캔버스는 Phaser의 Scale.FIT이 중앙 정렬한다. 여기서 다시 늘이지 않는다. */
+#game-root canvas {
+    display: block;
+    image-rendering: pixelated;
 }
 
 /* ── UI 오버레이 ── */
@@ -90,7 +112,19 @@ body,
     position: fixed;
     inset: 0;
     pointer-events: none; /* 자식 중 실제 대화 요소만 pointer-events를 되살린다 */
-    padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+}
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    pointer-events: auto;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 .ui-loading {
@@ -120,63 +154,49 @@ body,
     transition: width 120ms linear;
 }
 
-button {
-    font-family: inherit;
-    cursor: pointer;
-    border: none;
-    outline: none;
-    pointer-events: auto;
-}
-
-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
-/* ── 결과 화면 (T223 임시) ── */
-.ui-result {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    background: rgba(11, 7, 16, 0.82);
-    pointer-events: auto;
-}
-.ui-result__title {
-    margin: 0;
-    font-size: 20px;
-    color: var(--blood-light);
-}
-.ui-result__stat {
-    margin: 0;
-    font-size: 12px;
-    color: var(--parchment);
-}
-.ui-result__btn {
-    margin-top: 8px;
-    padding: 10px 24px;
-    min-height: 48px;
-    font-size: 13px;
-    color: var(--parchment);
-    background: var(--stone-2);
-    border: 1px solid var(--stone-4);
-}
-
-/* ── PACT 카드 (10-UIUX 2.5) ────────────────────────────────
-   Phaser가 Scale.FIT으로 640x360(16:9)을 중앙 배치하므로
-   같은 비율 박스를 만들어 두 좌표계를 맞춘다. */
+/* ── 스테이지 박스 ──────────────────────────────────────────
+   Phaser가 Scale.FIT으로 640x360(16:9)을 중앙 배치하므로 같은 크기 박스를 만들어
+   두 좌표계를 맞춘다. .ui-stage 는 캔버스와 1:1 이고, 안쪽 요소는 % 또는 --u 로 배치한다.
+   ★ .ui-stage 에는 절대 padding 을 주지 않는다 — 자식의 absolute 기준이 패딩 박스로 바뀌어
+     PactOverlay 카드 좌표가 통째로 밀린다. 세이프 인셋은 .ui-screen 이 담당한다. */
 .ui-stage {
     position: absolute;
-    inset: 0;
-    margin: auto;
-    aspect-ratio: 16 / 9;
-    max-width: 100%;
-    max-height: 100%;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--stage-w);
+    height: var(--stage-h);
+    /* 논리 1px = --u 이므로 폰트도 같은 배율로 따라간다. em 로 짠 자식들이 저절로 맞는다. */
+    font-size: calc(16 * var(--u));
     pointer-events: none;
 }
+
+/* 전면 화면(타이틀·성소·옵션·크레딧·결과). 스테이지와 같은 박스에 세이프 인셋만 더한다. */
+.ui-screen {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: var(--stage-w);
+    height: var(--stage-h);
+    padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+    font-size: calc(12 * var(--u));
+    color: var(--parchment);
+    pointer-events: auto;
+}
+
+/* 전면 화면 뒤를 덮는 암막. 스테이지가 아니라 화면 전체를 덮어야 레터박스까지 어두워진다. */
+.ui-scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--void);
+    pointer-events: auto;
+}
+.ui-scrim--dim {
+    background: rgba(11, 7, 16, 0.78);
+}
+
+/* ── PACT 카드 (10-UIUX 2.5) ── */
 .pact-stage {
     pointer-events: auto;
     background: rgba(11, 7, 16, 0.82);
@@ -240,5 +260,27 @@ button:disabled {
     color: var(--ash);
     background: transparent;
     border: 1px solid var(--stone-3);
-    font-size: 0.8em;
+    font-size: 0.68em;
+    /* 한 줄 강제 — 2줄이 되면 11% 높이 박스를 넘쳐 카드 위로 겹친다.
+       버튼 폭은 논리 160px 고정이라 폰트를 줄이는 쪽이 안전하다. */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* T540 리롤 — PactOverlay 가 쓰는 클래스. 컴포넌트 패치는 보고서 참조. */
+.pact-reroll {
+    position: absolute;
+    height: 11%;
+    color: var(--candle-light);
+    background: transparent;
+    border: 1px solid var(--candle);
+    font-size: 0.68em;
+    /* 한 줄 강제 — 2줄이 되면 11% 높이 박스를 넘쳐 카드 위로 겹친다.
+       버튼 폭은 논리 160px 고정이라 폰트를 줄이는 쪽이 안전하다. */
+    white-space: nowrap;
+    overflow: hidden;
+}
+.pact-reroll:disabled {
+    color: var(--stone-4);
+    border-color: var(--stone-3);
 }

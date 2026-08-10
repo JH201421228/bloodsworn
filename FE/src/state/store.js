@@ -11,8 +11,9 @@
 import { create } from "zustand";
 import { createMetaSlice } from "./metaSlice";
 import { createRunSlice } from "./runSlice";
-import { createUiSlice } from "./uiSlice";
-import { createSettingsSlice } from "./settingsSlice";
+import { createUiSlice, SCREENS } from "./uiSlice";
+import { createSettingsSlice, settingsToSave } from "./settingsSlice";
+import { defaultSave, loadSave, saveNow, resetSave } from "@/save/save";
 
 export const useStore = create((set, get, api) => ({
     ...createMetaSlice(set, get, api),
@@ -34,4 +35,69 @@ export function getSnapshotForRun() {
         },
         settings: { ...s.settings },
     };
+}
+
+// ── 세이브 연동 (T550) ───────────────────────────────────────────
+/**
+ * 현재 스토어 → 세이브 객체. 08-DATA-SCHEMA 4.3 스키마 형태를 그대로 만든다.
+ * ★ 세이브 대상은 meta + settings 뿐이다. run 상태(레벨·인간성 등)는 저장하지 않는다 —
+ *   런 도중 저장/복구 기능이 없으므로 저장해봐야 되살릴 수 없는 값이다.
+ */
+export function collectSave() {
+    const s = useStore.getState();
+    const base = defaultSave();
+    return {
+        ...base,
+        gold: Math.max(0, Math.floor(s.gold)),
+        sanctum: { ...base.sanctum, ...s.upgrades },
+        unlocks: {
+            stage2: s.unlocked.includes("stage2"),
+            char2: s.unlocked.includes("char2"),
+            awakenCodex: [...s.codex],
+        },
+        stats: { ...base.stats, ...s.stats },
+        options: settingsToSave(s.settings),
+    };
+}
+
+/**
+ * 저장 요청. 08-DATA-SCHEMA 4.1이 정한 3개 시점(런 종료 / 성소 구매 / 옵션 변경)에서만 부른다.
+ * ★ 마이크로태스크 1틱 디바운스: 옵션 슬라이더를 연타하면 탭 1회당 write가 한 번씩 나가는데,
+ *   Preferences 는 네이티브 IPC라 연타 시 큐가 밀린다. 마지막 상태 한 번이면 충분하다.
+ */
+let pending = false;
+export function persistSave() {
+    if (pending) return;
+    pending = true;
+    queueMicrotask(() => {
+        pending = false;
+        saveNow(collectSave());
+    });
+}
+
+/**
+ * 부팅 시 1회. 세이브를 읽어 meta/settings 에 주입한다.
+ * ★ 실패해도 throw하지 않는다 — 세이브 하나 때문에 게임이 안 켜지는 사고를 막는다(T551).
+ */
+export async function hydrateStore() {
+    let save;
+    try {
+        save = await loadSave();
+    } catch (e) {
+        console.error("[store] 세이브 로드 실패 — 기본값으로 시작한다", e);
+        save = defaultSave();
+    }
+    const s = useStore.getState();
+    s.hydrate(save);
+    s.hydrateSettings(save.options);
+    return save;
+}
+
+/** 옵션 화면의 "저장 데이터 삭제". 지운 뒤 타이틀로 되돌린다 — 성소에 남아 있으면 유령 골드가 보인다. */
+export async function wipeSave() {
+    await resetSave();
+    const s = useStore.getState();
+    s.hydrate(defaultSave());
+    s.resetSettings();
+    s.setScreen(SCREENS.TITLE);
 }

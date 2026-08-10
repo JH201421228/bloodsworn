@@ -1,0 +1,73 @@
+{
+    "schemaVersion": 1,
+    "_note": "성소 영구 업그레이드 6종. 정본 03-GDD-CORE 9.1 / 스키마 08-DATA-SCHEMA 3.8. 비용·효과를 여기서 임의로 바꾸지 말 것.",
+    "goldFormula": { "perKill": 1, "perSurvivedSecond": 0.5, "bossClear": 200 },
+    "upgrades": [
+        {
+            "id": "meta_tough",
+            "name": "강인함",
+            "desc": "최대 체력 +10 / 단계",
+            "icon": "🛡",
+            "maxLevel": 5,
+            "costs": [50, 120, 250, 500, 900],
+            "effectPerLevel": { "stat": "maxHp", "op": "add", "value": 10 },
+            "applyAt": "runStart",
+            "iconKey": "icon_meta_tough"
+        },
+        {
+            "id": "meta_sharp",
+            "name": "예리함",
+            "desc": "공격력 +4% / 단계",
+            "icon": "⚔",
+            "maxLevel": 5,
+            "costs": [60, 140, 280, 550, 1000],
+            "effectPerLevel": { "stat": "damageMult", "op": "add", "value": 0.04 },
+            "applyAt": "runStart",
+            "iconKey": "icon_meta_sharp"
+        },
+        {
+            "id": "meta_swift",
+            "name": "신속",
+            "desc": "이동속도 +3% / 단계",
+            "icon": "👟",
+            "maxLevel": 5,
+            "costs": [50, 120, 250, 500, 900],
+            "effectPerLevel": { "stat": "moveSpeed", "op": "add", "value": 2.1 },
+            "applyAt": "runStart",
+            "iconKey": "icon_meta_swift"
+        },
+        {
+            "id": "meta_greed",
+            "name": "탐욕",
+            "desc": "골드 획득 +10% / 단계",
+            "icon": "⬤",
+            "maxLevel": 5,
+            "costs": [80, 180, 350, 650, 1200],
+            "effectPerLevel": { "stat": "goldMult", "op": "add", "value": 0.1 },
+            "applyAt": "runStart",
+            "iconKey": "icon_meta_greed"
+        },
+        {
+            "id": "meta_awaken_boost",
+            "name": "각성 촉진",
+            "desc": "각성 필요 중첩 −0.2 / 단계",
+            "icon": "✦",
+            "maxLevel": 2,
+            "costs": [300, 800],
+            "effectPerLevel": { "op": "special", "id": "awaken_threshold_reduce", "params": { "delta": -0.2 } },
+            "applyAt": "runStart",
+            "iconKey": "icon_meta_awaken"
+        },
+        {
+            "id": "meta_recontract",
+            "name": "재계약",
+            "desc": "런당 리롤 +1 / 단계",
+            "icon": "📜",
+            "maxLevel": 3,
+            "costs": [200, 500, 1000],
+            "effectPerLevel": { "op": "special", "id": "reroll_plus", "params": { "delta": 1 } },
+            "applyAt": "cardGen",
+            "iconKey": "icon_meta_recontract"
+        }
+    ]
+}

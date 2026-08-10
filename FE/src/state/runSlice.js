@@ -18,6 +18,8 @@ const RUN_INIT = {
     awakenings: [], // [{ tag, awakeningId, name, atLevel }]
     ownedBlessings: {}, // { [blessingId]: level }
     rerollLeft: 2,
+    /** T511 완전 흡혈귀화. 인간성 0에서 켜지고 런이 끝날 때까지 꺼지지 않는다(단방향). */
+    ascended: false,
     bossHp: null, // { hp, maxHp, phase } — 200ms 스로틀로만 갱신
     lastResult: null, // RunStats
 };
@@ -25,20 +27,36 @@ const RUN_INIT = {
 export const createRunSlice = (set) => ({
     ...RUN_INIT,
 
-    resetRun: (rerollLeft = RUN_INIT.rerollLeft) =>
-        set({ ...RUN_INIT, tagCounts: emptyTagCounts(), rerollLeft }),
+    /**
+     * ★ lastResult 는 일부러 남긴다. 결과 화면에서 [다시 하기]를 누르면 런이 먼저 시작되고
+     *   결과 화면이 언마운트되는데, 그 사이 lastResult 가 null 이 되면 한 프레임 동안
+     *   빈 결과 화면이 깜빡인다. 다음 RUN_ENDED 가 어차피 덮어쓴다.
+     */
+    resetRun: (rerollLeft = RUN_INIT.rerollLeft) => {
+        const { lastResult: _keep, ...rest } = RUN_INIT;
+        set({ ...rest, tagCounts: emptyTagCounts(), rerollLeft });
+    },
 
     applyPactResult: (p) =>
-        set({
+        set((s) => ({
             level: p.level,
             humanity: p.humanity,
             tagCounts: p.tagCounts,
             ownedBlessings: p.ownedBlessings,
-        }),
+            // 인간성은 회복 수단이 없다(04-PACT 8). 0을 한 번 찍으면 그대로 흡혈귀화다.
+            ascended: s.ascended || p.humanity <= 0,
+        })),
+
+    setHumanity: (humanity) =>
+        set((s) => ({ humanity, ascended: s.ascended || humanity <= 0 })),
+
+    setAscended: () => set({ humanity: 0, ascended: true }),
 
     pushAwakening: (a) => set((s) => ({ awakenings: [...s.awakenings, a] })),
 
     consumeReroll: () => set((s) => ({ rerollLeft: Math.max(0, s.rerollLeft - 1) })),
+
+    setRerollLeft: (rerollLeft) => set({ rerollLeft }),
 
     setBossHp: (bossHp) => set({ bossHp }),
 

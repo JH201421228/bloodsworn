@@ -1,0 +1,484 @@
+/**
+ * 전면 화면 공통 스타일 (타이틀 / 성소 / 옵션 / 크레딧 / 결과).
+ *
+ * 규격: 10-UIUX-LANDSCAPE.md 2.2~2.11(와이어프레임) · 3.4(히트박스) · 8.2(한글 최소 크기)
+ *
+ * ★ 모든 치수는 calc(N * var(--u)) 다. --u 는 논리 1px(index.css 참조).
+ *   와이어프레임의 좌표를 그대로 옮길 수 있고, 어떤 해상도에서도 같은 그림이 나온다.
+ * ★ 와이어프레임의 절대 좌표 대신 flex/grid 로 짰다. 세이프 인셋(--safe-*)이 기기마다 다른데
+ *   절대 좌표를 쓰면 인셋만큼 화면 밖으로 밀려 나간다. 흐름 배치는 인셋을 저절로 흡수한다.
+ * ★ 히트박스 규칙: max(시각크기 × 1.5, 48논리px). 10-UIUX 3.4. min-height 로 강제한다.
+ */
+
+.screen {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+}
+
+/* ── 공통 버튼 ── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: calc(6 * var(--u));
+    min-height: calc(48 * var(--u)); /* 10-UIUX 3.4 최소 터치 타깃 */
+    padding: 0 calc(14 * var(--u));
+    font-size: calc(13 * var(--u));
+    letter-spacing: calc(1 * var(--u));
+    color: var(--parchment);
+    background: linear-gradient(180deg, #241e2b 0%, #14101a 100%);
+    border: calc(1 * var(--u)) solid var(--stone-4);
+}
+.btn:active:not(:disabled) {
+    transform: translateY(calc(1 * var(--u)));
+    background: #2f2739;
+}
+.btn--primary {
+    color: #f0e6d2;
+    border-color: var(--blood-light);
+    box-shadow: 0 0 calc(8 * var(--u)) rgba(196, 24, 43, 0.35);
+}
+.btn--ghost {
+    background: transparent;
+    border-color: var(--stone-3);
+    color: var(--ash);
+    font-size: calc(11 * var(--u));
+}
+.btn--danger {
+    color: #e8a0a8;
+    border-color: var(--blood);
+}
+.btn--wide { width: calc(224 * var(--u)); }
+.btn--sm {
+    min-height: calc(48 * var(--u));
+    padding: 0 calc(10 * var(--u));
+    font-size: calc(11 * var(--u));
+}
+
+/* ── 상단 바 (성소 / 옵션 / 크레딧 공용) ── */
+.topbar {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: calc(12 * var(--u));
+    height: calc(40 * var(--u));
+    padding-bottom: calc(4 * var(--u));
+    border-bottom: calc(1 * var(--u)) solid var(--stone-2);
+}
+.topbar__title {
+    flex: 1;
+    margin: 0;
+    font-size: calc(14 * var(--u));
+    letter-spacing: calc(2 * var(--u));
+    color: var(--parchment);
+}
+.topbar__gold {
+    font-size: calc(12 * var(--u));
+    color: var(--gold);
+}
+
+/* ── 인간성 심장 (T510) ── */
+.humanity {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(1 * var(--u));
+    font-size: calc(12 * var(--u));
+    line-height: 1;
+}
+.humanity__heart.is-full { color: var(--blood-light); }
+/* 20% 미만이 남은 칸. 색이 아니라 투명도+테두리로도 구분되게 한다(색맹 대응) */
+.humanity__heart.is-cracked { color: var(--blood); opacity: 0.55; }
+.humanity__heart.is-empty { color: var(--stone-3); }
+.humanity__num {
+    margin-left: calc(4 * var(--u));
+    font-size: calc(10 * var(--u));
+    color: var(--ash);
+}
+.humanity.is-ascended {
+    gap: calc(4 * var(--u));
+    color: var(--blood-glow);
+}
+.humanity__mark { font-size: calc(13 * var(--u)); }
+.humanity__label { font-size: calc(10 * var(--u)); letter-spacing: calc(1 * var(--u)); }
+
+/* 플레이 중 좌상단 HUD. HP바(y12~22)와 HP숫자(y26)를 피해 y38에 놓는다. */
+.hud-humanity {
+    position: absolute;
+    left: max(env(safe-area-inset-left, 0px), calc(16 * var(--u)));
+    top: calc(38 * var(--u));
+    pointer-events: none;
+}
+
+/* ── 타이틀 (10-UIUX 2.2) ──────────────────────────────────
+   로고는 왼쪽(정보), 액션은 오른쪽(조작). 가로 파지에서 오른손 엄지의 자연 스윕 아크가
+   x≈420~600 / y≈150~300 이라 주 버튼을 전부 우측에 몬다. */
+.title {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-content: center;
+    gap: calc(24 * var(--u));
+    height: 100%;
+    padding-bottom: calc(24 * var(--u));
+}
+.title__brand { align-self: center; }
+.title__logo {
+    margin: 0;
+    font-size: calc(28 * var(--u));
+    letter-spacing: calc(4 * var(--u));
+    color: var(--parchment);
+}
+.title__sub {
+    margin: calc(4 * var(--u)) 0 0 calc(12 * var(--u));
+    font-size: calc(13 * var(--u));
+    letter-spacing: calc(6 * var(--u));
+    color: var(--blood-light);
+}
+.title__rule {
+    width: calc(176 * var(--u));
+    height: calc(1 * var(--u));
+    margin: calc(10 * var(--u)) 0;
+    background: var(--blood);
+}
+.title__tagline {
+    margin: 0;
+    font-size: calc(11 * var(--u));
+    color: var(--ash);
+}
+.title__menu {
+    display: flex;
+    flex-direction: column;
+    gap: calc(8 * var(--u));
+    align-self: center;
+}
+.title__row {
+    display: flex;
+    gap: calc(8 * var(--u));
+}
+.title__row .btn { flex: 1; }
+.title__foot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: calc(10 * var(--u));
+    color: var(--ash);
+}
+.title__gold { color: var(--gold); font-size: calc(11 * var(--u)); }
+
+/* ── 성소 (10-UIUX 2.3) — 3×2 그리드. 스크롤을 아예 만들지 않는다 ── */
+.sanctum__grid {
+    display: grid;
+    flex: 1;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: calc(12 * var(--u));
+    padding: calc(10 * var(--u)) 0;
+}
+.sanctum__tile {
+    display: flex;
+    flex-direction: column;
+    gap: calc(3 * var(--u));
+    padding: calc(8 * var(--u));
+    background: linear-gradient(180deg, #201a27 0%, #14101a 100%);
+    border: calc(1 * var(--u)) solid var(--stone-3);
+}
+.sanctum__tile.is-max { border-color: var(--gold); }
+.sanctum__head {
+    display: flex;
+    align-items: center;
+    gap: calc(6 * var(--u));
+    font-size: calc(12 * var(--u));
+    color: var(--parchment);
+}
+.sanctum__desc {
+    font-size: calc(10 * var(--u));
+    color: var(--ash);
+}
+/* 단계 게이지 — 색이 아니라 채움 도형으로 구분한다(10-UIUX 9.1) */
+.sanctum__gauge {
+    display: flex;
+    align-items: center;
+    gap: calc(2 * var(--u));
+    font-size: calc(12 * var(--u));
+    color: var(--candle-light);
+}
+.sanctum__gauge .is-off { color: var(--stone-3); }
+.sanctum__gauge small {
+    margin-left: calc(4 * var(--u));
+    font-size: calc(10 * var(--u));
+    color: var(--ash);
+}
+.sanctum__buy {
+    margin-top: auto;
+    align-self: flex-end;
+    min-height: calc(48 * var(--u));
+    padding: 0 calc(10 * var(--u));
+    font-size: calc(11 * var(--u));
+    color: var(--gold);
+    background: #1b1622;
+    border: calc(1 * var(--u)) solid var(--stone-4);
+}
+.sanctum__buy:disabled { color: var(--stone-4); border-color: var(--stone-2); }
+/* 골드가 모자란데 눌렀다 — 흔들림 4px 로 "안 됐다"를 즉시 알린다 */
+.sanctum__buy.is-denied { animation: deny-shake 220ms ease-in-out; }
+@keyframes deny-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(calc(-4 * var(--u))); }
+    75% { transform: translateX(calc(4 * var(--u))); }
+}
+.sanctum__foot {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: calc(6 * var(--u));
+    border-top: calc(1 * var(--u)) solid var(--stone-2);
+}
+
+/* ── 옵션 (10-UIUX 2.10) — 2×2 패널 ── */
+.options__grid {
+    display: grid;
+    flex: 1;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(10 * var(--u));
+    padding: calc(10 * var(--u)) 0;
+    align-content: start;
+}
+.panel {
+    padding: calc(8 * var(--u));
+    border: calc(1 * var(--u)) solid var(--stone-3);
+    background: rgba(22, 18, 28, 0.85);
+}
+.panel__title {
+    margin: 0 0 calc(6 * var(--u));
+    font-size: calc(11 * var(--u));
+    letter-spacing: calc(3 * var(--u));
+    color: var(--candle-light);
+}
+.row {
+    display: flex;
+    align-items: center;
+    gap: calc(8 * var(--u));
+    min-height: calc(48 * var(--u));
+    font-size: calc(11 * var(--u));
+}
+.row__label { flex: 1; color: var(--parchment); }
+.row__value {
+    width: calc(40 * var(--u));
+    text-align: right;
+    color: var(--ash);
+    font-size: calc(11 * var(--u));
+}
+/* ★ 드래그 슬라이더가 아니라 10% 스텝 버튼이다. 가로 화면에서 드래그는 오조작이 잦다(10-UIUX 2.10) */
+.step {
+    width: calc(48 * var(--u));
+    min-height: calc(48 * var(--u));
+    font-size: calc(14 * var(--u));
+    color: var(--parchment);
+    background: #1b1622;
+    border: calc(1 * var(--u)) solid var(--stone-3);
+}
+.meter {
+    width: calc(64 * var(--u));
+    height: calc(8 * var(--u));
+    background: var(--stone-1);
+    border: calc(1 * var(--u)) solid var(--stone-3);
+}
+.meter__fill { height: 100%; background: var(--candle); }
+/* 토글: 선택된 쪽은 채움 + 밑줄. 색만으로 구분하지 않는다(10-UIUX 9.1) */
+.toggle {
+    display: flex;
+    gap: calc(4 * var(--u));
+}
+.toggle button {
+    min-width: calc(52 * var(--u));
+    min-height: calc(48 * var(--u));
+    font-size: calc(11 * var(--u));
+    color: var(--ash);
+    background: transparent;
+    border: calc(1 * var(--u)) solid var(--stone-3);
+}
+.toggle button.is-on {
+    color: var(--void);
+    background: var(--parchment);
+    border-color: var(--parchment);
+    text-decoration: underline;
+}
+.options__meta {
+    margin-top: calc(6 * var(--u));
+    font-size: calc(10 * var(--u));
+    line-height: 1.6;
+    color: var(--ash);
+}
+
+/* ── 크레딧 (10-UIUX 2.11) — 우측 컬럼만 세로 스크롤 ── */
+.credits {
+    display: grid;
+    flex: 1;
+    grid-template-columns: calc(180 * var(--u)) 1fr;
+    gap: calc(16 * var(--u));
+    min-height: 0; /* 없으면 grid 자식이 스크롤 대신 부모를 늘린다 */
+    padding-top: calc(8 * var(--u));
+}
+.credits__left {
+    font-size: calc(11 * var(--u));
+    line-height: 1.7;
+    color: var(--ash);
+}
+.credits__left h3 {
+    margin: 0 0 calc(4 * var(--u));
+    font-size: calc(15 * var(--u));
+    letter-spacing: calc(3 * var(--u));
+    color: var(--parchment);
+}
+.credits__scroll {
+    overflow-y: auto;
+    padding-right: calc(8 * var(--u));
+    /* ★ 이 게임에서 세로 스크롤이 허용된 유일한 곳이다. 전역 touch-action:none 을 되돌린다 */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+.credits__group {
+    margin: 0 0 calc(10 * var(--u));
+    font-size: calc(10 * var(--u));
+    letter-spacing: calc(2 * var(--u));
+    color: var(--gold);
+    border-bottom: calc(1 * var(--u)) solid var(--stone-2);
+}
+.credits__item { margin-bottom: calc(8 * var(--u)); }
+.credits__role { font-size: calc(10 * var(--u)); color: var(--stone-4); }
+.credits__name { font-size: calc(11 * var(--u)); color: var(--bone); }
+.credits__by,
+.credits__url,
+.credits__lic {
+    font-size: calc(10 * var(--u));
+    color: var(--ash);
+    word-break: break-all;
+}
+.credits__lic { color: var(--candle-light); }
+.credits__foot {
+    margin-top: calc(12 * var(--u));
+    font-size: calc(10 * var(--u));
+    color: var(--stone-4);
+}
+
+/* ── 결과 (10-UIUX 2.8 / 2.9) ──────────────────────────────
+   ★ T531 재시작 3초 규칙: 버튼은 카운트업 애니메이션과 무관하게 처음부터 그려져 있고
+     즉시 눌린다. 애니메이션이 끝나기를 기다리게 만들면 규칙이 깨진다. */
+.result {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding-top: calc(6 * var(--u));
+}
+.result__head {
+    margin: 0;
+    font-size: calc(20 * var(--u));
+    letter-spacing: calc(3 * var(--u));
+}
+.result.is-win .result__head { color: var(--gold); }
+.result.is-lose .result__head { color: var(--blood-light); }
+.result__ending {
+    margin: calc(2 * var(--u)) 0 0;
+    font-size: calc(14 * var(--u));
+    color: var(--parchment);
+}
+.result__rule {
+    width: calc(384 * var(--u));
+    max-width: 100%;
+    height: calc(1 * var(--u));
+    margin: calc(6 * var(--u)) 0;
+    background: var(--stone-3);
+}
+.result__line {
+    margin: 0;
+    font-size: calc(12 * var(--u));
+    line-height: 1.5;
+    color: var(--bone);
+}
+.result__panels {
+    display: grid;
+    flex: 1;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(16 * var(--u));
+    align-content: center;
+    padding: calc(8 * var(--u)) 0;
+}
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: calc(11 * var(--u));
+    line-height: 1.8;
+}
+.stat-row__k { color: var(--ash); }
+.stat-row__v { color: var(--parchment); }
+.result__awakens {
+    margin: calc(4 * var(--u)) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: calc(11 * var(--u));
+    color: var(--gold);
+}
+.result__gold {
+    margin-top: calc(6 * var(--u));
+    font-size: calc(14 * var(--u));
+    color: var(--gold);
+}
+.result__actions {
+    display: flex;
+    gap: calc(12 * var(--u));
+    justify-content: flex-start;
+    padding-top: calc(4 * var(--u));
+}
+
+/* ── 일시정지 (10-UIUX 2.7) ── */
+.pause {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: calc(16 * var(--u));
+    height: 100%;
+    align-content: center;
+}
+.pause__menu {
+    display: flex;
+    flex-direction: column;
+    gap: calc(10 * var(--u));
+    justify-content: center;
+}
+.pause__info {
+    padding: calc(10 * var(--u));
+    border: calc(1 * var(--u)) solid var(--stone-3);
+    background: rgba(22, 18, 28, 0.9);
+    font-size: calc(11 * var(--u));
+}
+
+/* ── 확인 다이얼로그 ── */
+.confirm {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(300 * var(--u));
+    padding: calc(14 * var(--u));
+    background: #16121c;
+    border: calc(1 * var(--u)) solid var(--stone-4);
+}
+.confirm__title {
+    margin: 0 0 calc(6 * var(--u));
+    font-size: calc(13 * var(--u));
+    color: var(--parchment);
+}
+.confirm__body {
+    margin: 0 0 calc(12 * var(--u));
+    font-size: calc(11 * var(--u));
+    color: var(--ash);
+}
+.confirm__actions {
+    display: flex;
+    gap: calc(8 * var(--u));
+    justify-content: flex-end;
+}

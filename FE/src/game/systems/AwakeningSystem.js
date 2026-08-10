@@ -42,6 +42,9 @@ const BY_TAG = {};
 for (const a of awakeningsData.awakenings) if (a.tag) BY_TAG[a.tag] = a;
 const PRES = awakeningsData.presentation;
 
+/** 최종 각성 「완전 흡혈귀화」 — 태그가 아니라 인간성 0 으로 발동한다(T511 / 04-PACT 5.4) */
+const ASCENSION = awakeningsData.awakenings.find((a) => a.trigger?.type === "humanityZero");
+
 /** "#rrggbb" -> 0xrrggbb. JSON은 사람이 고치는 파일이라 CSS 표기를 쓴다 */
 const hex = (s) => parseInt(String(s).slice(1), 16);
 
@@ -115,6 +118,10 @@ export class AwakeningSystem {
         }
 
         this.list.push(tag);
+
+        this.scene.fxSystem?.hitStop(200);   // 정본 04-PACT 5.2 ① 필수 연출
+
+        this.scene.fxSystem?.awakenBurst(); // 심홍 플래시 + 흔들림
         this.defs[tag] = def;
 
         // ★ 저주를 실제로 뒤집는 지점. src 규약("toll:" + TAG)은 PactSystem.choose와 맞물린다.
@@ -145,6 +152,39 @@ export class AwakeningSystem {
 
         this.spawnAura(def);
         this.present(def);
+        return true;
+    }
+
+    /**
+     * T511 「완전 흡혈귀화」 — 인간성 0 에서 발동한다. 태그 각성과 다른 축이라
+     * MAX_AWAKENINGS(2) 상한에 포함되지 않는다. 인간성 0 은 그 자체가 상한이다.
+     *
+     * ★ 회복이 없다(healPctMaxHp: 0). 이건 보상이 아니라 귀결이다 — 여기까지 온 대가로
+     *   모든 대가가 2배가 되고 초당 2.0 씩 탄다. 강해지는 대신 시계가 빨라진다.
+     */
+    triggerAscension() {
+        if (!ASCENSION || this.ascended) return false;
+        this.ascended = true;
+
+        for (const e of ASCENSION.effects) {
+            if (e.op === "special") continue;
+            this.stats.add(e.stat, e.op, e.value, "awaken:ASCENSION");
+        }
+
+        // 모든 대가 페널티 2배 — 이미 걸린 toll 모디파이어를 같은 값으로 한 벌 더 얹는다.
+        // 곱연산이므로 (1-x)^2 이 되어 "2배로 아프다"가 수치로도 성립한다.
+        const mult = ASCENSION.effects.find((e) => e.op === "special")?.params?.tollPenaltyMult ?? 2;
+        if (mult > 1 && this.stats.mods) {
+            const tolls = this.stats.mods.filter((m) => String(m.src).startsWith("toll:"));
+            for (let i = 1; i < mult; i++) {
+                for (const m of tolls) this.stats.add(m.stat, m.op, m.value, "ascend:" + m.src);
+            }
+        }
+
+        this.scene.fxSystem?.hitStop(200);
+        this.scene.fxSystem?.awakenBurst();
+        this.spawnAura(ASCENSION);
+        this.present(ASCENSION);
         return true;
     }
 

@@ -77,6 +77,18 @@ export default class GameScene extends Phaser.Scene {
             this.offCmds = [
                 EventBus.on(EVENTS.CMD_PACT_CHOOSE, (p) => this.combatSystem.applyCard(p?.index ?? 0), { key: "game:pact-choose" }),
                 EventBus.on(EVENTS.CMD_PACT_SKIP, () => this.combatSystem.applyCard(-1), { key: "game:pact-skip" }),
+                EventBus.on(EVENTS.CMD_PACT_REROLL, () => this.combatSystem.rerollCards(), { key: "game:pact-reroll" }),
+                EventBus.on(EVENTS.CMD_PAUSE, () => {
+                    if (this.scene.isPaused()) return;
+                    this.scene.pause();
+                    EventBus.emit(EVENTS.RUN_PAUSED, {});
+                }, { key: "game:pause" }),
+                EventBus.on(EVENTS.CMD_RESUME, () => {
+                    if (!this.scene.isPaused()) return;
+                    this.scene.resume();
+                    EventBus.emit(EVENTS.RUN_RESUMED, {});
+                }, { key: "game:resume" }),
+                EventBus.on(EVENTS.CMD_ABANDON, () => this.combatSystem.abandon(), { key: "game:abandon" }),
             ];
             this.events.once("shutdown", () => this.offCmds?.forEach((f) => f()));
             if (DEBUG) installCheats(this);
@@ -87,6 +99,10 @@ export default class GameScene extends Phaser.Scene {
             const z = Math.min(LOGICAL_WIDTH / WORLD_WIDTH, LOGICAL_HEIGHT / WORLD_HEIGHT);
             this.cameras.main.setZoom(z).centerOn(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
         }
+
+        // React 가 화면을 PLAYING 으로 넘기고 런 상태를 초기화하는 신호.
+        // rerollLeft 는 성소 「재계약」으로 늘어나므로 Phaser 가 계산해 실어 보낸다.
+        EventBus.emit(EVENTS.RUN_STARTED, { rerollLeft: this.combatSystem?.pact?.rerollLeft ?? 2 });
 
         this.scene.launch(SCENES.HUD);
         if (DEBUG) this.scene.launch(SCENES.DEBUG);

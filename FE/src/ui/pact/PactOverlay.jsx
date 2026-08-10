@@ -78,6 +78,7 @@ function Card({ card }) {
 
 export default function PactOverlay() {
     const pact = useStore((s) => s.pact);
+    const rerollLeft = useStore((s) => s.rerollLeft);
     if (!pact.open) return null;
 
     return (
@@ -89,12 +90,24 @@ export default function PactOverlay() {
             {pact.cards.map((c) => (
                 <Card key={c.index} card={c} />
             ))}
+            {/* T540 리롤 — 런당 2회(+성소 「재계약」). 대가만 리롤은 제공하지 않는다(04-PACT 6.1) */}
+            <button
+                className="pact-reroll"
+                disabled={rerollLeft <= 0}
+                style={{ left: pct(136, 640), top: pct(300, 360), width: pct(160, 640) }}
+                onClick={() => EventBus.emit(EVENTS.CMD_PACT_REROLL)}
+            >
+                ↻ 다시 뽑는다 ({rerollLeft})
+            </button>
+
+            {/* T541 스킵 — 인간성이 줄지 않는 유일한 선택지다. 보상을 문구에 적어야 선택지로 읽힌다 */}
             <button
                 className="pact-skip"
-                style={{ left: pct(240, 640), top: pct(300, 360), width: pct(160, 640) }}
+                disabled={!pact.canSkip}
+                style={{ left: pct(344, 640), top: pct(300, 360), width: pct(160, 640) }}
                 onClick={() => EventBus.emit(EVENTS.CMD_PACT_SKIP)}
             >
-                거절한다
+                거절 (HP +25% · ⬤30)
             </button>
         </div>
     );
