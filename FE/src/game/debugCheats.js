@@ -17,7 +17,9 @@ export function installCheats(scene) {
         /** 시간 배속 */
         speed: (v = 1) => { scene.timeScale = v; return v; },
         /** 웨이브 구간 점프 (0~11) */
-        wave: (i) => { const s = scene.spawnSystem; s.segIndex = Math.max(0, Math.min(i, s.segments.length - 1)); s.elapsed = s.segment.t; return s.segment; },
+        /** 구간 점프. jumpTo 는 지나친 특수 이벤트를 "소비만" 하고 발화시키지 않는다 —
+         *  elapsed 를 직접 밀면 엘리트 3체 + 무리 18파도가 한 프레임에 쏟아진다. */
+        wave: (i) => { const s = scene.spawnSystem; return s.jumpTo(s.segments[Math.max(0, Math.min(i, s.segments.length - 1))].t); },
         /** 즉사 */
         kill: () => scene.combatSystem.hurt(9999),
         /** 체력 회복 + 부활. 사망 상태도 푼다 */

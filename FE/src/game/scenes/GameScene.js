@@ -16,6 +16,7 @@ import { DEBUG } from "../debug";
 import { PlayerSystem } from "../systems/PlayerSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
+import { EnemyProjectileSystem } from "../systems/EnemyProjectileSystem";
 import { CombatSystem } from "../systems/CombatSystem";
 import { installCheats } from "../debugCheats";
 import { validateData } from "@/data/validate";
@@ -53,6 +54,8 @@ export default class GameScene extends Phaser.Scene {
             this.pact = new PactSystem(this.stats);
             this.combatSystem = new CombatSystem(this, this.player, this.spawnSystem, this.playerSystem, this.stats, this.pact);
             this.playerSystem.stats = this.stats;
+            // 적 투사체(E6). EnemyAISystem 이 scene.enemyProjectiles 로 찾으므로 이 이름이 계약이다.
+            this.enemyProjectiles = new EnemyProjectileSystem(this, { player: this.player, combat: this.combatSystem });
 
             // ★ 각성은 CombatSystem 안쪽에서 피해·처치를 가로채므로 주입으로 연결한다.
             //   생성자 인자로 넘기면 CombatSystem <-> AwakeningSystem 순환 참조가 된다.
@@ -99,6 +102,7 @@ export default class GameScene extends Phaser.Scene {
         this.playerSystem?.update();
         this.spawnSystem?.update(dt);
         this.aiSystem?.update(dt);
+        this.enemyProjectiles?.update(dt); // 투사체 이동 -> 충돌은 그 안에서 처리한다
         this.combatSystem?.update(dt);
         this.bossSystem?.update(dt);
         this.fxSystem?.update(dt);
