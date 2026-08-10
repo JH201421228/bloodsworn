@@ -275,6 +275,7 @@ export class SpawnSystem {
         // 죽었다 살아난 적이 공짜 스턴/슬로우를 물려받지 않는다
         e.stunUntil = 0;
         e.slowMult = 1;
+        e.isBoss = false;  // 풀 재사용 시 보스 표식이 남으면 잡몹이 불사가 된다
         e.slowUntil = 0;   // 각성 「중력의 군주」 슬로우 만료 시각
         e.orbHitAt = 0;    // 각성 「탐욕의 왕관」 오브 관통 재타격 쿨
 
@@ -329,7 +330,9 @@ export class SpawnSystem {
         for (let i = list.length - 1; i >= 0; i--) {
             const e = list[i];
             if (dist2(e.x, e.y, this.player.x, this.player.y) <= DESPAWN_R2) continue;
-            if (e.isElite) {
+            // 보스와 엘리트는 지우지 않고 링 위로 되돌린다. 지우면 런이 끝나지 않거나
+            // 보물상자와 EXP 40이 그냥 증발한다.
+            if (e.isElite || e.isBoss) {
                 const p = this.ringPoint();
                 e.setPosition(p.x, p.y);
                 e.kbx = 0;

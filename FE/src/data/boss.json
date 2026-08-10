@@ -1,0 +1,48 @@
+{
+    "_comment": [
+        "보스 「여명의 처형인」 데이터. 출처 05-COMBAT 6(HP 역산/페이즈별 패턴표) / 08-DATA-SCHEMA 3.3 BOSS 항목.",
+        "★ 수치를 코드에 박지 않고 여기 두는 이유: Day 6 밸런싱은 '느낌'이 아니라 이 표를 고쳐서 한다.",
+        "★ windup 은 전부 0.60 이상이어야 한다(T525 / 03-GDD 7.3). BossSystem 생성자가 이를 검사한다.",
+        "이름 주의 — 「녹턴」은 PACT 카드를 제시하는 흡혈귀(01-CONCEPT 4.4)이고, 6:00 보스는 「여명의 처형인」이다."
+    ],
+    "schemaVersion": 1,
+    "boss": {
+        "id": "BOSS",
+        "name": "여명의 처형인",
+        "tier": "boss",
+        "baseHp": 11000,
+        "contactDamage": 16,
+        "moveSpeed": 46,
+        "hitbox": { "w": 56, "h": 80 },
+        "expValue": 0,
+        "goldValue": 0,
+        "goldOnClear": 200,
+        "knockbackResist": 1,
+        "ai": "chase",
+        "anim": "boss.idle",
+        "spawnAt": 360,
+        "purgeMinionsOnSpawn": true,
+        "stopSpawning": true,
+        "flashColor": 16723755,
+        "flashDuration": 0.45,
+        "phaseInvuln": 1.2,
+        "phases": [
+            { "phase": 1, "hpFrom": 1.00, "hpTo": 0.66, "moveSpeedMult": 1.0 },
+            { "phase": 2, "hpFrom": 0.66, "hpTo": 0.33, "moveSpeedMult": 1.0 },
+            { "phase": 3, "hpFrom": 0.33, "hpTo": 0.00, "moveSpeedMult": 1.4 }
+        ],
+        "patterns": [
+            { "phase": 1, "id": "scythe",    "type": "cone",       "damage": 26, "cooldown": 3.20, "windup": 0.80, "params": { "angle": 130, "radius": 96, "knockback": 60 } },
+            { "phase": 1, "id": "soulbolt",  "type": "projectile", "damage": 18, "cooldown": 4.50, "windup": 0.60, "params": { "count": 3, "spread": 30, "speed": 150, "range": 400 } },
+
+            { "phase": 2, "id": "scythe",    "type": "cone",       "damage": 26, "cooldown": 2.80, "windup": 0.80, "params": { "angle": 130, "radius": 96, "knockback": 60 } },
+            { "phase": 2, "id": "soulbolt",  "type": "projectile", "damage": 18, "cooldown": 4.50, "windup": 0.60, "params": { "count": 5, "spread": 50, "speed": 150, "range": 400 } },
+            { "phase": 2, "id": "summon",    "type": "summon",     "damage": 0,  "cooldown": 12.0, "windup": 1.00, "params": { "enemyId": "E4", "count": 6, "ringRadius": 120, "hpMultOverride": 1.0 } },
+
+            { "phase": 3, "id": "scythe",    "type": "cone",       "damage": 26, "cooldown": 1.68, "windup": 0.80, "params": { "angle": 130, "radius": 96, "knockback": 60 } },
+            { "phase": 3, "id": "soulbolt",  "type": "projectile", "damage": 18, "cooldown": 4.00, "windup": 0.60, "params": { "count": 5, "spread": 50, "speed": 170, "range": 400 } },
+            { "phase": 3, "id": "summon",    "type": "summon",     "damage": 0,  "cooldown": 9.00, "windup": 1.00, "params": { "enemyId": "E4", "count": 6, "ringRadius": 120, "hpMultOverride": 1.0 } },
+            { "phase": 3, "id": "bloodpool", "type": "ground_aoe", "damage": 12, "cooldown": 5.00, "windup": 0.60, "params": { "radius": 70, "duration": 6.0, "tickInterval": 1.0, "maxActive": 4, "dropsPerCast": 2, "scatterMin": 70, "scatterMax": 150 } }
+        ]
+    }
+}

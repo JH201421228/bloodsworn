@@ -32,6 +32,10 @@ export function installCheats(scene) {
         weapon: (id, lv = 1) => { const w = scene.combatSystem.addWeapon(id, lv); return w ? { id: w.id, level: w.level, ...w.s } : 'unknown ' + id; },
         /** 보유 무기 목록 */
         weapons: () => scene.combatSystem.weaponList.map((w) => w.id + ' Lv' + w.level),
+        /** 보스 즉시 소환 — 6분을 기다리지 않고 보스전을 검증한다 */
+        boss: () => { scene.spawnSystem.elapsed = 360; return !!scene.bossSystem.spawn(); },
+        /** 보스 HP 직접 설정 — 페이즈 전환/처치 연출을 10초 만에 본다 */
+        bossHp: (v) => { const b = scene.bossSystem.boss; if (b) b.hp = v; return v; },
         /** 스탯 스냅샷 */
         stats: () => ({ ...scene.stats.all }),
         /** 적 전멸 */

@@ -26,6 +26,8 @@ export default class HudScene extends Phaser.Scene {
         this.joy = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0).setAlpha(0);
         this.dashG = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0);
         this.statG = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0);
+        // T526 보스 HP바 — statG와 분리한다. 보스전에만 그려지고 보스전이 끝나면 통째로 clear하면 된다
+        this.bossG = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0);
 
         // ★ HP/타이머/킬은 60fps로 바뀐다 -> Zustand에 넣지 않고 여기서 직접 그린다 (T112)
         const t = (x, y, size, color, origin) =>
@@ -42,6 +44,7 @@ export default class HudScene extends Phaser.Scene {
         this.drawJoystick();
         this.drawDash();
         this.drawStats();
+        this.drawBossBar();
     }
 
     drawStats() {
@@ -129,5 +132,48 @@ export default class HudScene extends Phaser.Scene {
             g.arc(DASH_BTN.x, DASH_BTN.y, 24, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress);
             g.strokePath();
         }
+    }
+
+    /**
+     * T526 보스 HP 바 — 10-UIUX 4.1 H13 (120, 30 / 400x8 / 알파 0.95 / 매 프레임 / 보스전에서만).
+     *
+     * ★ React가 아니라 여기서 직접 그린다.
+     *   보스 HP는 60fps로 변한다. Zustand에 넣으면 초당 60회 리렌더가 돌아
+     *   보스전이라는 가장 무거운 구간에서 프레임이 깎인다. 이 프로젝트의 확정 규약(T112)이다.
+     *   BossSystem은 별도로 200ms 스로틀된 BOSS_HP 이벤트를 쏘지만 그건 React 소비자용이고,
+     *   폭을 결정하는 건 아래 한 줄뿐이다.
+     *
+     * ★ 페이즈 눈금 2개(66% / 33%)를 그린다.
+     *   "언제 광폭화가 오는가"를 숫자가 아니라 바 위의 위치로 알려준다 — 정본 4.3.
+     */
+    drawBossBar() {
+        const g = this.bossG;
+        g.clear();
+
+        const bs = this.scene.get(SCENES.GAME)?.bossSystem;
+        const b = bs?.active ? bs.boss : null;
+        // 킬 카운터는 보스전에 무의미하다 (10-UIUX 4.3). 값이 바뀔 때만 건드린다
+        if (this.txtKills && this.txtKills.visible === !!b) this.txtKills.setVisible(!b);
+        if (!b) return;
+
+        const X = 120, Y = 30, W = 400, H = 8;
+        const ratio = Math.max(0, Math.min(1, b.hp / b.maxHp));
+
+        g.fillStyle(0x241e2e, 0.95).fillRect(X, Y, W, H);                 // STONE_DARK 트랙
+        g.fillStyle(0x8e1220, 0.95).fillRect(X, Y, W * ratio, H);         // BLOOD 채움
+        // 남은 HP의 앞머리를 밝게 — 400px 바에서 잔량 1%의 변화를 눈으로 잡을 수 있게 한다
+        if (ratio > 0) g.fillStyle(0xd6203a, 0.95).fillRect(X + W * ratio - 2, Y, 2, H);
+
+        // 페이즈 눈금 — 지나간 눈금은 금색으로 남겨 "2페이즈를 넘겼다"를 계속 보여준다
+        for (const cut of [0.66, 0.33]) {
+            const passed = ratio <= cut;
+            g.fillStyle(passed ? 0xe8b44c : 0x0b0710, passed ? 0.95 : 0.8);
+            g.fillRect(X + W * cut - 1, Y - 1, 2, H + 2);
+        }
+
+        g.lineStyle(1, 0x6e6478, 0.9).strokeRect(X, Y, W, H);
+
+        // 페이즈 전환 무적 중에는 바를 점멸시킨다. "때려도 안 깎이는" 1.2초의 이유를 알려준다
+        g.alpha = bs.invulnerable ? ((this.time.now / 60) % 2 < 1 ? 0.45 : 1) : 1;
     }
 }

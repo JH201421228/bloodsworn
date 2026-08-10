@@ -103,6 +103,12 @@ export default class GameScene extends Phaser.Scene {
         this.spawnSystem?.update(dt);
         this.aiSystem?.update(dt);
         this.enemyProjectiles?.update(dt); // 투사체 이동 -> 충돌은 그 안에서 처리한다
+
+        // 6:00 최종 보스 「여명의 처형인」. 등장 시각은 data/boss.json 의 spawnAt(=360)이 정본이다.
+
+        const bs = this.bossSystem;
+
+        if (bs && !bs.active && !bs.defeated && this.spawnSystem.elapsed >= bs.def.spawnAt) bs.spawn();
         this.combatSystem?.update(dt);
         this.bossSystem?.update(dt);
         this.fxSystem?.update(dt);
