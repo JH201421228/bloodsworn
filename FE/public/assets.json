@@ -161,7 +161,86 @@
     "atlases": [],
     "tilemaps": [],
     "bitmapFonts": [],
-    "audio": [],
+    "audio": [
+        {
+            "key": "bgm-bed",
+            "urls": [
+                "assets/audio/bgm/bgm-bed.m4a"
+            ]
+        },
+        {
+            "key": "bgm-perc1",
+            "urls": [
+                "assets/audio/bgm/bgm-perc1.m4a"
+            ]
+        },
+        {
+            "key": "bgm-perc2",
+            "urls": [
+                "assets/audio/bgm/bgm-perc2.m4a"
+            ]
+        },
+        {
+            "key": "bgm-perc2-kick",
+            "urls": [
+                "assets/audio/bgm/bgm-perc2-kick.m4a"
+            ]
+        },
+        {
+            "key": "bgm-perc3",
+            "urls": [
+                "assets/audio/bgm/bgm-perc3.m4a"
+            ]
+        },
+        {
+            "key": "bgm-strings",
+            "urls": [
+                "assets/audio/bgm/bgm-strings.m4a"
+            ]
+        },
+        {
+            "key": "bgm-boss-intro",
+            "urls": [
+                "assets/audio/bgm/bgm-boss-intro.m4a"
+            ]
+        },
+        {
+            "key": "bgm-boss",
+            "urls": [
+                "assets/audio/bgm/bgm-boss.m4a"
+            ]
+        },
+        {
+            "key": "bgm-title",
+            "urls": [
+                "assets/audio/bgm/bgm-title.m4a"
+            ]
+        },
+        {
+            "key": "bgm-sanctum",
+            "urls": [
+                "assets/audio/bgm/bgm-sanctum.m4a"
+            ]
+        },
+        {
+            "key": "bgm-result-win",
+            "urls": [
+                "assets/audio/bgm/bgm-result-win.m4a"
+            ]
+        },
+        {
+            "key": "bgm-result-lose",
+            "urls": [
+                "assets/audio/bgm/bgm-result-lose.m4a"
+            ]
+        },
+        {
+            "key": "bgm-result-alt",
+            "urls": [
+                "assets/audio/bgm/bgm-result-alt.m4a"
+            ]
+        }
+    ],
     "json": [
         {
             "key": "props_grave",

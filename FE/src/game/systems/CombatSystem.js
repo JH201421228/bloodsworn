@@ -47,6 +47,7 @@ export class CombatSystem {
         this.dead = false;
         this.godMode = false;
         this.gold = 0;
+        this.ascended = false;  // T511 완전 흡혈귀화 — 한 런에 한 번만 발동한다
         /** @type {import("./AwakeningSystem").AwakeningSystem|null} 각성. GameScene이 주입한다 */
         this.awakening = null;
         /** @type {any} 연출. 없으면 조용히 건너뛴다 — 전투 로직이 연출에 의존하면 안 된다 */
@@ -198,6 +199,7 @@ export class CombatSystem {
         this.arcHalf = half;
         this.arcRadius = radius;
         this.arcFxUntil = this.scene.time.now + 100;
+        this.scene.audio?.sfx("slash");
     }
 
     /** W2 화염탄 — 사거리 내 최근접 적 자동조준 */
@@ -237,6 +239,7 @@ export class CombatSystem {
         p.knockback = w.knockback * this.stats.get("knockback");
         if (!p.hitSet) p.hitSet = new Set();
         p.hitSet.clear();
+        this.scene.audio?.sfx("fire");
     }
 
     moveProjectiles(dt) {
@@ -289,9 +292,13 @@ export class CombatSystem {
             e.hp -= isCrit ? d.amount * critMult : d.amount;
 
             // 피격 플래시 60ms (T213). 치명타는 금색으로 구분한다.
-            e.setTintFill(isCrit ? 0xffd24a : 0xffffff);
+            // ★ 매 피격마다 delayedCall 을 만들면 TimerEvent 와 클로저가 초당 수백 개 쌓인다.
+            //   평균 fps 는 멀쩡한데 1% Low 만 무너지는 전형적 원인이다(T622).
+            //   FxSystem 이 링버퍼로 만료를 관리한다 — 할당이 0이다.
+            if (this.fx) this.fx.hitFlash(e, isCrit);
+            else e.setTintFill(isCrit ? 0xffd24a : 0xffffff);
             this.fx?.damageNumber(e.x, e.y, isCrit ? d.amount * critMult : d.amount, isCrit);
-            this.scene.time.delayedCall(60, () => { if (e.__active) e.clearTint(); });
+            if (isCrit) this.fx?.hitStop(30); // 09-ART 7.2. 저사양이면 FxSystem 이 알아서 건너뛴다
 
             if (d.knockback) {
                 const dx = e.x - this.player.x, dy = e.y - this.player.y;
@@ -339,10 +346,12 @@ export class CombatSystem {
         if (typeof replaced === "number") taken = replaced;
         this.hp = Math.max(0, this.hp - taken);
         this.hurtUntil = this.scene.time.now + PLAYER_IFRAME * this.stats.get("iframe");
-        this.player.setTintFill(0xffffff);
-        this.scene.time.delayedCall(60, () => this.player.clearTint());
-        this.fx?.playerHurt();
-        this.scene.cameras.main.shake(90, 0.004);
+        // 흔들림을 여기서 직접 하면 "화면 흔들림 OFF" 접근성 옵션이 무시된다(13-QA UI-03).
+        // FxSystem 이 옵션을 보고 흔들지 말지 결정한다.
+        if (this.fx) this.fx.hitFlash(this.player, false);
+        else { this.player.setTintFill(0xffffff); this.scene.time.delayedCall(60, () => this.player.clearTint()); }
+        if (this.fx) this.fx.playerHurt();
+        else this.scene.cameras.main.shake(90, 0.004);
         if (this.hp <= 0) this.die();
     }
 
@@ -407,6 +416,7 @@ export class CombatSystem {
                 this.exp += o.value * this.stats.get("expMult");
                 o.setVisible(false).setPosition(-999, -999);
                 this.orbs.release(o);
+                this.scene.audio?.sfx("pickup");
                 this.checkLevelUp();
                 continue;
             }
@@ -450,6 +460,33 @@ export class CombatSystem {
         });
     }
 
+    /** T540 리롤 — 3장 전체 재생성. 응답도 RUN_LEVELUP 으로 보낸다(브릿지가 이미 처리한다) */
+    rerollCards() {
+        if (!this.pendingCards) return;          // 카드가 안 떠 있으면 무시
+        if (!this.pact.consumeReroll()) return;  // 남은 횟수 0 — 버튼이 이미 disabled 다
+        const cards = this.pact.generate(this.level);
+        this.pendingCards = cards;
+        EventBus.emit(EVENTS.RUN_LEVELUP, {
+            level: this.level, cards,
+            nocturneLine: this.pact.lastLine, canSkip: true,
+            humanity: this.pact.humanity, rerollLeft: this.pact.rerollLeft,
+        });
+    }
+
+    /** 중도 포기. 골드는 획득한 만큼 그대로 준다 — 모바일이므로 관대하게(정본 03-GDD 12) */
+    abandon() {
+        if (this.dead) return;
+        this.dead = true;
+        EventBus.emit(EVENTS.RUN_ENDED, {
+            reason: "abandon",
+            time: Math.floor(this.spawn.elapsed), kills: this.spawn.killCount,
+            level: this.level, gold: Math.floor(this.gold),
+            awakenings: this.awakening ? [...this.awakening.list] : [],
+            humanity: this.pact?.humanity ?? 100,
+        });
+        this.scene.scene.resume(); // 카드가 떠 있는 상태에서 포기하면 pause 가 남는다
+    }
+
     /** React에서 카드를 고르면 호출된다 */
     applyCard(index) {
         const cards = this.pendingCards;
@@ -475,6 +512,18 @@ export class CombatSystem {
                     atLevel: this.level,
                 });
             }
+
+            // T511 — 인간성 0 「완전 흡혈귀화」. 여기서만 쏜다(스킵으로는 인간성이 줄지 않는다).
+            if (r.humanity <= 0 && !this.ascended) {
+                this.ascended = true;
+                EventBus.emit(EVENTS.HUMANITY_ZERO, { humanity: 0 });
+                this.awakening?.triggerAscension?.();
+            }
+        } else if (index < 0 && cards) {
+            // T541 스킵 — HP 25% 회복 + 골드 30. 인간성 감소가 없는 유일한 선택지이자
+            // 후반 인간성 관리의 유일한 수단이다(04-PACT 6.2).
+            this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.25);
+            this.gold += 30;
         }
         this.pendingCards = null;
         this.scene.scene.resume();

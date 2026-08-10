@@ -8,6 +8,8 @@
  *   씬끼리 서로를 참조하면 결합이 생기므로 두 씬이 이 모듈만 본다. (EventBus와 같은 이유)
  */
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { EventBus } from "../EventBus";
+import { EVENTS } from "../constants";
 
 /** 정본 3.2 */
 export const JOY_RADIUS = 48;
@@ -26,6 +28,15 @@ class InputSystemImpl {
         /** 조이스틱이 눌려 있는가 (HUD 렌더용) */
         this.active = false;
         this.origin = { x: 0, y: 0 };
+        /**
+         * 조이스틱 모드. true = 손가락을 댄 자리에 생긴다(기본, 모바일에서 눈으로 찾을 필요가 없다).
+         * false = 좌하단 고정. 손가락이 화면을 가리는 것을 싫어하는 사람이 있어 옵션으로 둔다.
+         */
+        this.floating = true;
+        this.fixedOrigin = { x: 84, y: LOGICAL_HEIGHT - 76 };
+        EventBus.on(EVENTS.CMD_SETTINGS, (st) => {
+            if (typeof st?.joystickFloating === "boolean") this.floating = st.joystickFloating;
+        }, { key: "input:settings" });
         this.knob = { x: 0, y: 0 };
         /** 이번 프레임에 대시가 요청됐는가. consumeDash()로 꺼내 쓴다 */
         this.dashQueued = false;
@@ -84,8 +95,9 @@ class InputSystemImpl {
         if (p.x > JOY_ZONE_RIGHT || p.y < 0 || p.y > LOGICAL_HEIGHT) return;
         this.joyPointerId = p.id;
         this.active = true;
-        this.origin.x = Math.max(0, p.x);
-        this.origin.y = p.y;
+        // 고정 모드면 손가락 위치와 무관하게 항상 같은 자리를 원점으로 쓴다.
+        this.origin.x = this.floating ? Math.max(0, p.x) : this.fixedOrigin.x;
+        this.origin.y = this.floating ? p.y : this.fixedOrigin.y;
         this.knob.x = this.origin.x;
         this.knob.y = this.origin.y;
         this.vector.x = 0;
@@ -100,7 +112,9 @@ class InputSystemImpl {
         let d = Math.hypot(dx, dy);
 
         // 드리프트 — 반경을 넘으면 원점을 손가락 쪽으로 끌어당긴다(5.1)
-        if (d > JOY_RADIUS) {
+        // 원점 드리프트는 부동 모드에서만 한다. 고정 모드에서 원점이 따라 움직이면
+        // "고정"이라는 약속이 깨져 오히려 더 혼란스럽다.
+        if (d > JOY_RADIUS && this.floating) {
             const k = 1 - JOY_RADIUS / d;
             this.origin.x += dx * k;
             this.origin.y += dy * k;

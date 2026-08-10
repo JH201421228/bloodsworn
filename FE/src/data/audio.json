@@ -1,0 +1,270 @@
+{
+    "_comment": [
+        "오디오 정본 데이터 (T610 / T610b). 근거: 09-ART-AUDIO-AND-ASSET-MAP.md 5(BGM 배정) 5.4(믹스/페이드).",
+        "",
+        "★ 이 파일이 유일한 출처다 — 런타임 AudioSystem 과 인코더 tools/encode-audio.mjs 가 같은 걸 읽는다.",
+        "  곡을 바꾸려면 여기만 고친다. 코드에 파일명을 하드코딩하면 둘이 어긋난다.",
+        "",
+        "src  = 저장소 루트 asset/bgm/ 기준 원본 파일명 (asset/ 는 git 제외 대상).",
+        "key  = Phaser 캐시 키이자 산출물 파일명 → FE/public/assets/audio/bgm/<key>.<ext>",
+        "vol  = 트랙 고유 볼륨(0~1). 최종 = vol * settings.bgmVolume.",
+        "",
+        "★ 배포 포맷을 m4a(AAC) 1종으로 하는 이유",
+        "  AAC 는 Android WebView 와 iOS WKWebView 양쪽 모두 네이티브 지원이다.",
+        "  ogg 를 같이 넣으면 재생되는 파일은 여전히 1개인데 번들만 2배가 된다.",
+        "  Vorbis 로만 가야 할 사정이 생기면 encode.formats 에 \"ogg\" 를 추가한다.",
+        "",
+        "★ 비트레이트를 곡마다 다르게 주는 이유",
+        "  13곡 총 재생시간이 약 718초다. 전곡 96kbps 로 뽑으면 8.4MB 로 오디오 예산(4.5MB)을 2배 초과한다.",
+        "  긴 앰비언스/메뉴곡(bed·title·sanctum·resultLose·bossLoop)은 저역 중심이라 48k 모노에서 열화가 거의 없다.",
+        "  타격 박자가 실린 퍼커션 루프만 64k 스테레오로 남긴다. 산출 합계 약 4.8MB."
+    ],
+    "schemaVersion": 1,
+    "encode": {
+        "srcDir": "asset/bgm",
+        "outDir": "FE/public/assets/audio/bgm",
+        "formats": [
+            "m4a"
+        ],
+        "bitrate": "64k",
+        "channels": 2,
+        "sampleRate": 44100,
+        "fadeMs": 5,
+        "budgetMB": 4.5
+    },
+    "tracks": [
+        {
+            "key": "bgm-bed",
+            "src": "universfield-horror-background-atmosphere-025-499631.mp3",
+            "sec": 161,
+            "vol": 0.55,
+            "loop": true,
+            "bitrate": "48k",
+            "channels": 1,
+            "role": "런 앰비언스 베드. 런 내내 한 번도 stop 하지 않는다(규칙 A2)"
+        },
+        {
+            "key": "bgm-perc1",
+            "src": "5xbeatz-percussion-loop-118-bpm-free-385692.mp3",
+            "sec": 33,
+            "vol": 0.45,
+            "loop": true,
+            "role": "01:00 구간 퍼커션 118BPM"
+        },
+        {
+            "key": "bgm-perc2",
+            "src": "5xbeatz-percussion-loop-130bpm-387865.mp3",
+            "sec": 31,
+            "vol": 0.6,
+            "loop": true,
+            "role": "03:00 구간 퍼커션 130BPM"
+        },
+        {
+            "key": "bgm-perc2-kick",
+            "src": "soundreality-cinematic-percussion-kick-474176.mp3",
+            "sec": 29,
+            "vol": 0.35,
+            "loop": true,
+            "role": "03:00 킥 레이어"
+        },
+        {
+            "key": "bgm-perc3",
+            "src": "5xbeatz-percussion-loop-132bpm-387866.mp3",
+            "sec": 31,
+            "vol": 0.7,
+            "loop": true,
+            "role": "05:00 구간 퍼커션 132BPM"
+        },
+        {
+            "key": "bgm-strings",
+            "src": "11325622-epic-strings-intro-239971.mp3",
+            "sec": 36,
+            "vol": 0.5,
+            "loop": true,
+            "bitrate": "48k",
+            "channels": 1,
+            "role": "05:00 스트링 레이어"
+        },
+        {
+            "key": "bgm-boss-intro",
+            "src": "simplesound-dark-horror-opener-443328.mp3",
+            "sec": 34,
+            "vol": 0.85,
+            "loop": false,
+            "bitrate": "48k",
+            "channels": 1,
+            "role": "보스 등장 1회"
+        },
+        {
+            "key": "bgm-boss",
+            "src": "audioknap-drums-only-448491.mp3",
+            "sec": 64,
+            "vol": 0.75,
+            "loop": true,
+            "bitrate": "48k",
+            "channels": 1,
+            "role": "보스전 루프"
+        },
+        {
+            "key": "bgm-title",
+            "src": "universfield-atmospheric-cinematic-soundscape-152493.mp3",
+            "sec": 91,
+            "vol": 0.5,
+            "loop": true,
+            "bitrate": "40k",
+            "channels": 1,
+            "role": "타이틀",
+            "_note": "메뉴/결과 — 정적 화면이라 40k 로 낮춰 예산을 맞춘다"
+        },
+        {
+            "key": "bgm-sanctum",
+            "src": "ncprime-noncopyright-music-pianos-295174.mp3",
+            "sec": 92,
+            "vol": 0.45,
+            "loop": true,
+            "bitrate": "40k",
+            "channels": 1,
+            "role": "성소",
+            "_note": "메뉴/결과 — 정적 화면이라 40k 로 낮춰 예산을 맞춘다"
+        },
+        {
+            "key": "bgm-result-win",
+            "src": "grand_project-deep-epic-cinematic-when-time-collapses_outro-501526.mp3",
+            "sec": 33,
+            "vol": 0.7,
+            "loop": false,
+            "bitrate": "40k",
+            "channels": 1,
+            "role": "결과-승리",
+            "_note": "메뉴/결과 — 정적 화면이라 40k 로 낮춰 예산을 맞춘다"
+        },
+        {
+            "key": "bgm-result-lose",
+            "src": "universfield-dark-horror-soundscape-345814.mp3",
+            "sec": 69,
+            "vol": 0.4,
+            "loop": true,
+            "bitrate": "40k",
+            "channels": 1,
+            "role": "결과-패배",
+            "_note": "메뉴/결과 — 정적 화면이라 40k 로 낮춰 예산을 맞춘다"
+        },
+        {
+            "key": "bgm-result-alt",
+            "src": "ncprime-cinematic-background-291979.mp3",
+            "sec": 14,
+            "vol": 0.5,
+            "loop": true,
+            "bitrate": "40k",
+            "channels": 1,
+            "role": "결과 공통 백업",
+            "_note": "메뉴/결과 — 정적 화면이라 40k 로 낮춰 예산을 맞춘다"
+        }
+    ],
+    "_skipped": {
+        "_comment": "배포에서 뺀 원본. 이유를 남겨 두지 않으면 다음 사람이 다시 넣는다.",
+        "soundreality-cinematic-percussion-471495 (1).mp3": "md5 중복 (471495.mp3 와 동일)",
+        "ncprime-cinematic-background-293547.mp3": "md5 중복 (291979.mp3 와 동일)",
+        "soundreality-cinematic-percussion-471495.mp3": "보스 등장 스팅 → 절차적 SFX bossAppear 로 대체(T612)",
+        "universfield-paranormal-horror-cinematic-498207.mp3": "각성 스팅 → 절차적 SFX awaken 으로 대체(T612)",
+        "dragon-studio-slow-cinematic-clock-ticking-405471.mp3": "카운트다운 오버레이는 선택 항목. 예산 우선",
+        "soundreality-cinematic-music-487645.mp3": "미사용(09-ART 5.3)",
+        "niteshnaagodiya-bongo-and-drum-instrumental-music-21295.mp3": "미사용(09-ART 5.3)",
+        "soundreality-cinematic-drums-percussion-474175.mp3": "미사용(09-ART 5.3)"
+    },
+    "phases": [
+        {
+            "t": 0,
+            "label": "23:00",
+            "bed": "bgm-bed",
+            "layers": []
+        },
+        {
+            "t": 90,
+            "label": "01:00",
+            "bed": "bgm-bed",
+            "layers": [
+                "bgm-perc1"
+            ]
+        },
+        {
+            "t": 180,
+            "label": "03:00",
+            "bed": "bgm-bed",
+            "layers": [
+                "bgm-perc2",
+                "bgm-perc2-kick"
+            ]
+        },
+        {
+            "t": 270,
+            "label": "05:00",
+            "bed": "bgm-bed",
+            "layers": [
+                "bgm-perc3",
+                "bgm-strings"
+            ]
+        }
+    ],
+    "screens": {
+        "run": {
+            "phased": true
+        },
+        "boss": {
+            "bed": null,
+            "intro": "bgm-boss-intro",
+            "layers": [
+                "bgm-boss"
+            ],
+            "fadeMs": 600,
+            "layerFadeMs": 2500
+        },
+        "title": {
+            "bed": "bgm-title",
+            "layers": []
+        },
+        "sanctum": {
+            "bed": "bgm-sanctum",
+            "layers": []
+        },
+        "result-win": {
+            "bed": "bgm-result-win",
+            "layers": []
+        },
+        "result-lose": {
+            "bed": "bgm-result-lose",
+            "layers": []
+        }
+    },
+    "fade": {
+        "phaseChange": 1200,
+        "bossEnter": 600,
+        "sceneChange": 400,
+        "duck": 250
+    },
+    "duck": {
+        "cardOpen": 0.5,
+        "awakening": 0.3,
+        "awakeningMs": 1500
+    },
+    "sfx": {
+        "_comment": [
+            "T613. 8ms 는 태스크가 정한 하한이고, 아래 값은 09-ART 6.4 가 실측 튜닝한 값이다.",
+            "둘 다 만족시키려면 더 엄격한 쪽(개별 값)을 쓰면 된다.",
+            "maxVoices 12 는 13-QA AU-07 의 합격 기준."
+        ],
+        "defaultThrottleMs": 8,
+        "throttleMs": {
+            "hit": 60,
+            "kill": 45,
+            "pickup": 40,
+            "gold": 40,
+            "uiTap": 80,
+            "slash": 45,
+            "fire": 50,
+            "bossHit": 50
+        },
+        "maxPerFrame": 6,
+        "maxVoices": 12
+    }
+}

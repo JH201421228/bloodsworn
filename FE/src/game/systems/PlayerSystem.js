@@ -103,6 +103,8 @@ export class PlayerSystem {
 
         this.player.setPosition(lastX, lastY);
         this.dashReadyAt = this.scene.time.now + DASH_COOLDOWN * (this.stats ? this.stats.get("dashCd") : 1);
+        this.scene.audio?.sfx("dash");
+        this.scene.fxSystem?.shake("dash");
         this.invulnUntil = this.scene.time.now + DASH_IFRAME;
 
         // 무적 동안 반짝임 — 피격 판정이 없다는 것을 눈으로 알려준다
