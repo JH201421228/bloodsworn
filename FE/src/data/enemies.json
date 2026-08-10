@@ -1,0 +1,12 @@
+{
+    "_comment": "적 스탯. 출처 08-DATA-SCHEMA 3.4 / 05-COMBAT 4. frame은 enemies.png(64x160) 합본의 시작 프레임.",
+    "schemaVersion": 1,
+    "enemies": [
+        { "id": "E1", "name": "흡혈박쥐",     "baseHp": 8,  "contactDamage": 4,  "moveSpeed": 95,  "hitbox": 12, "expValue": 1, "unlockAt": 0,   "ai": "chase",   "anim": "enemy.e1",  "knockbackResist": 0 },
+        { "id": "E2", "name": "썩은 비틀거림", "baseHp": 26, "contactDamage": 8,  "moveSpeed": 38,  "hitbox": 14, "expValue": 2, "unlockAt": 0,   "ai": "stagger", "anim": "enemy.e2",  "knockbackResist": 0.3, "params": { "moveDuration": 0.8, "pauseDuration": 0.2 } },
+        { "id": "E3", "name": "기어오는 손",   "baseHp": 4,  "contactDamage": 5,  "moveSpeed": 135, "hitbox": 10, "expValue": 1, "unlockAt": 30,  "ai": "chase",   "anim": "enemy.e3",  "knockbackResist": 0 },
+        { "id": "E4", "name": "낡은 해골",     "baseHp": 18, "contactDamage": 6,  "moveSpeed": 62,  "hitbox": 14, "expValue": 2, "unlockAt": 90,  "ai": "chase",   "anim": "enemy.e4",  "knockbackResist": 0 },
+        { "id": "E5", "name": "무덤 망령",     "baseHp": 22, "contactDamage": 7,  "moveSpeed": 70,  "hitbox": 14, "expValue": 3, "unlockAt": 90,  "ai": "zigzag",  "anim": "enemy.e5",  "knockbackResist": 0, "params": { "amplitude": 40, "period": 1.2 } },
+        { "id": "EL1","name": "시체 포식자",   "baseHp": 260,"contactDamage": 14, "moveSpeed": 58,  "hitbox": 18, "expValue": 25,"unlockAt": 90,  "ai": "chase",   "anim": "enemy.el1", "knockbackResist": 0.8, "tier": "elite" }
+    ]
+}

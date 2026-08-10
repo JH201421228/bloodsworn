@@ -25,6 +25,15 @@ export default class HudScene extends Phaser.Scene {
 
         this.joy = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0).setAlpha(0);
         this.dashG = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0);
+        this.statG = this.add.graphics().setDepth(DEPTH.HUD).setScrollFactor(0);
+
+        // ★ HP/타이머/킬은 60fps로 바뀐다 -> Zustand에 넣지 않고 여기서 직접 그린다 (T112)
+        const t = (x, y, size, color, origin) =>
+            this.add.text(x, y, "", { fontFamily: "monospace", fontSize: size + "px", color })
+                .setOrigin(origin ?? 0, 0).setDepth(DEPTH.HUD + 1).setScrollFactor(0);
+        this.txtTimer = t(320, 8, 14, "#c9b792", 0.5);
+        this.txtKills = t(632, 10, 10, "#9a94a3", 1);
+        this.txtHp = t(18, 26, 9, "#c7c2ce", 0);
 
         this.events.once("shutdown", () => input.detach());
     }
@@ -32,6 +41,34 @@ export default class HudScene extends Phaser.Scene {
     update() {
         this.drawJoystick();
         this.drawDash();
+        this.drawStats();
+    }
+
+    drawStats() {
+        const gs = this.scene.get(SCENES.GAME);
+        const c = gs?.combatSystem;
+        const sp = gs?.spawnSystem;
+        if (!c || !sp) return;
+
+        const g = this.statG;
+        g.clear();
+
+        // HP 바 — 좌상단 120x10 (09-ART A-13 규격)
+        const hpW = 120, hpRatio = Math.max(0, c.hp / c.maxHp);
+        g.fillStyle(0x3a3345, 0.9).fillRect(16, 12, hpW, 10);
+        g.fillStyle(0x8e1220, 1).fillRect(16, 12, hpW * hpRatio, 10);
+        g.lineStyle(1, 0x7b7488, 0.8).strokeRect(16, 12, hpW, 10);
+
+        // EXP 바 — 화면 최상단 전체 폭. 얇게 깔아 시선을 뺏지 않는다
+        const need = 5 + c.level * 5;
+        g.fillStyle(0x16121c, 0.9).fillRect(0, 0, 640, 4);
+        g.fillStyle(0x2fbfa8, 1).fillRect(0, 0, 640 * Math.min(1, c.exp / need), 4);
+
+        const m = Math.floor(sp.elapsed / 60);
+        const s2 = Math.floor(sp.elapsed % 60);
+        this.txtTimer.setText(m + ":" + String(s2).padStart(2, "0"));
+        this.txtKills.setText(sp.killCount + " kills");
+        this.txtHp.setText(Math.ceil(c.hp) + " / " + c.maxHp);
     }
 
     drawJoystick() {

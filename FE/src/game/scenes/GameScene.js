@@ -14,6 +14,10 @@ import { SCENES, DEPTH } from "../constants";
 import { WORLD_WIDTH, WORLD_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT, TILE_SIZE } from "../config";
 import { DEBUG } from "../debug";
 import { PlayerSystem } from "../systems/PlayerSystem";
+import { SpawnSystem } from "../systems/SpawnSystem";
+import { EnemyAISystem } from "../systems/EnemyAISystem";
+import { CombatSystem } from "../systems/CombatSystem";
+import { installCheats } from "../debugCheats";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -21,6 +25,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        this.timeScale = 1; // 치트: 시간 배속
         this.buildMap();
         this.placeProps();
         this.spawnPlayer();
@@ -30,6 +35,10 @@ export default class GameScene extends Phaser.Scene {
             // 플레이어는 항상 화면 중앙에 둔다 — 조이스틱(좌하단)과 손가락이 겹치지 않는다(10-UIUX 5.2 원칙 3)
             this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
             this.playerSystem = new PlayerSystem(this, this.player, this.wallLayer);
+            this.spawnSystem = new SpawnSystem(this, this.player);
+            this.aiSystem = new EnemyAISystem(this, this.player, this.spawnSystem);
+            this.combatSystem = new CombatSystem(this, this.player, this.spawnSystem, this.playerSystem);
+            if (DEBUG) installCheats(this);
         }
 
         // ?overview=1 — 맵 전체를 한 화면에 담아 구조를 검수한다. 개발 전용.
@@ -42,8 +51,16 @@ export default class GameScene extends Phaser.Scene {
         if (DEBUG) this.scene.launch(SCENES.DEBUG);
     }
 
-    update() {
+    update(time, delta) {
+        // ★ update 순서 고정 (06-TECH 4.2) — 입력/이동 -> 스폰 -> AI -> 전투
+        //   전투가 마지막인 이유: 공간해시를 모든 이동이 끝난 뒤 재구축해야 한다.
+        const dt = Math.min(delta, 50) / 1000 * this.timeScale;
+        // 사망하면 전부 멈춘다 — 결과 화면이 뜨는데 뒤에서 스폰이 계속 돌면 안 된다
+        if (this.combatSystem?.dead) return;
         this.playerSystem?.update();
+        this.spawnSystem?.update(dt);
+        this.aiSystem?.update(dt);
+        this.combatSystem?.update(dt);
     }
 
     /** 배경 이미지 + 충돌 격자 */

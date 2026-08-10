@@ -1,0 +1,14 @@
+{
+    "_comment": "무기 수치. 출처 05-COMBAT 2.1(W1) / 2.2(W2). Lv1만 Day 2 범위. Lv2~5는 Day 3 성장에서 채운다.",
+    "schemaVersion": 1,
+    "weapons": [
+        {
+            "id": "W1", "name": "피의 송곳니", "type": "melee_arc",
+            "levels": [{ "damage": 12, "cooldown": 1.0, "radius": 64, "arcDeg": 90, "knockback": 40 }]
+        },
+        {
+            "id": "W2", "name": "화염탄", "type": "projectile",
+            "levels": [{ "damage": 14, "cooldown": 1.2, "range": 200, "count": 1, "pierce": 0, "speed": 220, "knockback": 12 }]
+        }
+    ]
+}

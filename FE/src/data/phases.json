@@ -1,0 +1,18 @@
+{
+    "_comment": "30초 x 12구간 웨이브. 출처 05-COMBAT 5. t=구간 시작 초, interval=스폰 간격(초), cap=동시 상한.",
+    "schemaVersion": 1,
+    "segments": [
+        { "t": 0,   "hpMult": 1.00, "dmgMult": 1.00, "interval": 1.20, "cap": 15 },
+        { "t": 30,  "hpMult": 1.12, "dmgMult": 1.05, "interval": 1.05, "cap": 22 },
+        { "t": 60,  "hpMult": 1.33, "dmgMult": 1.12, "interval": 0.90, "cap": 30 },
+        { "t": 90,  "hpMult": 1.60, "dmgMult": 1.20, "interval": 0.75, "cap": 40 },
+        { "t": 120, "hpMult": 1.97, "dmgMult": 1.30, "interval": 0.66, "cap": 50 },
+        { "t": 150, "hpMult": 2.37, "dmgMult": 1.39, "interval": 0.55, "cap": 64 },
+        { "t": 180, "hpMult": 2.80, "dmgMult": 1.50, "interval": 0.45, "cap": 80 },
+        { "t": 210, "hpMult": 3.30, "dmgMult": 1.61, "interval": 0.39, "cap": 95 },
+        { "t": 240, "hpMult": 3.83, "dmgMult": 1.73, "interval": 0.33, "cap": 112 },
+        { "t": 270, "hpMult": 4.50, "dmgMult": 1.90, "interval": 0.28, "cap": 130 },
+        { "t": 300, "hpMult": 5.00, "dmgMult": 1.97, "interval": 0.25, "cap": 140 },
+        { "t": 330, "hpMult": 5.64, "dmgMult": 2.10, "interval": 0.22, "cap": 150 }
+    ]
+}

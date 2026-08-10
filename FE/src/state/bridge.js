@@ -69,6 +69,8 @@ export function installBridge() {
     sub(EVENTS.BOSS_HP, (hp) => s().setBossHp(hp), "bridge:boss-hp");
 
     sub(EVENTS.RUN_ENDED, (result) => {
+        // T232 텔레메트리 — 밸런스를 "느낌"이 아니라 숫자로 조정하기 위한 유일한 수단
+        console.log("[텔레메트리] 런 종료", JSON.stringify(result));
         s().setResult(result);
         if (typeof result?.gold === "number") s().addGold(result.gold);
         s().setScreen(SCREENS.RESULT);

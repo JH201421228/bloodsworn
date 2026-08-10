@@ -12,6 +12,7 @@ import { SCREENS } from "@/state/uiSlice";
 export default function UiLayer() {
     const screen = useStore((s) => s.screen);
     const loadProgress = useStore((s) => s.loadProgress);
+    const lastResult = useStore((s) => s.lastResult);
 
     return (
         <div className="ui-layer">
@@ -24,6 +25,19 @@ export default function UiLayer() {
                             style={{ width: `${Math.round(loadProgress * 100)}%` }}
                         />
                     </div>
+                </div>
+            )}
+
+            {screen === SCREENS.RESULT && (
+                <div className="ui-result">
+                    <p className="ui-result__title">여명을 보지 못했다</p>
+                    <p className="ui-result__stat">
+                        생존 {Math.floor((lastResult?.time ?? 0) / 60)}분 {(lastResult?.time ?? 0) % 60}초
+                        {" · "}처치 {lastResult?.kills ?? 0}
+                    </p>
+                    <button className="ui-result__btn" onClick={() => location.reload()}>
+                        다시 하기
+                    </button>
                 </div>
             )}
         </div>
