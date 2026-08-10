@@ -159,7 +159,10 @@ function buildTiles() {
     const parts = [];
     TILES.forEach((t, i) => {
         const p = resolve(tmp, "t" + String(i).padStart(2, "0") + ".png");
-        magick([sheet, "-crop", "16x16+" + t.x + "+" + t.y, "+repage", p]);
+        // 통행 불가 타일은 45% 밝기로 낮춘다. 원본 타일셋은 벽과 바닥의 명도차가 거의 없어
+        // 그대로 쓰면 플레이어가 어디가 막혔는지 화면에서 판단할 수 없다(실제로 겪었다).
+        const dark = t.solid ? ["-modulate", "45"] : [];
+        magick([sheet, "-crop", "16x16+" + t.x + "+" + t.y, "+repage", ...dark, p]);
         parts.push(p);
     });
     const out = resolve(dest, "tiles-main.png");

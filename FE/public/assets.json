@@ -30,6 +30,10 @@
         { "key": "player-atk1-up", "url": "assets/player/player-atk1-up.png", "frameWidth": 96, "frameHeight": 80 },
         { "key": "player-atk1-left", "url": "assets/player/player-atk1-left.png", "frameWidth": 96, "frameHeight": 80 },
         { "key": "player-atk1-right", "url": "assets/player/player-atk1-right.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk2-down", "url": "assets/player/player-atk2-down.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk2-up", "url": "assets/player/player-atk2-up.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk2-left", "url": "assets/player/player-atk2-left.png", "frameWidth": 96, "frameHeight": 80 },
+        { "key": "player-atk2-right", "url": "assets/player/player-atk2-right.png", "frameWidth": 96, "frameHeight": 80 },
 
         { "key": "enemies", "url": "assets/enemies/enemies.png", "frameWidth": 16, "frameHeight": 16 },
         { "key": "boss", "url": "assets/boss/boss-executioner.png", "frameWidth": 140, "frameHeight": 93 },
@@ -40,7 +44,7 @@
     ],
 
     "atlases": [],
-    "tilemaps": [],
+    "tilemaps": [{ "key": "map_crypt", "url": "assets/map/crypt.json" }],
     "bitmapFonts": [],
     "audio": []
 }

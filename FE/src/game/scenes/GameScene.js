@@ -1,13 +1,13 @@
 /**
- * GameScene — 런의 중심. 시스템 소유, update 순서 고정.
+ * GameScene — 런의 중심. 타일맵과 플레이어를 소유한다.
  *
- * ⚠ 블록 B 시점의 스텁이다. 실제 런 로직은 블록 C 이후에 들어온다.
- *   현재는 에셋 파이프라인 산출물이 실제로 올바르게 잘려 들어오는지 검증하는 용도다.
+ * 블록 B 완료 시점: 맵이 깔리고 플레이어가 스폰 지점에 서 있으며 벽에 충돌한다.
+ * 블록 C에서 조이스틱 입력·이동·카메라 추적·대시가 들어온다. (T133~T137)
  * 규격: 06-TECH-DESIGN.md 4.2 (update 순서)
  */
 import Phaser from "phaser";
-import { SCENES } from "../constants";
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { SCENES, DEPTH } from "../constants";
+import { WORLD_WIDTH, WORLD_HEIGHT } from "../config";
 import { DEBUG } from "../debug";
 
 export default class GameScene extends Phaser.Scene {
@@ -16,60 +16,58 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        const cx = LOGICAL_WIDTH / 2;
+        this.buildMap();
+        this.spawnPlayer();
 
-        // ── 바닥: 타일셋 8칸 중 바닥 타일만 깔아 격자 정렬을 눈으로 검증한다
-        if (this.textures.exists("tiles_main")) {
-            const tex = this.textures.get("tiles_main");
-            // 128x16 = 16px 타일 8칸. 1~6번이 바닥, 0=void, 7=벽
-            for (let y = 0; y < LOGICAL_HEIGHT; y += 16) {
-                for (let x = 0; x < LOGICAL_WIDTH; x += 16) {
-                    const idx = 1 + ((x / 16 + y / 16) % 6);
-                    this.add
-                        .image(x, y, "tiles_main")
-                        .setOrigin(0, 0)
-                        .setCrop(idx * 16, 0, 16, 16)
-                        .setPosition(x - idx * 16, y);
-                }
-            }
-            void tex;
-        }
-
-        // ── 플레이어: 96x80 8프레임이 제대로 잘렸는지
-        if (this.textures.exists("player-idle-down")) {
-            const t = this.textures.get("player-idle-down");
-            this.add.text(8, 6, `player-idle-down 프레임 ${t.frameTotal - 1}개`, {
-                fontFamily: "monospace",
-                fontSize: "10px",
-                color: "#8ff0dc",
-            });
-            for (let i = 0; i < 4; i++) {
-                this.add.sprite(60 + i * 100, 120, "player-idle-down", i);
-            }
-        }
-
-        // ── 적: 16x16 40프레임. 10종의 첫 프레임만 늘어놓는다
-        if (this.textures.exists("enemies")) {
-            const t = this.textures.get("enemies");
-            this.add.text(8, 200, `enemies 프레임 ${t.frameTotal - 1}개 (10종 x 4)`, {
-                fontFamily: "monospace",
-                fontSize: "10px",
-                color: "#8ff0dc",
-            });
-            for (let i = 0; i < 10; i++) {
-                this.add.sprite(24 + i * 32, 232, "enemies", i * 4).setScale(2);
-            }
-        }
-
-        this.add
-            .text(cx, LOGICAL_HEIGHT - 16, "Day 1 블록 B — 에셋 파이프라인 검증", {
-                fontFamily: "monospace",
-                fontSize: "10px",
-                color: "#c9b792",
-            })
-            .setOrigin(0.5);
+        // 카메라 — 블록 C에서 startFollow(lerp 0.1)로 바뀐다. 지금은 스폰 지점 중심.
+        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        if (this.player) this.cameras.main.centerOn(this.player.x, this.player.y);
 
         this.scene.launch(SCENES.HUD);
         if (DEBUG) this.scene.launch(SCENES.DEBUG);
+    }
+
+    /** 타일맵 로드 + 충돌 레이어 (T131) */
+    buildMap() {
+        if (!this.cache.tilemap.has("map_crypt")) {
+            console.warn("[GameScene] 타일맵이 없다. npm run build:map 을 돌렸는지 확인할 것");
+            return;
+        }
+
+        this.map = this.make.tilemap({ key: "map_crypt" });
+        // addTilesetImage(Tiled 안의 타일셋 이름, Phaser 텍스처 키)
+        const tiles = this.map.addTilesetImage("tiles-main", "tiles_main");
+
+        this.groundLayer = this.map.createLayer("ground", tiles, 0, 0);
+        this.wallLayer = this.map.createLayer("walls", tiles, 0, 0);
+        this.groundLayer?.setDepth(DEPTH.GROUND);
+        this.wallLayer?.setDepth(DEPTH.DECO);
+
+        // walls 레이어에서 빈 칸(0)이 아닌 모든 타일을 충돌로 만든다.
+        // setCollisionByExclusion([-1])은 "빈 칸 제외 전부"라는 뜻이다.
+        this.wallLayer?.setCollisionByExclusion([-1]);
+    }
+
+    /** 플레이어 스폰 — 맵 properties의 spawnX/spawnY를 따른다 */
+    spawnPlayer() {
+        if (!this.textures.exists("player-idle-down")) {
+            console.warn("[GameScene] 플레이어 텍스처가 없다. npm run build:assets 확인");
+            return;
+        }
+
+        const p = this.map?.properties ?? [];
+        const prop = (n, d) => p.find((e) => e.name === n)?.value ?? d;
+        const sx = prop("spawnX", WORLD_WIDTH / 2);
+        const sy = prop("spawnY", WORLD_HEIGHT / 2);
+
+        this.player = this.physics.add.sprite(sx, sy, "player-idle-down", 0);
+        this.player.setDepth(DEPTH.PLAYER);
+        // 바디는 발 밑 작은 사각형. 09-ART 2.1 실측 권장값.
+        this.player.body.setSize(14, 12).setOffset(41, 44);
+        this.player.setCollideWorldBounds(true);
+        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+        if (this.anims.exists("player.idle.down")) this.player.play("player.idle.down");
+        if (this.wallLayer) this.physics.add.collider(this.player, this.wallLayer);
     }
 }

@@ -11,6 +11,7 @@ import Phaser from "phaser";
 import { EventBus } from "../EventBus";
 import { EVENTS, SCENES } from "../constants";
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { registerAnims } from "../anims/registerAnims";
 
 const BAR_W = 320;
 const BAR_H = 8;
@@ -105,7 +106,8 @@ export default class PreloadScene extends Phaser.Scene {
     }
 
     create() {
-        // 블록 B에서 registerAnims(this)가 여기 들어온다.
+        const anims = registerAnims(this);
+        console.log("[Preload] 애니메이션 " + anims.created + "개 등록" + (anims.skipped.length ? " / " + anims.skipped.length + "개 건너뜀" : ""));
 
         // ★ 완료 신호를 명시적으로 한 번 더 쏜다.
         //   Phaser의 progress 이벤트는 로드 대상이 0개면 아예 발화하지 않는다.
