@@ -247,7 +247,13 @@ requiredExp(level) = floor(5 + level * 4 + level^1.55)
 
 ## 8. 스테이지 & 맵
 
-> 🚨 **Day 1 최우선 확인 사항 — `mainlevbuild.png`는 정면뷰(side-view) 플랫포머 타일셋으로 보인다.**
+> ✅ **해결됨 (2026-08-11). 아래 경고는 틀린 판단이었다.**
+> 원작 `szadiart.itch.io/rogue-fantasy-catacombs`는 **공식 탑다운 전용** 타일셋이다(공식 태그 Top-Down).
+> 입면도로 보인 것은 탑다운 픽셀 던전의 표준 관례인 **벽면(wall face) 표현**이었다.
+> 따라서 대응 A(바닥만 발췌)가 아니라 **원작 조립 규칙을 그대로 따른다** — 상세는 `09-ART-AUDIO-AND-ASSET-MAP.md` AT-07.
+> 구현은 `FE/tools/build-map.mjs`. 아래는 정정 전 기록이다.
+>
+> 🚨 ~~Day 1 최우선 확인 사항 — `mainlevbuild.png`는 정면뷰(side-view) 플랫포머 타일셋으로 보인다.**
 > 본작은 **탑다운**이다. 플랫포머 타일셋을 탑다운에 그대로 쓰면 벽·바닥의 원근이 어긋나 화면이 무너진다.
 > **Day 1 블록 B 시작 전에 육안으로 반드시 확인**하고, 정면뷰가 맞다면 아래 중 하나로 즉시 전환한다.
 > Day 3에 발견하면 맵을 통째로 다시 만들어야 한다.

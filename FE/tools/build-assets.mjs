@@ -241,7 +241,7 @@ ensure(OUT);
 buildPlayer();
 buildEnemies();
 buildBoss();
-buildTiles();
+// 타일셋은 build-map.mjs가 만든다 — 타일 인덱스와 맵 GID의 계약을 한 파일이 소유해야 한다
 buildProps();
 buildEffects();
 console.log("");

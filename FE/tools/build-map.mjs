@@ -1,196 +1,284 @@
 /**
- * Tiled 맵 생성기 — 봉인묘(스테이지 1) 1600x1200 맵을 프로그램으로 만든다. (T130)
+ * 타일셋 + Tiled 맵 생성기 — 봉인묘(스테이지 1). (T130)
  *
- * 근거: 03-GDD-CORE.md 8.1(월드 1600x1200 / 타일 16px) · 09-ART AT-07
+ * 근거: 03-GDD-CORE.md 8.1 — 1600x1200 / 타일 16px / ground·walls·deco·objects 4레이어
  * 실행: npm run build:map   (FE/ 에서)
  *
- * ★ Tiled 에디터로 손으로 그리지 않는 이유
- *   ① AT-07 결과 이 타일셋에서 쓸 수 있는 건 평면 바닥 텍스처와 벽 1종뿐이라
- *      손으로 배치해서 얻을 표현력이 거의 없다.
- *   ② 시드 고정 생성이면 밸런스 조정 때 맵을 재현 가능하게 다시 뽑을 수 있다.
- *   ③ Day 1에 1.5시간을 아낀다. 로드맵의 실패 폴백(단색 무한 평면)보다 훨씬 낫다.
- *   Tiled로 손보고 싶어지면 이 산출물을 Tiled에서 열어 편집하면 된다. 형식은 표준이다.
+ * ★ 이 파일이 타일셋도 함께 만드는 이유
+ *   타일 인덱스와 맵 GID는 한 몸이다. 두 스크립트로 나누면 인덱스가 어긋나도
+ *   맵이 조용히 이상해질 뿐 에러가 나지 않는다. 한 파일이 계약 전체를 소유한다.
+ *
+ * ★ AT-07 정정 (2026-08-11) — 1차 판단이 틀렸다
+ *   README와 09-ART는 mainlevbuild.png를 "정면뷰 플랫포머 세트"로 경고했고 나도 그렇게 판단했다.
+ *   원작(szadiart.itch.io/rogue-fantasy-catacombs)을 확인한 결과 **공식적으로 탑다운 전용**이다.
+ *   내가 입면도로 읽은 것은 탑다운 픽셀 던전의 표준 관례인 **벽면(wall face) 표현**이었다.
+ *
+ *   원작자 레퍼런스 맵에서 읽어낸 조립 규칙:
+ *     - 바닥은 평평한 석재. 벽은 3타일 높이 벽돌 밴드. 벽 너머는 순수 검정(void)
+ *     - 벽면에 납골 벽감 격자와 해골 알코브를 박아 넣는다
+ *     - 횃불·촛불을 벽면을 따라 다수 배치한다 (분위기의 절반이 광원이다)
  */
-import { writeFileSync, mkdirSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const FE = resolve(HERE, "..");
-const OUT_DIR = resolve(FE, "public/assets/map");
+const ROOT = resolve(FE, "..");
+const SHEET = resolve(ROOT, "asset/tilemap/mainlevbuild.png");
+const TILE_DIR = resolve(FE, "public/assets/tiles");
+const MAP_DIR = resolve(FE, "public/assets/map");
 
-// ── 규격 (03-GDD-CORE 8.1)
+const MAGICK = (() => {
+    for (const c of ["magick", "C:/Program Files/ImageMagick-7.1.2-Q16-HDRI/magick.exe", "/usr/bin/magick"]) {
+        try { execFileSync(c, ["-version"], { stdio: "ignore" }); return c; } catch { /* 다음 */ }
+    }
+    throw new Error("ImageMagick(magick)을 찾지 못했다");
+})();
+const magick = (a) => execFileSync(MAGICK, a, { stdio: ["ignore", "pipe", "pipe"] });
+
 const TILE = 16;
-const W = 100; // 1600 / 16
-const H = 75; // 1200 / 16
+const COLS = 10;
 
-// ── 타일 인덱스 (tools/build-assets.mjs 의 TILES 배열과 반드시 일치)
-const T_VOID = 0;
-const T_FLOOR = [1, 2, 3, 4, 5, 6]; // slab-a slab-b brick stone rough moss
-const T_WALL = 7;
-const GID = (i) => i + 1; // Tiled firstgid=1. 0은 빈 칸이다.
+// ── 타일 정의. 각 타일은 실제로 렌더해 눈으로 확인한 것만 쓴다.
+//    (1차에는 알파 점유 지도만 보고 좌표를 추측했다가 벽 조각을 바닥 격자로 잘못 넣었다)
+const T = [];
+const push = (name, x, y, solid = false) => (T.push({ name, x, y, solid }), T.length - 1);
+const rect = (name, x0, y0, w, h, solid) => {
+    const start = T.length;
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) push(name + r + c, x0 + c * TILE, y0 + r * TILE, solid);
+    return { start, w, h };
+};
 
-// ── 시드 고정 RNG (mulberry32). 같은 시드면 같은 맵이 나온다.
+const VOID = push("void", 80, 64, true); // 벽 너머의 검정
+
+// 바닥 — 계열별 [평면, 패턴A, 패턴B, 패턴C]. 평면을 주로 깐다.
+const FLOOR = {
+    warm: [push("f-warm-0", 736, 208), push("f-warm-1", 736, 272), push("f-warm-2", 736, 320), push("f-warm-3", 736, 368)],
+    teal: [push("f-teal-0", 832, 208), push("f-teal-1", 832, 272), push("f-teal-2", 832, 320), push("f-teal-3", 832, 368)],
+    green: [push("f-green-0", 928, 208), push("f-green-1", 928, 272), push("f-green-2", 928, 320), push("f-green-3", 928, 368)],
+};
+const MOSS = [push("moss-warm", 736, 416), push("moss-teal", 832, 416), push("moss-green", 928, 416)];
+
+// 벽 밴드 — 손상된 벽돌 3행 x 6열 변형. 레퍼런스대로 벽은 3타일 높이다.
+const WALL_TOP = [0, 1, 2, 3, 4, 5].map((i) => push("wt" + i, 272 + i * TILE, 272, true));
+const WALL_MID = [0, 1, 2, 3, 4, 5].map((i) => push("wm" + i, 272 + i * TILE, 288, true));
+const WALL_BOT = [0, 1, 2, 3, 4, 5].map((i) => push("wb" + i, 272 + i * TILE, 304, true));
+
+// 프리팹
+const ALCOVE = rect("alcove", 80, 272, 4, 3, true);  // 해골 안치 벽감. 벽 밴드(3타일)에 정확히 맞는다
+const GRATE = rect("grate", 496, 208, 4, 4, false);  // 금속 창살. 바닥 문양으로 쓴다(통행 가능)
+
+// ── 타일셋 이미지 조립 (COLS칸씩 가로로 붙인 뒤 세로로 이어붙인다)
+function buildTileset() {
+    mkdirSync(TILE_DIR, { recursive: true });
+    const tmp = resolve(TILE_DIR, "_tmp");
+    mkdirSync(tmp, { recursive: true });
+    const rows = Math.ceil(T.length / COLS);
+    const parts = [];
+    T.forEach((t, i) => {
+        const p = resolve(tmp, "t" + String(i).padStart(3, "0") + ".png");
+        magick([SHEET, "-crop", "16x16+" + t.x + "+" + t.y, "+repage", p]);
+        parts.push(p);
+    });
+    for (let i = T.length; i < rows * COLS; i++) {
+        const p = resolve(tmp, "t" + String(i).padStart(3, "0") + ".png");
+        magick(["-size", "16x16", "xc:none", p]);
+        parts.push(p);
+    }
+    const rowFiles = [];
+    for (let r = 0; r < rows; r++) {
+        const rp = resolve(tmp, "row" + r + ".png");
+        magick([...parts.slice(r * COLS, (r + 1) * COLS), "-background", "none", "+append", rp]);
+        rowFiles.push(rp);
+    }
+    const out = resolve(TILE_DIR, "tiles-main.png");
+    magick([...rowFiles, "-background", "none", "-append", out]);
+    rmSync(tmp, { recursive: true, force: true });
+    return { out, size: magick([out, "-format", "%wx%h", "info:"]).toString().trim(), rows };
+}
+
+// ── 맵 규격 (03-GDD 8.1)
+const W = 100, H = 75;
+const idx = (x, y) => y * W + x;
+const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
+
 function mulberry32(seed) {
     let a = seed >>> 0;
     return function () {
-        a |= 0;
-        a = (a + 0x6d2b79f5) | 0;
+        a |= 0; a = (a + 0x6d2b79f5) | 0;
         let t = Math.imul(a ^ (a >>> 15), 1 | a);
         t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
 }
-
-const SEED = Number(process.argv[2] ?? 20260810);
+const SEED = Number(process.argv[2] ?? 20260811);
 const rnd = mulberry32(SEED);
 const ri = (n) => Math.floor(rnd() * n);
 
-const idx = (x, y) => y * W + x;
+// region: 0=void 1=warm(중앙) 2=teal(모서리 묘실) 3=green(가장자리 띠)
+const region = new Array(W * H).fill(0);
+const floorAt = (x, y) => inb(x, y) && region[idx(x, y)] !== 0;
+const setReg = (x0, y0, w, h, r) => {
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if (inb(x, y)) region[idx(x, y)] = r;
+};
 
-// ── 1. ground 레이어: 전면 바닥. 패턴이 눈에 띄지 않게 가중치를 준다.
-//    slab 계열을 주로 깔고 rough/moss를 드물게 섞는다.
-const GROUND_WEIGHTS = [
-    [1, 34], // slab-a
-    [2, 30], // slab-b
-    [3, 16], // brick
-    [4, 12], // stone
-    [5, 5], // rough
-    [6, 3], // moss
-];
-const GROUND_TOTAL = GROUND_WEIGHTS.reduce((s, [, w]) => s + w, 0);
+// ── 레이아웃: 하나의 큰 투기장 + 규칙적 열주 + 모서리 묘실
+//    서바이버즈는 카이팅이 생명이라 미로가 아니라 넓은 홀이어야 한다.
+//    구조는 "랜덤 배치"가 아니라 대칭 격자로 만들어 건축물로 읽히게 한다.
+const AX = 14, AY = 10, AW = 72, AH = 55;
+setReg(AX, AY, AW, AH, 1);
+setReg(AX, AY, AW, 3, 3);                 // 위 가장자리 띠
+setReg(AX, AY + AH - 3, AW, 3, 3);        // 아래 가장자리 띠
+setReg(AX, AY, 3, AH, 3);                 // 좌
+setReg(AX + AW - 3, AY, 3, AH, 3);        // 우
+// 모서리 묘실 — 색으로 구역을 나눈다
+setReg(AX + 3, AY + 3, 16, 11, 2);
+setReg(AX + AW - 19, AY + 3, 16, 11, 2);
+setReg(AX + 3, AY + AH - 14, 16, 11, 2);
+setReg(AX + AW - 19, AY + AH - 14, 16, 11, 2);
 
-function pickFloor() {
-    let r = ri(GROUND_TOTAL);
-    for (const [t, w] of GROUND_WEIGHTS) {
-        if (r < w) return t;
-        r -= w;
+const SPAWN_T = { x: AX + Math.floor(AW / 2), y: AY + Math.floor(AH / 2) };
+
+// 열주 — 4x3 벽 블록을 대칭 격자에 놓는다. 스폰 반경 10타일은 비운다.
+const PILLARS = [];
+for (const px of [24, 38, 60, 74]) {
+    for (const py of [18, 36, 52]) {
+        if (Math.hypot(px + 2 - SPAWN_T.x, py + 1 - SPAWN_T.y) < 10) continue;
+        PILLARS.push([px, py]);
     }
-    return T_FLOOR[0];
 }
+for (const [px, py] of PILLARS) setReg(px, py, 4, 3, 0);
 
-const ground = new Array(W * H);
-for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) ground[idx(x, y)] = GID(pickFloor());
-}
-
-// ── 2. walls 레이어: 외곽 테두리 + 내부 기둥 블록
-//    0 = 빈 칸(통행 가능). 벽 타일만 GID를 넣는다.
+// ── 레이어 조립
+const GID = (i) => i + 1;
+const ground = new Array(W * H).fill(0);
 const walls = new Array(W * H).fill(0);
+const deco = new Array(W * H).fill(0);
+const objects = [];
 
-// 외곽 2타일 — 맵 밖으로 나가지 못하게 한다
-const BORDER = 2;
-for (let y = 0; y < H; y++) {
+const FAMILY = { 1: FLOOR.warm, 2: FLOOR.teal, 3: FLOOR.green };
+// 평면 타일을 80% 깐다. 패턴을 많이 섞으면 바닥이 노이즈로 보인다(1차 실패 원인).
+const pickFloor = (fam) => (rnd() < 0.8 ? fam[0] : fam[1 + ri(3)]);
+
+for (let y = 0; y < H; y++)
     for (let x = 0; x < W; x++) {
-        if (x < BORDER || y < BORDER || x >= W - BORDER || y >= H - BORDER) {
-            walls[idx(x, y)] = GID(T_WALL);
+        const r = region[idx(x, y)];
+        if (r) ground[idx(x, y)] = GID(pickFloor(FAMILY[r]));
+    }
+
+// 벽 밴드 — 바닥의 북쪽 경계 위로 3타일. 그 밖은 검정. 레퍼런스의 조립 규칙.
+for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+        if (floorAt(x, y)) continue;
+        const v = ri(6);
+        if (floorAt(x, y + 1)) walls[idx(x, y)] = GID(WALL_BOT[v]);
+        else if (floorAt(x, y + 2)) walls[idx(x, y)] = GID(WALL_MID[v]);
+        else if (floorAt(x, y + 3)) walls[idx(x, y)] = GID(WALL_TOP[v]);
+        // 남·좌·우 경계는 1타일 캡으로 마감한다. 이게 없으면 바닥이 허공에서 끊긴다.
+        else if (floorAt(x - 1, y) || floorAt(x + 1, y) || floorAt(x, y - 1)) walls[idx(x, y)] = GID(WALL_TOP[v]);
+        else walls[idx(x, y)] = GID(VOID);
+    }
+
+/** 벽 밴드(3타일)에 프리팹을 찍는다 */
+function stampWall(pf, x0, y0) {
+    for (let r = 0; r < pf.h; r++)
+        for (let c = 0; c < pf.w; c++) {
+            const x = x0 + c, y = y0 + r;
+            if (!inb(x, y) || floorAt(x, y)) return false;
         }
+    for (let r = 0; r < pf.h; r++)
+        for (let c = 0; c < pf.w; c++) walls[idx(x0 + c, y0 + r)] = GID(pf.start + r * pf.w + c);
+    return true;
+}
+
+// 벽면을 훑어 알코브를 규칙적으로 박고 그 사이에 횃불을 세운다.
+let alcoves = 0, torches = 0;
+for (let y = 0; y < H - 3; y++) {
+    let run = 0;
+    for (let x = 0; x < W; x++) {
+        const face = !floorAt(x, y) && floorAt(x, y + 3) && !floorAt(x, y + 1) && !floorAt(x, y + 2);
+        if (!face) { run = 0; continue; }
+        run++;
+        if (run % 12 === 6) { if (stampWall(ALCOVE, x - 1, y)) alcoves++; }
+        else if (run % 6 === 3) { objects.push({ type: "torch", x: x * TILE + 8, y: (y + 3) * TILE - 2 }); torches++; }
     }
 }
 
-// 플레이어 스폰 안전 구역 — 맵 중앙. 여기엔 기둥을 놓지 않는다.
-const SPAWN = { x: Math.floor(W / 2), y: Math.floor(H / 2), r: 9 };
-
-// 내부 기둥: 3x3 ~ 6x6 사각 블록. 서바이버즈는 시야가 생명이라 크게 만들지 않는다.
-const PILLARS = 38;
-let placed = 0;
-for (let attempt = 0; attempt < PILLARS * 12 && placed < PILLARS; attempt++) {
-    const w = 3 + ri(4);
-    const h = 3 + ri(4);
-    const x = BORDER + 2 + ri(W - 2 * BORDER - 4 - w);
-    const y = BORDER + 2 + ri(H - 2 * BORDER - 4 - h);
-
-    // 스폰 안전 구역과 겹치면 버린다
-    const cx = x + w / 2;
-    const cy = y + h / 2;
-    if (Math.hypot(cx - SPAWN.x, cy - SPAWN.y) < SPAWN.r + Math.max(w, h)) continue;
-
-    // 기존 기둥과 최소 3타일 간격 — 붙으면 통로가 막힌다
-    let clash = false;
-    for (let yy = y - 3; yy < y + h + 3 && !clash; yy++) {
-        for (let xx = x - 3; xx < x + w + 3; xx++) {
-            if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
-            if (walls[idx(xx, yy)] !== 0 && !(xx < BORDER || yy < BORDER || xx >= W - BORDER || yy >= H - BORDER)) {
-                clash = true;
-                break;
-            }
-        }
-    }
-    if (clash) continue;
-
-    for (let yy = y; yy < y + h; yy++) {
-        for (let xx = x; xx < x + w; xx++) walls[idx(xx, yy)] = GID(T_WALL);
-    }
-    placed++;
+/** 바닥 문양 */
+function stampFloor(pf, x0, y0) {
+    for (let r = 0; r < pf.h; r++) for (let c = 0; c < pf.w; c++) if (!floorAt(x0 + c, y0 + r)) return false;
+    for (let r = 0; r < pf.h; r++)
+        for (let c = 0; c < pf.w; c++) deco[idx(x0 + c, y0 + r)] = GID(pf.start + r * pf.w + c);
+    return true;
 }
+let grates = 0;
+const GRATE_AT = [
+    [SPAWN_T.x - 2, SPAWN_T.y - 2],
+    [AX + 9, AY + 6], [AX + AW - 13, AY + 6],
+    [AX + 9, AY + AH - 10], [AX + AW - 13, AY + AH - 10],
+];
+for (const [gx, gy] of GRATE_AT) if (stampFloor(GRATE, gx, gy)) grates++;
 
-// ── 3. Tiled JSON 출력 (표준 형식. Tiled 에디터로 열어 편집 가능)
-const layer = (id, name, data) => ({
-    data,
-    height: H,
-    id,
-    name,
-    opacity: 1,
-    type: "tilelayer",
-    visible: true,
-    width: W,
-    x: 0,
-    y: 0,
+// 이끼 — 벽에 붙은 자리에만 얇게. 넓게 뿌리면 바닥이 지저분해진다.
+let mossCells = 0;
+const nearWall = (x, y) => [[0,-1],[0,1],[-1,0],[1,0]].some(([dx,dy]) => inb(x+dx,y+dy) && !floorAt(x+dx,y+dy));
+for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++)
+        if (floorAt(x, y) && deco[idx(x, y)] === 0 && nearWall(x, y) && rnd() < 0.35) {
+            deco[idx(x, y)] = GID(MOSS[region[idx(x, y)] - 1] ?? MOSS[0]); mossCells++;
+        }
+
+const SPAWN = { x: SPAWN_T.x * TILE + 8, y: SPAWN_T.y * TILE + 8 };
+objects.push({ type: "spawn", x: SPAWN.x, y: SPAWN.y });
+
+// ── Tiled JSON 출력
+const ts = buildTileset();
+const tileLayer = (id, name, data) => ({
+    data, height: H, id, name, opacity: 1, type: "tilelayer", visible: true, width: W, x: 0, y: 0,
 });
 
 const map = {
-    compressionlevel: -1,
-    height: H,
-    infinite: false,
-    layers: [layer(1, "ground", ground), layer(2, "walls", walls)],
-    nextlayerid: 3,
-    nextobjectid: 1,
-    orientation: "orthogonal",
-    renderorder: "right-down",
-    tiledversion: "1.10.2",
-    tileheight: TILE,
-    tilesets: [
+    compressionlevel: -1, height: H, infinite: false,
+    layers: [
+        tileLayer(1, "ground", ground),
+        tileLayer(2, "deco", deco),
+        tileLayer(3, "walls", walls),
         {
-            columns: 8,
-            firstgid: 1,
-            image: "../tiles/tiles-main.png",
-            imageheight: TILE,
-            imagewidth: 128,
-            margin: 0,
-            name: "tiles-main",
-            spacing: 0,
-            tilecount: 8,
-            tileheight: TILE,
-            tilewidth: TILE,
+            draworder: "topdown", id: 4, name: "objects", opacity: 1, type: "objectgroup",
+            visible: true, x: 0, y: 0,
+            objects: objects.map((o, i) => ({
+                id: i + 1, name: o.type, type: o.type, point: true,
+                x: o.x, y: o.y, width: 0, height: 0, rotation: 0, visible: true,
+            })),
         },
     ],
-    tilewidth: TILE,
-    type: "map",
-    version: "1.10",
-    width: W,
+    nextlayerid: 5, nextobjectid: objects.length + 1,
+    orientation: "orthogonal", renderorder: "right-down", tiledversion: "1.10.2",
+    tileheight: TILE,
+    tilesets: [{
+        columns: COLS, firstgid: 1, image: "../tiles/tiles-main.png",
+        imageheight: ts.rows * TILE, imagewidth: COLS * TILE, margin: 0,
+        name: "tiles-main", spacing: 0, tilecount: ts.rows * COLS, tileheight: TILE, tilewidth: TILE,
+    }],
+    tilewidth: TILE, type: "map", version: "1.10", width: W,
     properties: [
-        { name: "spawnX", type: "int", value: SPAWN.x * TILE + TILE / 2 },
-        { name: "spawnY", type: "int", value: SPAWN.y * TILE + TILE / 2 },
+        { name: "spawnX", type: "int", value: SPAWN.x },
+        { name: "spawnY", type: "int", value: SPAWN.y },
         { name: "seed", type: "int", value: SEED },
     ],
 };
 
-mkdirSync(OUT_DIR, { recursive: true });
-const outFile = resolve(OUT_DIR, "crypt.json");
-writeFileSync(outFile, JSON.stringify(map));
+mkdirSync(MAP_DIR, { recursive: true });
+writeFileSync(resolve(MAP_DIR, "crypt.json"), JSON.stringify(map));
 
-// ── 검산 — 눈으로 못 보는 산출물이므로 숫자로 확인한다
-const wallCount = walls.filter((v) => v !== 0).length;
-const borderCount = W * H - (W - 2 * BORDER) * (H - 2 * BORDER);
-const innerWalls = wallCount - borderCount;
-const walkable = W * H - wallCount;
-
-console.log("맵 생성 완료");
-console.log("  파일: " + outFile);
-console.log("  시드: " + SEED);
-console.log("  크기: " + W + "x" + H + " 타일 = " + W * TILE + "x" + H * TILE + "px");
-console.log("  스폰: (" + SPAWN.x * TILE + ", " + SPAWN.y * TILE + ") 안전반경 " + SPAWN.r + "타일");
-console.log("  기둥: " + placed + "개 배치 (목표 " + PILLARS + ")");
-console.log("  벽 타일: " + wallCount + " (외곽 " + borderCount + " + 내부 " + innerWalls + ")");
-console.log("  통행 가능: " + walkable + " 타일 (" + Math.round((walkable / (W * H)) * 100) + "%)");
-if (walkable / (W * H) < 0.75) console.warn("  ! 통행 가능 면적이 75% 미만이다. 기둥이 너무 많다");
+const walkable = region.filter((v) => v !== 0).length;
+const band = walls.filter((v) => v !== 0 && v !== GID(VOID)).length;
+console.log("타일셋 tiles-main.png (" + ts.size + ") · " + T.length + "타일 / " + COLS + "x" + ts.rows);
+console.log("맵 crypt.json · " + W + "x" + H + " 타일 = " + W * TILE + "x" + H * TILE + "px · 시드 " + SEED);
+console.log("  레이어 4종: ground / deco / walls / objects (정본 8.1)");
+console.log("  통행 가능 " + walkable + "타일 (" + Math.round((walkable / (W * H)) * 100) + "%) · 열주 " + PILLARS.length + "개");
+console.log("  벽면 " + band + "타일 · 알코브 " + alcoves + " · 횃불 " + torches + " · 바닥문양 " + grates + " · 이끼 " + mossCells);
+console.log("  스폰 (" + SPAWN.x + ", " + SPAWN.y + ")");
+if (walkable / (W * H) < 0.35) console.warn("  ! 통행 면적 부족 — 카이팅 공간이 좁다");
