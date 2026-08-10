@@ -31,7 +31,7 @@
 |---|---|
 | **충돌 판정** | 이미지에는 충돌 정보가 없다 → **흑백 마스크 이미지를 한 장 더 받는다**(§2). 이게 이 문서의 핵심 요구사항이다 |
 | **수정 비용** | 타일맵은 한 칸만 고칠 수 있지만 이미지는 **전체 재생성**이다. 확정 후 잘 바꾸지 않는다는 전제로 간다 |
-| **스테이지 2 재활용** | 정본 8.2의 "같은 타일셋 + 색조 변경으로 재활용"이 **불가능해진다.** 스테이지 2는 이미 컷 후보 2순위이므로 감수한다 |
+| **스테이지 2 재활용** | ⚠ **2026-08-11 정정 — 처음 쓴 "불가능해진다"는 절반이 틀렸다.** 색조 변경 재활용은 오히려 **더 쉬워졌다**(이미지 1장에 `setTint` 한 줄. 타일맵은 타일마다 처리해야 했다). 비싸진 것은 **레이아웃이 다른 맵**뿐이다. 상세: §11 |
 | **메모리** | 1600x1200 RGBA = 약 7.7MB VRAM. 정본 성능 목표(적 150체 60fps) 안에서 허용 범위지만 **저사양 기기에서 1차 감시 대상**이다 |
 | **애니메이션** | 횃불·촛불은 이미지에 구워 넣으면 멈춘다 → **애니메이션 소품은 이미지에 넣지 않고 스프라이트로 얹는다**(§3) |
 
@@ -60,21 +60,101 @@ FE/public/assets/map/map-crypt-mask.png   빌드 시 충돌 격자로 변환 후
 
 ## 2. ★ 충돌 마스크 규격 (M-2) — 가장 중요
 
-M-1과 **픽셀 단위로 같은 구도**여야 한다. 같은 장면을 두 가지로 렌더한다고 생각하면 된다.
+> ⚠ **2026-08-11 개정 — 1차 마스크가 왜 틀렸는가**
+>
+> 1차 의뢰에서 마스크는 **§4 좌표표와 픽셀 단위로 정확히 일치**하게 나왔다(x=96, y=128에서 정확히 흰색 시작).
+> 규격대로였지만 **쓸 수 없었다.** 그림의 벽이 좌표표 경계보다 **약 27px(1.7타일) 안쪽까지** 그려졌기 때문이다.
+> 결과: 플레이어가 납골 벽감 한가운데까지 걸어 들어간다.
+>
+> **원인은 이 문서다.** §4를 "통행 가능 영역"이라고만 주고 **벽을 그 바깥에 그리라고 명시하지 않았으며**,
+> 마스크를 **완성된 그림이 아니라 좌표표에서 뽑아도 되는 것처럼** 읽히게 썼다.
+>
+> **개정 원칙 두 가지**
+> 1. **마스크는 좌표표가 아니라 완성된 그림에서 뽑는다.** 좌표표는 구도 지시용이지 마스크의 근거가 아니다.
+> 2. **마스크는 본체와 분리해 2단계로 의뢰한다.** 본체를 먼저 확정하고, 그 이미지를 첨부해 마스크만 따로 받는다.
+
+### 2.1 판정 규칙 — 기준은 "플레이어의 발이 여기 닿아도 되는가"
+
+| 대상 | 색 | 근거 |
+|---|---|---|
+| 눈에 보이는 바닥면(석재 타일) | **흰색** | |
+| **바닥에 놓인 석관·항아리·유골·잔해·상자** | **흰색** | ★ 아래 설명 |
+| 바닥 문양(금속 격자·핏자국·이끼·균열) | **흰색** | 그림일 뿐 통행을 막지 않는다 |
+| **벽 — 상단 갓돌부터 하단 갓돌까지 전부** | **검정** | 벽 그림 위에 플레이어가 서면 안 된다 |
+| 벽에 붙은 것(벽감·창살문·횃불 브래킷) | **검정** | 벽의 일부다 |
+| 기둥·독립 구조물 | **검정** | |
+| 아치 통로 안쪽의 검은 부분 | **검정** | 지나갈 수 없는 어둠이다 |
+| 맵 바깥 여백 | **검정** | |
+
+> ★ **왜 석관과 항아리가 통행 가능인가 — 1차 규격에서 뒤집힌 항목**
+> `06-TECH-DESIGN.md` 998행: **"적 ↔ 벽 타일레이어 — 쓰지 않는다. 적은 벽을 통과한다.
+> 150체 타일 충돌은 예산 밖."**
+> 즉 **적은 장애물을 통과하는데 플레이어만 막힌다.** 이 비대칭 때문에 작은 장애물은
+> 전술적 이득이 0이고 플레이어에게만 손해다. 카이팅 중 석관에 걸려 멈추면 그대로 포위당한다.
+> 서바이버즈류에서 **걸림(snagging)은 가장 나쁜 조작감**이고, 이 장르의 맵이 개활지인 이유가 이것이다.
+> **막는 것은 방의 경계를 이루는 큰 벽뿐이다.**
+
+**벽의 검정 범위:** 벽은 위에서 아래로 [상단 갓돌 → 벽돌 몸통 → 하단 갓돌] 순서로 그려져 있다.
+**하단 갓돌까지 전부 검정**이고, 그 바로 아래 첫 바닥 픽셀부터 흰색이다.
+
+### 2.2 기술 규격
 
 | 규칙 | 값 |
 |---|---|
-| 통행 가능(바닥) | **순백 `#FFFFFF`** |
-| 통행 불가(벽·기둥·구조물·맵 밖) | **순흑 `#000000`** |
-| 중간색 | **금지.** 안티에일리어싱 없이 두 색만 쓴다 |
-| 정렬 | 경계는 **16px 격자**에 맞춘다 (게임이 16px 단위로 읽는다) |
+| 색 | **순백 `#FFFFFF` 과 순흑 `#000000` 두 가지만.** 중간색·안티에일리어싱 금지 |
+| 크기 | M-1과 **완전히 동일**하게 1600 × 1200 |
+| 정렬 | 경계를 **16px 격자**에 맞춘다. 애매하면 **벽 쪽으로 반올림**한다(플레이어가 벽에 겹치는 것보다 낫다) |
 | 알파 | 불투명. 투명 픽셀 없음 |
 
-**판정 기준:** 플레이어가 **서 있을 수 있으면 흰색**이다.
-벽의 그림자·바닥에 그려진 장식·바닥 문양은 **흰색**(통행 가능)이다.
-기둥·벽·석관처럼 **몸이 통과할 수 없는 것만 검정**이다.
+### 2.3 ★ 마스크 단독 재의뢰 프롬프트 (그대로 복사 + 완성된 맵 이미지 첨부)
 
----
+```
+=== COLLISION MASK FOR AN EXISTING MAP IMAGE ===
+
+I am attaching a finished top-down pixel-art crypt map, 1600 x 1200 pixels.
+DO NOT redraw, restyle, or regenerate the map. The artwork is final.
+
+TASK
+Produce ONE new image, exactly 1600 x 1200 pixels, that is a COLLISION MASK of the
+attached image. It must be derived from what is actually drawn in the attached picture —
+not from any coordinate list, not from an idealised floor plan.
+
+Think of it as tracing: lay the attached image underneath, and paint over it.
+
+TWO COLOURS ONLY
+  #FFFFFF pure white  = the player character may stand on this pixel
+  #000000 pure black  = the player cannot enter this pixel
+No grey. No anti-aliasing. No gradients. No texture. Exactly two unique RGB values.
+
+WHITE — paint these white
+  - Every visible stone floor surface
+  - Sarcophagi, coffins, urns, pots, crates, skeletal remains and rubble that SIT ON the floor
+  - Floor decoration: metal floor grates, blood stains, moss patches, cracks, floor medallions
+  (These are walkable on purpose. Enemies in this game pass through obstacles, so any small
+   obstacle would only block the player and would feel bad. Only room walls block movement.)
+
+BLACK — paint these black
+  - The wall bands that enclose each room, over their FULL height:
+    from the light stone coping ledge on top, through the brick body with burial niches,
+    down to and including the light stone coping ledge at the bottom.
+    White begins at the first floor pixel BELOW the lower coping ledge.
+  - Anything mounted on a wall: burial niche grids, barred cell doors, torch brackets
+  - Free-standing pillars and structures
+  - The dark interior of archways and doorways
+  - All area outside the map
+
+GEOMETRY
+  - Snap every boundary to the 16-pixel grid.
+  - When a boundary falls between grid lines, round TOWARD THE WALL, so that the white
+    region is slightly smaller rather than overlapping the wall art.
+  - Do not invent walls that are not in the attached image.
+  - Do not remove walls that are in the attached image.
+  - Every white region must stay connected to its neighbours exactly as the corridors in
+    the attached image connect them. Do not seal any room.
+
+OUTPUT
+  A single PNG, 1600 x 1200, two colours, no transparency.
+```
 
 ## 3. 애니메이션 소품은 이미지에 넣지 않는다
 
@@ -136,6 +216,12 @@ M-1과 **픽셀 단위로 같은 구도**여야 한다. 같은 장면을 두 가
 | 성소↔회랑좌 연결 | 448 | 560 | 224 | 96 |
 | 성소↔회랑우 연결 | 928 | 560 | 224 | 96 |
 
+> ⚠ **★ 1차에서 빠져 사고가 난 지시 — 반드시 지킬 것**
+> **이 사각형은 "플레이어가 실제로 걸어다니는 바닥"이다. 벽은 이 사각형 바깥에 그린다.**
+> 벽 그림이 사각형 안쪽을 침범하면 플레이어가 벽 속으로 걸어 들어간다.
+> 1차 의뢰에서 벽이 약 27px(1.7타일) 안쪽까지 그려져 마스크를 다시 만들어야 했다.
+> 벽의 **하단 갓돌까지 전부** 사각형 바깥이어야 하고, 사각형의 첫 픽셀부터 바닥이어야 한다.
+>
 > **이 사각형들의 합집합이 흰색(통행 가능)이고 나머지는 전부 검정이다.**
 > 홀 안에 기둥을 세우는 것은 자유이나, **한 변이 96px을 넘는 기둥은 놓지 않는다**(적 무리에 갇힌다).
 > 기둥을 세우면 그 자리는 마스크에서 검정이 된다.
@@ -235,16 +321,28 @@ CONSTRAINTS
 - Keep corridors completely clear of obstacles.
 - Every walkable rectangle must connect to its neighbours — no sealed rooms.
 
+WALL PLACEMENT (critical)
+The rectangles listed above are the FLOOR the player actually walks on.
+Draw every wall OUTSIDE those rectangles. A wall must never intrude into a listed rectangle,
+including its lower stone coping ledge. The first pixel of each rectangle is already floor.
+
 IMAGE B — COLLISION MASK
-Same composition, same 1600x1200 canvas, but rendered as a hard two-colour mask:
-  PURE WHITE #FFFFFF = the player can stand here (all floor, including areas that merely
-                        have decoration painted on them, and the base of walls that is floor)
-  PURE BLACK #000000 = the player cannot pass (walls, pillars, sarcophagi, urns, and all
-                        area outside the map)
-No grey, no anti-aliasing, no gradients, no texture. Only two colours.
-All boundaries must land on the 16-pixel grid.
-The white regions must exactly match the walkable rectangles listed above, minus any solid
-props you drew inside the halls.
+Derive it from what you actually DREW in image A, not from the rectangle list.
+Same 1600x1200 canvas, rendered as a hard two-colour mask:
+  PURE WHITE #FFFFFF = the player may stand here
+      - all visible stone floor
+      - sarcophagi, urns, crates, bones and rubble RESTING ON the floor
+      - floor decoration: grates, blood stains, moss, cracks, medallions
+        (these are deliberately walkable: enemies in this game pass through obstacles,
+         so a small obstacle would block only the player and would feel bad)
+  PURE BLACK #000000 = the player cannot enter
+      - the wall bands over their full height, from the upper coping ledge through the
+        brick body down to and including the lower coping ledge
+      - anything mounted on a wall: niche grids, barred doors, torch brackets
+      - free-standing pillars, the dark interior of archways, and all area outside the map
+No grey, no anti-aliasing, no gradients, no texture. Exactly two unique RGB values.
+Snap all boundaries to the 16-pixel grid; when in doubt round TOWARD the wall so the white
+region is slightly smaller rather than overlapping wall art.
 
 TECHNICAL
 - Exactly 1600 x 1200 pixels. Not 1599, not 1601.
@@ -289,12 +387,16 @@ grey placeholder blocks, unfinished areas, sealed rooms, maze, narrow corridors
 - [ ] 텍스트·워터마크·격자선이 없다
 - [ ] 픽셀 격자가 균일하다 (한 부분만 뭉개지지 않음)
 
-**M-2 (충돌 마스크)**
+**M-2 (충돌 마스크)** — 2026-08-11 개정
 - [ ] 정확히 1600 × 1200 px, M-1과 같은 구도
-- [ ] **흰색과 검정 두 색만** 쓰였다 (중간색 0개)
+- [ ] **흰색과 검정 두 색만** 쓰였다 (중간색 0개) — `magick mask.png -format "%k" info:` 가 **2**
 - [ ] 경계가 16px 격자에 맞는다
-- [ ] 흰색 영역이 §4의 13개 사각형과 일치한다
-- [ ] 마스크를 M-1 위에 반투명으로 겹쳤을 때 벽 위치가 어긋나지 않는다 ← **가장 중요**
+- [ ] ⛔ **흰색 영역이 §4 사각형과 "일치"하는지 보지 않는다.** 1차 실패가 바로 이 검사를 통과했다.
+      **그림 위에 겹쳐서 벽과 맞는지**를 본다
+- [ ] **벽 그림 전체(상단 갓돌~하단 갓돌)가 검정**이다. 흰색은 하단 갓돌 아래 첫 바닥 픽셀부터 시작한다 ← **가장 중요**
+- [ ] **석관·항아리·유골·바닥 격자·핏자국이 흰색**이다 (통행 가능이어야 한다 — §2.1 근거)
+- [ ] 아치 통로 안쪽의 검은 부분이 검정이다
+- [ ] 방이 봉인되지 않았다 — 회랑이 그림과 같은 위치에서 이어진다
 
 **좌표 목록**
 - [ ] torch / candle / solid 좌표가 텍스트로 함께 왔다
@@ -326,7 +428,89 @@ grey placeholder blocks, unfinished areas, sealed rooms, maze, narrow corridors
 
 ---
 
-## 11. 관련 문서
+## 11. 추가 맵 의뢰 조건
+
+> 질문: "맵은 1개면 충분한가?"
+> **7일 출시 기준으로는 1개가 맞다.** 다만 알고 가야 할 약점과, 늘릴 때의 조건을 여기 못박는다.
+
+### 11.1 왜 1개인가 — 그리고 무엇이 약점인가
+
+정본은 스테이지 2를 **컷 사다리 1순위**(`16-RISKS` §2)에 뒀고, `01-CONCEPT` §3은
+"절차적 던전 생성, 다층 스테이지"를 **명시적 배제 항목**으로 적었다. 맵을 늘리는 건 원래 계획에 없다.
+
+**그러나 실제 플레이 분량을 계산하면 약점이 드러난다.**
+`README` 검산표 기준 클리어당 골드 1,318 → 성소 만렙까지 **9~11회 클리어**.
+즉 플레이어는 같은 맵을 **10회 이상, 누적 한 시간 넘게** 본다.
+
+서바이버즈류의 리플레이성 주축은 맵이 아니라 빌드(본작은 PACT)이므로 치명적이지는 않다.
+**하지만 "알고 가는 약점"이지 "문제 없음"이 아니다.** 판정은 §11.4의 게이트로 한다.
+
+### 11.2 변형 두 종류와 실제 비용
+
+| 변형 | 방법 | 생성 의뢰 | 코드 | 언제 쓸 수 있나 |
+|---|---|---|---|---|
+| **색조 변형** | 같은 이미지에 `setTint` | **0회** | 한 줄 | 즉시. 런 중 페이즈 전환에도 쓴다(§11.5) |
+| **레이아웃 변형** | 새 맵 이미지 + 새 마스크 + 새 좌표 목록 | **1사이클** | 매니페스트 추가 | 첫 장이 수용 기준을 통과한 뒤 |
+
+레이아웃 변형 1개의 비용 = **의뢰 → 수령 → 규격 검증 → 마스크 대조 → 충돌 변환** 왕복 1회.
+프롬프트는 이미 있으므로 **§4 좌표표만 갈아끼우면 된다.**
+
+### 11.3 ★ 지금 의뢰에서 같이 받아둘 것 (조건부)
+
+**조건: M-1과 M-2가 §8 수용 기준을 한 번에 통과했을 때만.**
+
+통과했다면 **같은 세션에서 레이아웃 변형 1~2개를 추가로 요청**한다.
+프롬프트가 이미 맥락에 있어 재설명 비용이 없고, 산출물은 `store/_raw/`에 보관만 해둔다.
+Day 7 이후 스테이지 2를 붙일 때 생성 왕복이 통째로 사라진다.
+
+> ⚠ **첫 장이 재시도에 들어갔다면 변형을 요청하지 않는다.**
+> 기준을 못 맞춘 상태에서 장수를 늘리면 재시도 대상만 배로 늘어난다.
+> Day 6은 재시도 전용일이고 Day 7은 의뢰 금지일이다(`15-IMAGE-PROMPTS-FOR-CODEX.md` §5.1).
+
+### 11.4 레이아웃 변형에서 바꾸는 것 / 절대 바꾸지 않는 것
+
+**바꾸지 않는다 (바꾸면 게임이 깨지거나 코드를 고쳐야 한다)**
+- 캔버스 **1600 × 1200**, 16px 격자 정렬
+- 팔레트, 탑다운 벽 표현 규칙(갓돌·몸통·갓돌)
+- 마스크 규격 — 두 색만, 16px 정렬
+- 스폰 지점 반경 **144px** 무장애물
+- 홀 한 변 **최소 320px**, 회랑 폭 **최소 192px** (적 150체 카이팅 하한)
+- 홀 안 구조물 한 변 **96px 이하**
+
+**바꾼다 — §4 좌표표뿐이다.**
+
+| 변형안 | 구조 | 성격 |
+|---|---|---|
+| **A. 십자형** | 중앙 대형 홀 1개 + 4방향 짧은 팔 | 개활지 위주. 카이팅이 가장 쉽다. **밸런스 기준선으로 삼기 좋다** |
+| **B. 회랑 순환형** | 가운데를 막고 도넛형 회랑 | 원형 카이팅 강제. 난이도가 올라간다. 스테이지 2 후보 |
+
+### 11.5 런 중 색조 전환 — 거의 공짜인 변화 수단
+
+정본 §11의 **90초 페이즈 전환**에 맞춰 맵 이미지에 tint를 건다. 생성 의뢰 0회, 코드 몇 줄이다.
+
+| 페이즈 | 시각 | tint | 의도 |
+|---|---|---|---|
+| 1 | 0:00~1:30 | 없음 (`0xffffff`) | 기준 |
+| 2 | 1:30~3:00 | `0xc9b8c4` | 미묘하게 차가워진다 |
+| 3 | 3:00~4:30 | `0xb89aa4` | 심홍이 스며든다 |
+| 4 | 4:30~6:00 | `0xa8848c` | 새벽이 가까워진다 |
+
+> ⚠ tint는 **곱연산**이라 원본보다 밝아지지 않는다. 팔레트 밖으로 나갈 위험이 없다.
+> 다만 **너무 세게 걸면 바닥과 벽의 명도차가 무너져 벽이 안 보인다** — 이건 이미 겪은 실패다.
+> 값을 바꾼 뒤 반드시 스크린샷으로 벽 시인성을 재확인할 것.
+
+### 11.6 판정 시점
+
+| 시점 | 판정 |
+|---|---|
+| **Day 4 종료** | 각성 Go/No-Go 실패 → **맵 이야기는 꺼내지 않는다.** PACT 튜닝에 전부 쓴다 |
+| **Day 5 종료** | 보스·루프 완결 성공 + 버퍼 남음 → §11.5 색조 전환만 붙인다 (30분) |
+| **Day 6** | 재시도 전용일. **신규 맵 의뢰 금지** |
+| **Day 7 이후** | 보관해 둔 레이아웃 변형으로 스테이지 2 착수 |
+
+---
+
+## 12. 관련 문서
 
 - `15-IMAGE-PROMPTS-FOR-CODEX.md` — A-01~A-15 (아이콘·UI·인장 등). 공통 스타일 블록은 그쪽 1.3
 - `03-GDD-CORE.md` 8.1 — 맵 규격. **제작 방식이 Tiled에서 이미지로 바뀐 것을 이 문서가 대체한다**
