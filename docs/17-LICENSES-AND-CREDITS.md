@@ -11,6 +11,53 @@
 
 ---
 
+## 0. 2026-08-11 재확인 — itch 원문 직접 조회 결과 (이 절이 최신 판정이다)
+
+수익화(보상형 광고 + IAP) 전환이 확정되어 전 에셋의 라이선스를 **itch 페이지 원문으로** 다시 확인했다.
+이전 판정 중 2건이 과도하게 보수적이었고, 그 결과 쓸 수 있는 에셋을 버릴 뻔했다.
+
+| 팩 | 이전 판정 | **재확인 결과** | 근거 |
+|---|---|---|---|
+| 적 스프라이트 (DeepDiveGameStudio Basic ×10계열 150종) | 🟨 조건부 | 🟩 **상업 사용 가능** | 전 티어 라이선스 문구 동일. 티어 차이는 **내용물 수량뿐**(Basic 15종 / Supporter $2+ 10종 추가 / Premium $4+ 15종 추가) |
+| 투사체 (BDragon1727 Fire Pixel Bullet 16x16) | 🟥 확인 필요 | 🟩 **상업 사용 가능 (기여 조건)** | "If you will be using on a commercial game, please contribute (any value)" — 금액 제한 없음 |
+| Raven Fantasy Icons | 🟥 최대 리스크 | 🟨 **구매 여부에 달림** | 무료 티어는 수익화 불가. 동봉 `Special Note to the Dev.txt` 에 **"thank you for your purchase"** 라고 적혀 있어 구매분일 가능성이 높다 |
+| pixel items0~6 (`asset/item/`) | 🟥 확인 불가 | 🟨 **출처 미상 유지** | 제작자·라이선스 단서 전무. 검색으로도 특정 불가 |
+
+### 원문 인용
+
+**DeepDiveGameStudio** — https://deepdivegamestudio.itch.io/undead-asset-pack
+> 허용: "Use in commercial and non-commercial video games and personal projects" / "Edit the assets as much as you like for use in projects"
+> 금지: "Resell, repackage or redistribute the assets in original or modified form" / "Include these assets in game making tools, code templates, or NFT/crypto projects"
+
+광고·IAP 를 명시적으로 언급하지는 않는다. "commercial video games" 에 포함되는 것으로 읽는다.
+
+**BDragon1727** — https://bdragon1727.itch.io/fire-pixel-bullet-16x16
+> "Free to use on non-commercial games, please leave comments and reviews"
+> **"If you will be using on a commercial game, please contribute (any value)"**
+> "Modify as desired" / 금지: "Resell / redistribute this asset"
+
+→ **실행 과제:** itch 페이지에서 임의 금액 기여 후 영수증 보관. 금액 제한이 없으므로 비용 리스크는 사실상 0이다.
+
+**Clockwork Raven Studios** — https://clockworkraven.itch.io/raven-fantasy-icons
+> 무료: "Personal use includes any projects or game released for free with no microtransactions and/or paid advertisement/ad."
+> 프리미엄($35+): "This asset can be used in any project, even commercial and physical(print or tabletop) ones"
+
+동봉된 `asset/icons/Special Note to the Dev.txt` 에는 **라이선스 조항이 한 줄도 없다** — 감사 인사뿐이다.
+다만 그 본문이 "thank you for your **purchase**" 로 시작한다. 폴더명은 `Free - Raven Fantasy Icons` 이라
+**폴더명과 동봉 문구가 서로 다른 것을 가리킨다.**
+
+→ **실행 과제:** itch 구매 내역을 확인해 프리미엄 구매분이면 영수증을 보관한다.
+무료 다운로드분이었다면 $35 결제로 즉시 해소된다. 8,000+ 아이콘의 상업 사용권이 $35 라면
+6개월 프로젝트에서 가장 값싼 리스크 제거다.
+
+### 판단 원칙
+동봉 파일에 라이선스가 없다고 해서 "사용 불가"가 아니다. **itch 상품 페이지가 라이선스의 소재지**다.
+반대로 동봉 파일이 있어도 페이지 조항이 더 좁으면 좁은 쪽을 따른다.
+출처를 특정할 수 없는 팩(pixel items)만이 진짜 위험이다 — 권리자를 모르면 허락을 구할 대상도 없다.
+
+---
+
+
 ## 0. 조사 범위와 방법
 
 - 대상: `asset/` 전체 **7,846 파일 / 128MB** (bgm 21 / bosses 162 / character 18 / effect 273 / fonts 1 / icons 6,581 / item 7 / monsters 481 / npcs 267 / projectile 9 / tilemap 26)
