@@ -24,6 +24,8 @@ const MAX_ZONES = 12;   // W4 장판 최대 수 (Lv5 5곳 x 지속 1.8s / 쿨 2.
 const MAX_ORBS = 300;
 const PLAYER_IFRAME = 400; // ms. 정본 05-COMBAT 1
 const ORB_MAGNET2 = 48 * 48;
+const ORB_MERGE_THRESHOLD = 200; // 이 수를 넘으면 병합한다 (T302)
+const ORB_MERGE_CELL = 24;       // 병합 격자 크기(px). 시각적으로 겹쳐 보이는 거리
 
 export class CombatSystem {
     constructor(scene, player, spawn, playerSystem, stats, pact) {
@@ -364,7 +366,38 @@ export class CombatSystem {
         o.value = value;
     }
 
+    /**
+     * 오브가 너무 많으면 근접한 것끼리 합친다. (T302)
+     *
+     * ★ 왜 필요한가: 오브는 자석 반경 밖에서는 그냥 서 있는다. 후반 페이즈에
+     *   초당 20체가 죽는데 플레이어가 지나가지 않은 구역의 오브는 계속 쌓인다.
+     *   300개를 넘기면 updateOrbs 의 거리 계산만으로 프레임을 갉아먹고,
+     *   화면에는 청록 점이 뭉개진 얼룩으로 보인다.
+     * ★ EXP 총량은 보존한다 — 병합으로 손해를 보면 플레이어가 알아채지 못하는
+     *   방식으로 성장이 느려진다. 가장 나쁜 종류의 버그다.
+     */
+    mergeOrbs(dt) {
+        // 0.5s 간격. 흩어져 있어 병합할 게 없는 상태에서도 임계를 넘으면
+        // 매 프레임 Map을 새로 만들게 되므로 호출 자체를 눌러야 한다.
+        this.mergeTimer = (this.mergeTimer ?? 0) - dt;
+        if (this.mergeTimer > 0) return;
+        this.mergeTimer = 0.5;
+        const list = this.orbs.active;
+        if (list.length <= ORB_MERGE_THRESHOLD) return;
+        const cells = new Map();
+        for (let i = list.length - 1; i >= 0; i--) {
+            const o = list[i];
+            const key = ((o.x / ORB_MERGE_CELL) | 0) + "," + ((o.y / ORB_MERGE_CELL) | 0);
+            const head = cells.get(key);
+            if (!head) { cells.set(key, o); continue; }
+            head.value += o.value;
+            o.setVisible(false).setPosition(-999, -999);
+            this.orbs.release(o);
+        }
+    }
+
     updateOrbs(dt) {
+        this.mergeOrbs(dt);
         const list = this.orbs.active;
         for (let i = list.length - 1; i >= 0; i--) {
             const o = list[i];
@@ -409,6 +442,7 @@ export class CombatSystem {
         EventBus.emit(EVENTS.RUN_LEVELUP, {
             level: this.level,
             cards,
+            nocturneLine: this.pact.lastLine,
             canSkip: true,
             humanity: this.pact.humanity,
             rerollLeft: this.pact.rerollLeft,

@@ -8,6 +8,7 @@
  */
 import tollsData from "@/data/tolls.json";
 import blessingsData from "@/data/blessings.json";
+import nocturneData from "@/data/nocturneLines.json";
 
 export const AWAKEN_STACKS = 3;
 const RARITIES = ["common", "rare", "epic"];
@@ -27,6 +28,8 @@ export class PactSystem {
         this.awakened = new Set();
         this.humanity = 100;
         this.rerollLeft = 2;
+        this.prevLine = null;  // 직전 녹턴 대사 — 연속 중복을 막는다
+        this.lastLine = null;
     }
 
     /**
@@ -90,7 +93,28 @@ export class PactSystem {
             }
             cards.push(card);
         }
+        this.lastLine = this.pickNocturneLine(level, cards, rng);
         return cards;
+    }
+
+    /**
+     * 녹턴 대사 1줄. (T343 / 정본 01 §5.2, 표시 규칙 10-UIUX §532)
+     *
+     * ★ 직전과 같은 대사를 금지한다. 12개짜리 풀에서 랜덤을 그냥 뽑으면
+     *   두 번 연속 같은 줄이 나올 확률이 8%라, 10회 레벨업이면 거의 매 판 한 번은 겹친다.
+     *   그 순간 화자가 "랜덤 문자열 생성기"로 보인다.
+     */
+    pickNocturneLine(level, cards, rng = Math.random) {
+        // Lv1~3 은 대가가 없는 구간(S4). '공짜'를 명시해야 Lv4의 첫 대가가
+        // 배신이 아니라 예고된 일이 된다.
+        if (level <= 3) return nocturneData.first;
+
+        const imminent = cards.some((c) => c.toll?.triggersAwakening);
+        const pool = (imminent ? nocturneData.awaken : nocturneData.pool)
+            .filter((l) => l !== this.prevLine);
+        const line = pool.length ? pool[(rng() * pool.length) | 0] : nocturneData.pool[0];
+        this.prevLine = line;
+        return line;
     }
 
     /** S2 — 각성한 태그는 다시 나오지 않는다. 뒤집은 저주가 또 오면 각성의 의미가 사라진다 */

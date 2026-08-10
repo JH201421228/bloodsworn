@@ -18,6 +18,7 @@ import { SpawnSystem } from "../systems/SpawnSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
 import { CombatSystem } from "../systems/CombatSystem";
 import { installCheats } from "../debugCheats";
+import { validateData } from "@/data/validate";
 import { GroundSystem } from "../systems/GroundSystem";
 import { StatSystem } from "../systems/StatSystem";
 import { PactSystem } from "../systems/PactSystem";
@@ -36,6 +37,8 @@ export default class GameScene extends Phaser.Scene {
 
     create() {
         this.timeScale = 1; // 치트: 시간 배속
+        // 데이터 오타는 JSON 파서를 통과하고 런타임에 NaN 으로 나타난다. 부팅 때 한 번 잡는다(T322).
+        if (DEBUG) validateData();
         this.buildMap();
         this.spawnPlayer();
 

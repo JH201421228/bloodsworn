@@ -11,6 +11,7 @@
 import { useStore } from "@/state/store";
 import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
+import "./nocturne.css";
 
 const pct = (v, total) => (v / total) * 100 + "%";
 
@@ -81,6 +82,10 @@ export default function PactOverlay() {
 
     return (
         <div className="ui-stage pact-stage">
+            {/* 녹턴 대사 — 화자가 있어야 카드 3장이 '시스템'이 아니라 '거래'로 읽힌다 */}
+            {pact.nocturneLine && (
+                <p className="pact-nocturne" key={pact.nocturneLine}>“{pact.nocturneLine}”</p>
+            )}
             {pact.cards.map((c) => (
                 <Card key={c.index} card={c} />
             ))}

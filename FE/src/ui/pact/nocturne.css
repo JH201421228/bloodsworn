@@ -1,0 +1,29 @@
+/*
+ * 녹턴 대사 1줄. (T343 / 10-UIUX §532)
+ *
+ * ★ index.css 를 건드리지 않고 여기에 둔다 — 병렬 작업 중 전역 스타일 파일은
+ *   충돌 지점이라 화면별 스타일은 그 화면 옆에 두는 편이 안전하다.
+ * ★ 좌상단 x=60 y=12 인 이유: 카드(y>=52)를 절대 가리지 않고, F패턴의 첫 시선이
+ *   닿는 곳이며, 초상(x=12)과 인접해 "누가 말하는가"가 명확하다.
+ * ★ 타이핑 연출을 쓰지 않는다. 카드 선택 예산이 3~6초인데 타이핑이 그걸 잡아먹는다.
+ */
+.pact-nocturne {
+    position: absolute;
+    left: 9.375%;   /* 60 / 640 */
+    top: 3.333%;    /* 12 / 360 */
+    width: 59.375%; /* 380 / 640 */
+    margin: 0;
+    font-size: clamp(9px, 2.1vh, 13px);
+    line-height: 1.2;
+    color: var(--parchment, #d9cfc0);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    animation: nocturne-in 180ms ease-out both;
+    pointer-events: none;
+}
+
+@keyframes nocturne-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
