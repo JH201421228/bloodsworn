@@ -1,13 +1,17 @@
 /**
- * GameScene — 런의 중심. 타일맵과 플레이어를 소유한다.
+ * GameScene — 런의 중심. 맵과 플레이어를 소유한다.
  *
- * 블록 B 완료 시점: 맵이 깔리고 플레이어가 스폰 지점에 서 있으며 벽에 충돌한다.
+ * ★ 맵은 Tiled 타일맵이 아니라 **단일 이미지 + 충돌 배열**이다.
+ *   타일셋 자동 조립 품질이 요구 수준에 미달해 방식을 바꿨다. 경위와 규격: docs/18-MAP-IMAGE-PROMPT.md
+ *     map-crypt.png      1600x1200 배경 이미지 1장
+ *     map-collision.json 16px 격자 100x75 배열 (0=solid, 1=walkable)
+ *     map-objects.json   횃불·촛불 좌표 (불꽃은 이미지에 없다. 여기서 스프라이트로 얹는다)
+ *
  * 블록 C에서 조이스틱 입력·이동·카메라 추적·대시가 들어온다. (T133~T137)
- * 규격: 06-TECH-DESIGN.md 4.2 / 맵 레이어 규약은 03-GDD-CORE.md 8.1
  */
 import Phaser from "phaser";
 import { SCENES, DEPTH } from "../constants";
-import { WORLD_WIDTH, WORLD_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { WORLD_WIDTH, WORLD_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT, TILE_SIZE } from "../config";
 import { DEBUG } from "../debug";
 
 export default class GameScene extends Phaser.Scene {
@@ -33,56 +37,81 @@ export default class GameScene extends Phaser.Scene {
         if (DEBUG) this.scene.launch(SCENES.DEBUG);
     }
 
-    /** 타일맵 로드 + 충돌 (T131). 레이어는 ground / deco / walls / objects */
+    /** 배경 이미지 + 충돌 격자 */
     buildMap() {
-        if (!this.cache.tilemap.has("map_crypt")) {
-            console.warn("[GameScene] 타일맵이 없다. npm run build:map 을 돌렸는지 확인할 것");
+        if (this.textures.exists("map_crypt")) {
+            this.add.image(0, 0, "map_crypt").setOrigin(0, 0).setDepth(DEPTH.GROUND);
+        } else {
+            console.warn("[GameScene] map_crypt 텍스처가 없다");
+        }
+
+        const col = this.cache.json.get("map_collision");
+        if (!col?.data) {
+            console.warn("[GameScene] map-collision.json 이 없다. 벽에 막히지 않는다");
             return;
         }
-        this.map = this.make.tilemap({ key: "map_crypt" });
-        const tiles = this.map.addTilesetImage("tiles-main", "tiles_main");
 
-        this.groundLayer = this.map.createLayer("ground", tiles, 0, 0)?.setDepth(DEPTH.GROUND);
-        this.decoLayer = this.map.createLayer("deco", tiles, 0, 0)?.setDepth(DEPTH.GROUND + 1);
-        this.wallLayer = this.map.createLayer("walls", tiles, 0, 0)?.setDepth(DEPTH.DECO);
+        // ★ 충돌은 타일맵으로 만든다. 셀마다 정적 바디를 만들면 3천 개가 넘어 예산 밖이다.
+        //   Phaser 타일맵은 -1을 빈 칸으로 본다 → walkable(1)을 -1로, solid(0)을 0으로 뒤집는다.
+        const data = col.data.map((row) => row.map((v) => (v ? -1 : 0)));
 
-        // walls 레이어의 빈 칸이 아닌 전부가 충돌이다(벽면 + void).
-        this.wallLayer?.setCollisionByExclusion([-1]);
+        // 렌더하지 않을 레이어라 텍스처는 투명 16x16 한 장이면 된다.
+        if (!this.textures.exists("blank16")) {
+            const g = this.make.graphics({ add: false });
+            g.fillStyle(0xffffff, 0).fillRect(0, 0, TILE_SIZE, TILE_SIZE);
+            g.generateTexture("blank16", TILE_SIZE, TILE_SIZE);
+            g.destroy();
+        }
+
+        this.map = this.make.tilemap({ data, tileWidth: TILE_SIZE, tileHeight: TILE_SIZE });
+        const ts = this.map.addTilesetImage("blank16");
+        this.wallLayer = this.map.createLayer(0, ts, 0, 0);
+        this.wallLayer.setVisible(false); // 충돌 전용. 그림은 배경 이미지가 담당한다
+        this.wallLayer.setCollisionByExclusion([-1]);
+
+        if (DEBUG) {
+            const solid = col.data.flat().filter((v) => !v).length;
+            console.log("[GameScene] 충돌 격자 " + col.width + "x" + col.height + " · solid " + solid + "칸");
+        }
     }
 
-    /** objects 레이어의 포인트를 읽어 횃불을 세운다. 정본 8.1의 "청록 광원 연출" */
+    /** 좌표 목록으로 횃불·촛불을 얹는다. 불꽃은 맵 이미지에 없다(정본 8.1 청록 광원 연출) */
     placeProps() {
-        const layer = this.map?.getObjectLayer("objects");
-        if (!layer) return;
+        const objs = this.cache.json.get("map_objects");
+        if (!objs) return;
 
-        let lit = 0;
-        for (const o of layer.objects) {
-            if (o.type !== "torch" && o.name !== "torch") continue;
-            if (!this.textures.exists("torch")) break;
-
-            const s = this.add.sprite(o.x, o.y, "torch", 0).setDepth(DEPTH.DECO + 1);
-            if (this.anims.exists("deco.torch")) s.play("deco.torch");
-
-            // 불빛 — 스프라이트 뒤에 반투명 원을 깔아 광원처럼 보이게 한다.
-            // 실제 라이팅 파이프라인은 7일 스코프 밖이다(06 15).
+        const light = (x, y, radius, color, alpha) =>
             this.add
-                .circle(o.x, o.y + 2, 26, 0xff3b4a, 0.055)
+                .circle(x, y, radius, color, alpha)
                 .setDepth(DEPTH.DECO)
                 .setBlendMode(Phaser.BlendModes.ADD);
+
+        let lit = 0;
+        for (const t of objs.torches ?? []) {
+            if (!this.textures.exists("torch")) break;
+            const s = this.add.sprite(t.x, t.y, "torch", 0).setDepth(DEPTH.DECO + 1);
+            if (this.anims.exists("deco.torch")) s.play("deco.torch");
+            light(t.x, t.y + 2, 30, 0xff3b4a, 0.06);
             lit++;
         }
-        if (DEBUG) console.log("[GameScene] 횃불 " + lit + "개 배치");
+        for (const c of objs.candles ?? []) {
+            if (!this.textures.exists("candle-a")) break;
+            const s = this.add.sprite(c.x, c.y, "candle-a", 0).setDepth(DEPTH.DECO + 1);
+            if (this.anims.exists("deco.candleA")) s.play("deco.candleA");
+            light(c.x, c.y + 1, 18, 0x8ff0dc, 0.05);
+            lit++;
+        }
+        if (DEBUG) console.log("[GameScene] 광원 " + lit + "개 배치");
     }
 
     spawnPlayer() {
         if (!this.textures.exists("player-idle-down")) {
-            console.warn("[GameScene] 플레이어 텍스처가 없다. npm run build:assets 확인");
+            console.warn("[GameScene] 플레이어 텍스처가 없다");
             return;
         }
-        const p = this.map?.properties ?? [];
-        const prop = (n, d) => p.find((e) => e.name === n)?.value ?? d;
-        const sx = prop("spawnX", WORLD_WIDTH / 2);
-        const sy = prop("spawnY", WORLD_HEIGHT / 2);
+        // 스폰은 맵 규격(18번 문서 4)에서 고정값이다
+        const sx = 800;
+        const sy = 608;
 
         this.player = this.physics.add.sprite(sx, sy, "player-idle-down", 0);
         this.player.setDepth(DEPTH.PLAYER);

@@ -58,6 +58,9 @@ export default class PreloadScene extends Phaser.Scene {
         for (const e of manifest.atlases ?? []) {
             this.load.atlas(e.key, e.texture, e.data);
         }
+        for (const e of manifest.json ?? []) {
+            this.load.json(e.key, e.url);
+        }
         for (const e of manifest.tilemaps ?? []) {
             this.load.tilemapTiledJSON(e.key, e.url);
         }
