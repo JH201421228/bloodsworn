@@ -1,0 +1,120 @@
+/* 각성 배너 (Day 4 / T422). index.css 는 건드리지 않고 여기서만 정의한다.
+   팔레트 변수(--gold/--blood-light/…)는 index.css :root 에서 온다. (09-ART 1)
+
+   ★ 글자 크기를 rem/px 로 잡지 않는 이유
+     .ui-stage 는 16:9 레터박스 박스라 화면에 따라 실제 크기가 변한다.
+     px 로 잡으면 태블릿에서 좁쌀만 해지고 소형 폰에서 화면 밖으로 넘친다.
+     스테이지 높이 = min(100vh, 56.25vw) 이므로 이 값에 비례시키면
+     Phaser 캔버스와 항상 같은 비율로 커지고 작아진다. */
+
+.awaken-stage {
+    --stage-h: min(100vh, 56.25vw);
+    --awaken-accent: var(--gold);
+    /* 배너는 정보가 아니라 연출이다 — 탭을 가로채면 각성 직후 조작이 먹통이 된다 */
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* 태그별 강조색. awakenings.json 의 auraColor 를 그대로 쓰지 않는 이유:
+   오라 색은 어두운 배경 위 파티클용이라 BLIND(#2b2b3a) 처럼 글자로는 안 읽히는 값이 있다. */
+.awaken-stage[data-tag="FRAIL"] { --awaken-accent: #e0594a; }
+.awaken-stage[data-tag="SLOW"] { --awaken-accent: #9b86d8; }
+.awaken-stage[data-tag="MYOPIA"] { --awaken-accent: #e09a45; }
+.awaken-stage[data-tag="GREED"] { --awaken-accent: #e6c34a; }
+.awaken-stage[data-tag="BLIND"] { --awaken-accent: #8fa6d8; }
+.awaken-stage[data-tag="HUNGER"] { --awaken-accent: #e2456b; }
+
+/* 중앙만 열리는 어둠. 전면 불투명으로 덮으면 각성 직후 적 위치를 못 읽는다 */
+.awaken-veil {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 46%,
+            rgba(11, 7, 16, 0.05) 0%,
+            rgba(11, 7, 16, 0.72) 45%,
+            rgba(11, 7, 16, 0.92) 100%);
+    animation: awaken-veil-in 240ms ease-out both;
+}
+
+.awaken-core {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(var(--stage-h) * 0.012);
+    text-align: center;
+    color: var(--parchment);
+}
+
+.awaken-sigil {
+    font-size: calc(var(--stage-h) * 0.13);
+    line-height: 1;
+    color: var(--awaken-accent);
+    text-shadow: 0 0 calc(var(--stage-h) * 0.05) var(--awaken-accent);
+    animation: awaken-sigil-in 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.awaken-kicker {
+    font-size: calc(var(--stage-h) * 0.035);
+    letter-spacing: calc(var(--stage-h) * 0.03);
+    /* letter-spacing 은 마지막 글자 뒤에도 붙는다 — 그만큼 왼쪽으로 밀어 광학 중심을 맞춘다 */
+    text-indent: calc(var(--stage-h) * 0.03);
+    color: var(--blood-light);
+    animation: awaken-line-in 420ms ease-out 80ms both;
+}
+
+/* T422 중앙 대형 타이포 — 이게 대표 스크린샷의 주인공이다 */
+.awaken-name {
+    font-size: calc(var(--stage-h) * 0.135);
+    line-height: 1.05;
+    color: var(--parchment);
+    text-shadow:
+        0 0 calc(var(--stage-h) * 0.02) rgba(255, 255, 255, 0.35),
+        0 0 calc(var(--stage-h) * 0.09) var(--awaken-accent);
+    animation: awaken-name-in 560ms cubic-bezier(0.16, 1, 0.3, 1) 60ms both;
+}
+
+.awaken-quote {
+    font-size: calc(var(--stage-h) * 0.038);
+    color: var(--ash);
+    animation: awaken-line-in 460ms ease-out 220ms both;
+}
+
+.awaken-desc {
+    font-size: calc(var(--stage-h) * 0.036);
+    color: var(--awaken-accent);
+    animation: awaken-line-in 460ms ease-out 340ms both;
+}
+
+@keyframes awaken-veil-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 인장은 회전하며 조여든다 — "봉인이 찍히는" 동작 */
+@keyframes awaken-sigil-in {
+    from { opacity: 0; transform: scale(2.6) rotate(-35deg); }
+    to { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes awaken-name-in {
+    from { opacity: 0; transform: scale(1.35); letter-spacing: 0.4em; }
+    to { opacity: 1; transform: scale(1); letter-spacing: 0.02em; }
+}
+
+@keyframes awaken-line-in {
+    from { opacity: 0; transform: translateY(calc(var(--stage-h) * 0.03)); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 애니메이션 민감 사용자 — 등장 동작만 죽이고 표시 자체는 유지한다 */
+@media (prefers-reduced-motion: reduce) {
+    .awaken-veil,
+    .awaken-sigil,
+    .awaken-kicker,
+    .awaken-name,
+    .awaken-quote,
+    .awaken-desc {
+        animation-duration: 1ms;
+        animation-delay: 0ms;
+    }
+}

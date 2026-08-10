@@ -11,6 +11,8 @@ import blessingsData from "@/data/blessings.json";
 import nocturneData from "@/data/nocturneLines.json";
 
 export const AWAKEN_STACKS = 3;
+/** 각성 상한. AwakeningSystem 의 MAX_AWAKENINGS 와 같은 값이다(정본 04-PACT §5). */
+const AWAKEN_CAP = 2;
 const RARITIES = ["common", "rare", "epic"];
 
 export class PactSystem {
@@ -118,10 +120,44 @@ export class PactSystem {
     }
 
     /** S2 — 각성한 태그는 다시 나오지 않는다. 뒤집은 저주가 또 오면 각성의 의미가 사라진다 */
+    /**
+     * 대가 태그 추첨. 정본 04-PACT §6.3 의 가중치 보정 3가지를 반영한다.
+     *
+     * ★ 각성한 태그는 가중치 0 (중복 각성 방지, S2)
+     * ★ 각성 상한(2개)에 도달했으면 2중첩 태그를 x0.2 로 낮춘다.
+     *   상한 상태에서 3중첩을 찍으면 각성 대신 인간성 −20 만 맞는다. 그 카드가
+     *   자주 나오면 플레이어는 "왜 손해만 보는 선택지를 주지" 라고 느낀다.
+     *   0 이 아니라 0.2 인 이유는, 인간성을 태워서라도 태그를 정리하고 싶은
+     *   플레이가 존재하기 때문이다 — 막지 않고 드물게만 만든다.
+     * ★ 하한(floor)에 닿은 태그는 x0.3. 더 깎여도 수치가 안 변하는 대가는
+     *   "공짜 축복"이 되어 선택의 무게가 사라진다.
+     */
     pickToll(rng, usedTags) {
-        const pool = this.tolls.filter((t) => !this.awakened.has(t.tag) && !usedTags.has(t.tag));
+        const atCap = this.awakened.size >= AWAKEN_CAP;
+        const pool = [];
+        const weights = [];
+        let total = 0;
+        for (const t of this.tolls) {
+            if (this.awakened.has(t.tag) || usedTags.has(t.tag)) continue;
+            let w = 1;
+            if (atCap && (this.tagCounts[t.tag] ?? 0) === AWAKEN_STACKS - 1) w *= 0.2;
+            if (this.isAtFloor(t)) w *= 0.3;
+            pool.push(t); weights.push(w); total += w;
+        }
         if (!pool.length) return null;
-        return pool[(rng() * pool.length) | 0];
+        let r = rng() * total;
+        for (let i = 0; i < pool.length; i++) { if (r < weights[i]) return pool[i]; r -= weights[i]; }
+        return pool[pool.length - 1];
+    }
+
+    /** 해당 대가의 스탯이 이미 하한에 닿았는가 — 더 깎아도 수치가 변하지 않는다 */
+    isAtFloor(t) {
+        if (!this.stats) return false;
+        const cur = this.stats.get(t.stat);
+        const floor = this.stats.floorOf?.(t.stat);
+        if (floor == null || cur == null) return false;
+        // 하한까지 1% 이내면 사실상 도달로 본다. 부동소수 오차로 영원히 false 가 되는 것을 막는다.
+        return cur <= floor * 1.01;
     }
 
     describeBlessing(b, rarity) {

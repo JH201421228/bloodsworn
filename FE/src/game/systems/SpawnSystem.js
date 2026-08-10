@@ -275,6 +275,8 @@ export class SpawnSystem {
         // 죽었다 살아난 적이 공짜 스턴/슬로우를 물려받지 않는다
         e.stunUntil = 0;
         e.slowMult = 1;
+        e.slowUntil = 0;   // 각성 「중력의 군주」 슬로우 만료 시각
+        e.orbHitAt = 0;    // 각성 「탐욕의 왕관」 오브 관통 재타격 쿨
 
         e.aiPhase = Math.random() * Math.PI * 2; // 지그재그 위상. 전원이 같은 박자로 흔들리지 않게
         e.stateTimer = 0;

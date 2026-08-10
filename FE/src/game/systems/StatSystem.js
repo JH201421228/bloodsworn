@@ -65,6 +65,19 @@ export class StatSystem {
         if (this.mods.length !== before) this.dirty = true;
     }
 
+    /**
+     * 해당 스탯의 하한 절대값. 없으면 null.
+     * PactSystem 이 "이미 하한에 닿은 대가"를 덜 뽑기 위해 쓴다 — 더 깎여도
+     * 수치가 안 변하는 대가는 사실상 공짜 축복이라 선택의 무게가 사라진다.
+     */
+    floorOf(stat) {
+        const f = FLOORS[stat];
+        if (!f) return null;
+        if (f.type === "abs") return f.v;
+        if (f.type === "mult") return BASE[stat] * f.v;
+        return null; // cap 형(drain/armor/crit)은 상한이라 하한 개념이 없다
+    }
+
     get(stat) {
         if (this.dirty) this.recalc();
         return this.cache[stat];

@@ -1,0 +1,327 @@
+{
+    "_comment": "각성 6종 + 최종 각성. 출처 04-PACT-SYSTEM 5 / 08-DATA-SCHEMA 3.7. 밸런싱은 코드가 아니라 이 파일에서 한다.",
+    "_deviation": "08-DATA-SCHEMA 2.4의 스탯 이름(damageMult/attackSpeed/pickupRadius/lifesteal)이 아니라 실제 StatSystem 키(damage/haste/magnet/lifeOnKill)를 쓴다. tolls.json/blessings.json과 같은 규약이어야 해석기가 하나로 유지된다. op도 StatSystem 규약(add/awaken=곱연산 +value)을 따르므로 문서의 mul 1.5는 awaken 0.5로 적는다.",
+    "schemaVersion": 1,
+    "presentation": {
+        "hitstop": 0.2,
+        "flashColor": "#c8102e",
+        "invertDuration": 0.15,
+        "shockwaveRadius": 320,
+        "shockwaveStun": 2,
+        "shockwaveKnockback": 200,
+        "sfxKey": "awaken",
+        "bannerMs": 2000
+    },
+    "awakenings": [
+        {
+            "id": "awk_frail",
+            "tag": "FRAIL",
+            "trigger": {
+                "type": "tagStack",
+                "count": 3
+            },
+            "name": "불사의 껍질",
+            "quote": "부서지기 쉬운 것은, 부서지지 않는 법을 배운다.",
+            "desc": "치명타마다 회복하고, 한 번은 죽지 않는다. 약할수록 강해진다.",
+            "sigil": "⬢",
+            "removePenalty": false,
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "husk_crit_heal",
+                    "params": {
+                        "healPctMaxHp": 0.06
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "husk_revive",
+                    "params": {
+                        "hpPct": 0.5,
+                        "invulnSec": 2,
+                        "uses": 1
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "husk_lowhp_damage",
+                    "params": {
+                        "scale": 0.4
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0.3,
+                "codexUnlock": true
+            },
+            "auraColor": "#c0392b",
+            "priority": "P0"
+        },
+        {
+            "id": "awk_slow",
+            "tag": "SLOW",
+            "trigger": {
+                "type": "tagStack",
+                "count": 3
+            },
+            "name": "중력의 군주",
+            "quote": "움직이지 않는 자가, 세상을 멈춘다.",
+            "desc": "둔족이 사라지고, 주변의 모든 것이 대신 느려진다.",
+            "sigil": "⬣",
+            "removePenalty": true,
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "weight_slow_aura",
+                    "params": {
+                        "radius": 120,
+                        "enemySpeedMult": 0.6,
+                        "refreshSec": 0.15
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "weight_bonus_vs_slowed",
+                    "params": {
+                        "damageMult": 1.25
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0.3,
+                "codexUnlock": true
+            },
+            "auraColor": "#5b4a8a",
+            "priority": "P0"
+        },
+        {
+            "id": "awk_hunger",
+            "tag": "HUNGER",
+            "trigger": {
+                "type": "tagStack",
+                "count": 3
+            },
+            "name": "진조의 갈증",
+            "quote": "굶주림은 멈추지 않는다. 그러니 멈추지 마라.",
+            "desc": "죽일수록 회복하고, 죽일수록 빨라지고, 시체가 터진다.",
+            "sigil": "⬤",
+            "removePenalty": false,
+            "effects": [
+                {
+                    "stat": "lifeOnKill",
+                    "op": "add",
+                    "value": 4
+                },
+                {
+                    "op": "special",
+                    "id": "thirst_kill_explosion",
+                    "params": {
+                        "radius": 40,
+                        "damagePctBase": 0.6,
+                        "baseDamage": 12
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "thirst_killstreak_speed",
+                    "params": {
+                        "windowSec": 3,
+                        "maxBonus": 0.35,
+                        "killsForMax": 12,
+                        "step": 0.05
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0.3,
+                "codexUnlock": true
+            },
+            "auraColor": "#8e1f3d",
+            "priority": "P0"
+        },
+        {
+            "id": "awk_myopia",
+            "tag": "MYOPIA",
+            "trigger": {
+                "type": "tagStack",
+                "count": 3
+            },
+            "name": "접촉의 광기",
+            "quote": "멀리 볼 수 없다면, 끌어안는 수밖에.",
+            "desc": "사거리가 돌아오고, 코앞의 적은 두 배로 찢긴다.",
+            "sigil": "⬟",
+            "removePenalty": true,
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "madness_close_damage",
+                    "params": {
+                        "radius": 80,
+                        "damageMult": 2
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "madness_close_attackspeed",
+                    "params": {
+                        "radius": 80,
+                        "maxBonus": 0.6,
+                        "enemiesForMax": 6,
+                        "step": 0.1,
+                        "refreshSec": 0.15
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0.3,
+                "codexUnlock": true
+            },
+            "auraColor": "#b06a2c",
+            "priority": "P1"
+        },
+        {
+            "id": "awk_greed",
+            "tag": "GREED",
+            "trigger": {
+                "type": "tagStack",
+                "count": 3
+            },
+            "name": "탐욕의 왕관",
+            "quote": "덜 받는 자가, 결국 전부 가진다.",
+            "desc": "경험치와 골드가 배가 되고, 오브가 적을 뚫고 날아온다.",
+            "sigil": "⬥",
+            "removePenalty": true,
+            "effects": [
+                {
+                    "stat": "expMult",
+                    "op": "awaken",
+                    "value": 0.5
+                },
+                {
+                    "stat": "magnet",
+                    "op": "awaken",
+                    "value": 3
+                },
+                {
+                    "op": "special",
+                    "id": "avarice_gold",
+                    "params": {
+                        "mult": 2
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "avarice_orb_projectile",
+                    "params": {
+                        "damage": 10,
+                        "radius": 9,
+                        "rehitSec": 0.4,
+                        "refreshSec": 0.08,
+                        "budget": 24
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0.3,
+                "codexUnlock": true
+            },
+            "auraColor": "#c9a227",
+            "priority": "P1"
+        },
+        {
+            "id": "awk_blind",
+            "tag": "BLIND",
+            "trigger": {
+                "type": "tagStack",
+                "count": 3
+            },
+            "name": "어둠의 눈",
+            "quote": "눈을 감아라. 이제 다른 것으로 본다.",
+            "desc": "화면 밖이 붉게 보인다. 보이지 않는 것을 더 아프게 친다.",
+            "sigil": "⬮",
+            "removePenalty": false,
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "nyx_offscreen_marker",
+                    "params": {
+                        "color": "#ff3b3b",
+                        "max": 12,
+                        "size": 5,
+                        "scanRadius": 520,
+                        "refreshSec": 0.15
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "nyx_offscreen_damage",
+                    "params": {
+                        "damageMult": 1.8
+                    }
+                },
+                {
+                    "op": "special",
+                    "id": "nyx_offscreen_exp",
+                    "params": {
+                        "expMult": 2
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0.3,
+                "codexUnlock": true
+            },
+            "auraColor": "#2b2b3a",
+            "priority": "P1"
+        },
+        {
+            "id": "awk_ascension",
+            "tag": null,
+            "trigger": {
+                "type": "humanityZero"
+            },
+            "name": "완전 흡혈귀화",
+            "quote": "인간이었던 것은 여기서 끝난다.",
+            "desc": "모든 것이 강해지고, 모든 대가가 두 배가 된다.",
+            "sigil": "✝",
+            "removePenalty": false,
+            "effects": [
+                {
+                    "stat": "damage",
+                    "op": "awaken",
+                    "value": 0.5
+                },
+                {
+                    "stat": "haste",
+                    "op": "awaken",
+                    "value": 0.3
+                },
+                {
+                    "stat": "moveSpeed",
+                    "op": "awaken",
+                    "value": 0.2
+                },
+                {
+                    "stat": "drain",
+                    "op": "tollAdd",
+                    "value": 2
+                },
+                {
+                    "op": "special",
+                    "id": "ascension_visual",
+                    "params": {
+                        "tint": "#ff4444",
+                        "saturation": 0.35,
+                        "tollPenaltyMult": 2
+                    }
+                }
+            ],
+            "onTrigger": {
+                "healPctMaxHp": 0,
+                "codexUnlock": true
+            },
+            "auraColor": "#ff2b2b",
+            "priority": "P2"
+        }
+    ]
+}

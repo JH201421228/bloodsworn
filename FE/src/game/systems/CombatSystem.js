@@ -285,6 +285,7 @@ export class CombatSystem {
             if (!e.__active || e.hp <= 0) continue;
             // 치명타는 큐를 비울 때 한 번만 굴린다 — 무기별로 굴리면 판정이 흩어진다
             const isCrit = crit > 0 && Math.random() < crit;
+            if (isCrit) this.awakening?.onCrit(e, d.amount * critMult);
             e.hp -= isCrit ? d.amount * critMult : d.amount;
 
             // 피격 플래시 60ms (T213). 치명타는 금색으로 구분한다.
@@ -462,7 +463,17 @@ export class CombatSystem {
                 ownedBlessings: { ...this.pact.owned },
             });
             if (r.awakened && this.awakening?.trigger(r.awakened)) {
-                EventBus.emit(EVENTS.AWAKENING_TRIGGERED, { tag: r.awakened, list: [...this.awakening.list] });
+                const def = this.awakening.defs?.[r.awakened];
+                EventBus.emit(EVENTS.AWAKENING_TRIGGERED, {
+                    tag: r.awakened,
+                    list: [...this.awakening.list],
+                    awakeningId: def?.id,
+                    name: def?.name,
+                    quote: def?.quote,
+                    desc: def?.desc,
+                    sigil: def?.sigil,
+                    atLevel: this.level,
+                });
             }
         }
         this.pendingCards = null;
