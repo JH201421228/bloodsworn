@@ -1,0 +1,6 @@
+{
+    "appId": "com.superdimension.app",
+    "appName": "SuperDimension",
+    "webDir": "dist",
+    "bundledWebRuntime": false
+}

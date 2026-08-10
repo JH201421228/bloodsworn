@@ -1,0 +1,69 @@
+# ═══════════════════════════════════════════════════════════════
+#  BLOODSWORN / 피의 서약 — 루트 .gitignore
+#  근거: docs/07-PROJECT-STRUCTURE-AND-CONVENTIONS.md §6.4
+#  ⚠ 서명 자산 규칙은 파일을 만들기 전에 먼저 들어가 있어야 한다.
+#     git 히스토리에 한 번 들어가면 이후 커밋으로 지워도 영원히 남는다.
+# ═══════════════════════════════════════════════════════════════
+
+# ── 원본 에셋 ─────────────────────────────────────────────────
+# ★ 7,846 파일 / 131MB. 한 번도 수정되지 않으므로 버전 관리 이득이 0이다.
+#   PNG/MP3는 델타 압축이 안 되고, Windows 260자 경로 제한에 근접하며,
+#   대소문자 혼용 파일명이 많아 유령 변경을 만든다.
+#   산출물 FE/public/assets/ 만 커밋한다. 원본은 별도 백업.
+/asset/
+
+# ── 빌드 산출물 ───────────────────────────────────────────────
+dist/
+FE/dist/
+node_modules
+bower_components
+
+# ── Capacitor Android (android/ 자체는 커밋, 빌드 결과만 제외) ──
+FE/android/app/build/
+FE/android/build/
+FE/android/.gradle/
+FE/android/local.properties
+FE/android/app/release/
+
+# ── Capacitor iOS (ios/ 자체는 커밋. Podfile.lock도 반드시 커밋) ──
+# Mac이 없으므로 CI가 무엇을 빌드했는지 확인할 수단은 저장소 내용뿐이다.
+FE/ios/App/Pods/
+FE/ios/App/build/
+FE/ios/App/DerivedData/
+FE/ios/App/App.xcworkspace/xcuserdata/
+FE/ios/App/App.xcodeproj/xcuserdata/
+*.ipa
+*.xcarchive
+*.dSYM.zip
+
+# ── ★ 서명 자산 — 절대 커밋 금지 ─────────────────────────────
+# Android 키스토어 (분실 = 앱 업데이트 영구 불가)
+*.keystore
+*.jks
+keystore.properties
+key.properties
+
+# iOS 서명 자산. Android 키스토어와 정확히 같은 강도로 다룬다.
+# 유출되면 제3자가 이 앱의 이름으로 서명된 빌드를 만들 수 있다.
+*.p12                    # 배포 인증서 + 개인키 (CI에 base64로 주입)
+*.p8                     # App Store Connect API 키 — 재발급 시 기존 키는 폐기된다
+*.mobileprovision        # 프로비저닝 프로파일
+*.cer                    # Apple이 발급한 인증서
+*.certSigningRequest     # CSR
+*.key                    # openssl 개인키. 이것만 잃어도 인증서를 다시 만들어야 한다
+ExportOptions.plist      # 팀 ID·프로파일 이름이 들어간다
+
+# ── 로그 / 임시 / OS ──────────────────────────────────────────
+*.log
+logs
+**/*.backup.*
+**/*.back.*
+*.corrupt.*
+*.sublime*
+psd
+thumb
+sketch
+.DS_Store
+.DS_*
+Thumbs.db
+desktop.ini

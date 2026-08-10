@@ -1,0 +1,101 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+@font-face {
+    font-family: "base_font";
+    font-weight: 100 900;
+    /* Variable font */
+    font-style: normal;
+    font-display: swap;
+    /* 폰트 로딩 중에도 텍스트 표시 */
+    src: url("./assets/fonts/base_font.woff2") format("woff2");
+}
+
+:root {
+    font-family: "base_font";
+    line-height: 1.5;
+    font-weight: 400;
+
+    color-scheme: light;
+    color: var(--text);
+    background-color: var(--bg);
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: rgb(15, 15, 30);
+}
+
+#root {
+    /* 모바일 사이즈로 제한 */
+    /* width: 100%;
+    max-width: 430px;
+    height: 100dvh; */
+
+    /* 데스크탑에서 중앙 정렬 */
+    margin: 0 auto;
+
+    /* 앱 영역 배경색 */
+    /* background-color: var(--bg); */
+
+    /* 데스크탑에서 그림자로 구분감 */
+    /* box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
+
+    display: flex;
+    flex-direction: column; */
+
+    /* Safe Area 대응 */
+    /* padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+        env(safe-area-inset-left);
+
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    overflow: hidden; */
+}
+
+/* 공통 버튼 스타일 */
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* 공통 입력 스타일 */
+input,
+textarea,
+select {
+    font-family: inherit;
+    outline: none;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-full);
+}

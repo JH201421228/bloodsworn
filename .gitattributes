@@ -1,0 +1,28 @@
+# 줄바꿈 정규화 — 저장소에는 항상 LF로 저장한다.
+# ★ 이 프로젝트는 Windows에서 개발하고 클라우드 macOS CI에서 iOS를 빌드한다.
+#   CRLF로 체크아웃된 셸 스크립트·CI 설정은 macOS 러너에서 깨진다.
+* text=auto eol=lf
+
+# Windows 전용 스크립트만 CRLF 유지
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# 바이너리 — 변환 금지
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.mp3  binary
+*.ogg  binary
+*.wav  binary
+*.ttf  binary
+*.otf  binary
+*.woff binary
+*.woff2 binary
+*.aab  binary
+*.apk  binary
+*.ipa  binary
+*.jar  binary
+*.keystore binary
