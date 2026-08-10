@@ -1,7 +1,10 @@
 ext {
     minSdkVersion = 23
-    compileSdkVersion = 35
-    targetSdkVersion = 35
+    // ⏰ T103e — 2026-08-31부터 신규 앱·업데이트는 API 36(Android 16) 필수.
+    //    프로덕션 신청 예상 시점과 정확히 겹치므로 Day 1에 올려 미리 깨뜨려 본다.
+    //    ⚠ 이 변경은 Android SDK 36 플랫폼이 설치된 환경에서 `gradlew assembleDebug` 1회 통과를 확인해야 한다.
+    compileSdkVersion = 36
+    targetSdkVersion = 36
     androidxActivityVersion = '1.9.2'
     androidxAppCompatVersion = '1.7.0'
     androidxCoordinatorLayoutVersion = '1.2.0'

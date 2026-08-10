@@ -1,0 +1,28 @@
+{
+    "_comment": [
+        "Phaser 로드 매니페스트 (T114). PreloadScene이 이 파일만 읽는다.",
+        "에셋을 늘릴 때 씬 코드를 고치지 말고 여기만 고친다.",
+        "url은 FE/public/ 기준 상대경로. base:'./' 이므로 앞에 슬래시를 붙이면 Capacitor에서 깨진다.",
+        "",
+        "★ 여기 넣는 것은 Phaser가 그리는 에셋만이다.",
+        "  카드 프레임 / 각성 인장 / 로고 / 배경 / 녹턴 초상은 React(DOM)가 CSS로 렌더하므로",
+        "  이 매니페스트에 넣지 않는다. 넣으면 같은 이미지를 GPU에 두 번 올리게 된다.",
+        "",
+        "블록 B(T120~T126)에서 actors / fx / tiles / map / audio 항목이 채워진다."
+    ],
+
+    "images": [
+        { "key": "joystick_base", "url": "img/ui/joystick-base.png" },
+        { "key": "joystick_knob", "url": "img/ui/joystick-knob.png" }
+    ],
+
+    "spritesheets": [],
+
+    "atlases": [],
+
+    "tilemaps": [],
+
+    "bitmapFonts": [],
+
+    "audio": []
+}

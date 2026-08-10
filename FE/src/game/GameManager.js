@@ -1,77 +1,71 @@
 /**
- * 게임 매니저
- * Phaser 게임 인스턴스 관리 및 씬 전환
+ * GameManager — Phaser 인스턴스의 유일한 소유자.
+ * React StrictMode 이중 마운트 / Vite HMR 양쪽을 모두 방어한다.
+ *
+ * 규격 출처: 06-TECH-DESIGN.md 3.7
+ * T106: 깨진 AudienceRoomScene import 제거 (이전 프로젝트 잔재. 빌드 불가 원인이었다)
+ * T107: StrictMode 이중 마운트 대응
  */
 import Phaser from "phaser";
-import { GAME_CONFIG } from "./config.js";
-import { AudienceRoomScene } from "./scenes/AudienceRoomScene.js";
+import { GAME_CONFIG } from "./config";
+import { EventBus } from "./EventBus";
+import BootScene from "./scenes/BootScene";
+import PreloadScene from "./scenes/PreloadScene";
+import GameScene from "./scenes/GameScene";
+import HudScene from "./scenes/HudScene";
+import DebugScene from "./scenes/DebugScene";
 
-export class GameManager {
+class GameManagerImpl {
     constructor() {
+        /** @type {Phaser.Game|null} */
         this.game = null;
-        this.isInitialized = false;
+        /** StrictMode 이중 호출 방어 카운터 */
+        this.mountCount = 0;
     }
 
     /**
-     * 게임 초기화
-     * @param {HTMLElement} container - Phaser 게임을 마운트할 컨테이너
+     * @param {HTMLElement} container
+     * @returns {Phaser.Game|null}
      */
-    init(container) {
-        if (this.isInitialized) {
-            console.warn("[GameManager] Game already initialized, destroying previous instance");
-            this.destroy();
-        }
-
+    boot(container) {
+        this.mountCount += 1;
+        // 이미 살아 있으면 새로 만들지 않고 기존 인스턴스를 그대로 돌려준다.
+        if (this.game) return this.game;
         if (!container) {
-            console.error("[GameManager] Container element is required");
-            return;
+            console.error("[GameManager] container 엘리먼트가 없다");
+            return null;
         }
 
-        try {
-            const config = {
-                ...GAME_CONFIG,
-                parent: container,
-                scene: [AudienceRoomScene],
-            };
-
-            this.game = new Phaser.Game(config);
-            this.isInitialized = true;
-            // console.log("[GameManager] Game initialized successfully");
-        } catch (error) {
-            console.error("[GameManager] Failed to initialize game:", error);
-            this.isInitialized = false;
-        }
+        this.game = new Phaser.Game({
+            ...GAME_CONFIG,
+            parent: container,
+            scene: [BootScene, PreloadScene, GameScene, HudScene, DebugScene],
+        });
+        return this.game;
     }
 
     /**
-     * 게임 파괴
+     * cleanup에서 호출. StrictMode의 즉시 언마운트에서는 파괴하지 않는다.
+     * 실제 파괴는 페이지 이탈(pagehide) 또는 HMR dispose에서만 일어난다.
      */
+    release() {
+        this.mountCount -= 1;
+    }
+
     destroy() {
-        if (this.game) {
-            this.game.destroy(true);
-            this.game = null;
-            this.isInitialized = false;
-        }
-    }
-
-    /**
-     * 씬 전환
-     * @param {string} sceneKey
-     */
-    switchScene(sceneKey) {
-        if (this.game) {
-            this.game.scene.start(sceneKey);
-        }
-    }
-
-    /**
-     * 현재 씬 가져오기
-     * @returns {Phaser.Scene|null}
-     */
-    getCurrentScene() {
-        return this.game?.scene?.scenes?.[0] || null;
+        if (!this.game) return;
+        // removeCanvas=true 로 캔버스 DOM까지 제거해야 HMR에서 캔버스가 쌓이지 않는다.
+        // 두 번째 인자 noReturn=false — true면 Phaser 전역이 정리되어 HMR 재생성이 깨진다.
+        this.game.destroy(true, false);
+        this.game = null;
+        this.mountCount = 0;
+        EventBus.clear();
     }
 }
 
-// 싱글톤 인스턴스
-export const gameManager = new GameManager();
+export const gameManager = new GameManagerImpl();
+
+// Vite HMR: 모듈이 교체될 때 기존 게임을 확실히 파괴한다. 이걸 빼면 개발 중 캔버스가 무한 증식한다.
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => gameManager.destroy());
+}
