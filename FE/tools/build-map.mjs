@@ -70,6 +70,22 @@ const WALL_BOT = [0, 1, 2, 3, 4, 5].map((i) => push("wb" + i, 272 + i * TILE, 30
 const ALCOVE = rect("alcove", 80, 272, 4, 3, true);  // 해골 안치 벽감. 벽 밴드(3타일)에 정확히 맞는다
 const GRATE = rect("grate", 496, 208, 4, 4, false);  // 금속 창살. 바닥 문양으로 쓴다(통행 가능)
 
+// ── 벽면 모듈 (전부 4x3 = 벽 밴드 높이와 동일)
+//    레퍼런스 맵의 벽은 한 종류가 아니라 여러 벽면이 이어 붙어 있다.
+//    민무늬 하나로만 채우면 밀도가 나오지 않는다.
+const WM_PLAIN = rect("wmp", 272, 272, 4, 3, true);   // 손상된 벽돌
+const WM_NICHE = rect("wmn", 64, 192, 4, 3, true);    // 해골 안치 벽감 + 사슬
+const WM_NICHE2 = rect("wmn2", 176, 192, 4, 3, true); // 해골 벽감 변형
+const WM_BARRED = rect("wmb", 272, 208, 4, 3, true);  // 창살 감방 문
+const WM_LATTICE = rect("wml", 496, 208, 4, 3, true); // 납골 격자 (레퍼런스 벽면의 주역)
+const WALL_MODULES = [
+    { pf: WM_PLAIN, w: 40 },
+    { pf: WM_NICHE, w: 16 },
+    { pf: WM_NICHE2, w: 14 },
+    { pf: WM_LATTICE, w: 22 },
+    { pf: WM_BARRED, w: 8 },
+];
+
 // ── 타일셋 이미지 조립 (COLS칸씩 가로로 붙인 뒤 세로로 이어붙인다)
 function buildTileset() {
     mkdirSync(TILE_DIR, { recursive: true });
@@ -193,18 +209,37 @@ function stampWall(pf, x0, y0) {
     return true;
 }
 
-// 벽면을 훑어 알코브를 규칙적으로 박고 그 사이에 횃불을 세운다.
-let alcoves = 0, torches = 0;
+// ── 벽면 구성 — 북향 벽 밴드를 4칸짜리 모듈로 이어 붙인다.
+//    한 종류로 채우면 밀도가 안 난다. 레퍼런스 맵도 벽면이 계속 바뀐다.
+const pickModule = () => {
+    const total = WALL_MODULES.reduce((s2, m) => s2 + m.w, 0);
+    let r = ri(total);
+    for (const m of WALL_MODULES) { if (r < m.w) return m.pf; r -= m.w; }
+    return WM_PLAIN;
+};
+
+let modules = 0, torches = 0;
 for (let y = 0; y < H - 3; y++) {
-    let run = 0;
-    for (let x = 0; x < W; x++) {
-        const face = !floorAt(x, y) && floorAt(x, y + 3) && !floorAt(x, y + 1) && !floorAt(x, y + 2);
-        if (!face) { run = 0; continue; }
-        run++;
-        if (run % 12 === 6) { if (stampWall(ALCOVE, x - 1, y)) alcoves++; }
-        else if (run % 6 === 3) { objects.push({ type: "torch", x: x * TILE + 8, y: (y + 3) * TILE - 2 }); torches++; }
+    // 이 행에서 "북향 벽면"(3타일 밴드의 맨 위)이 연속되는 구간을 찾는다
+    let x = 0;
+    while (x < W) {
+        const face = (xx) => !floorAt(xx, y) && !floorAt(xx, y + 1) && !floorAt(xx, y + 2) && floorAt(xx, y + 3);
+        if (!face(x)) { x++; continue; }
+        let end = x;
+        while (end < W && face(end)) end++;
+        // 구간을 4칸씩 모듈로 채운다
+        for (let sx = x; sx + 4 <= end; sx += 4) {
+            if (stampWall(pickModule(), sx, y)) modules++;
+        }
+        // 구간 중앙마다 횃불 — 광원이 분위기의 절반이다
+        for (let tx = x + 2; tx < end; tx += 7) {
+            objects.push({ type: "torch", x: tx * TILE + 8, y: (y + 3) * TILE - 2 });
+            torches++;
+        }
+        x = end;
     }
 }
+const alcoves = modules;
 
 /** 바닥 문양 */
 function stampFloor(pf, x0, y0) {
