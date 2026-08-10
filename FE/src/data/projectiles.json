@@ -1,0 +1,453 @@
+{
+    "_comment": [
+        "투사체 정의. sheets 블록은 tools/build-projectiles.mjs 가 생성한다 — 손으로 고치지 마라.",
+        "projectiles / impacts 는 손으로 쓰는 거동 데이터이며 스크립트가 보존한다.",
+        "원본 라이선스: BDragon1727 'Fire Pixel Bullet 16x16' — 상업 사용/개조 가능, 재판매·재배포 금지."
+    ],
+    "schemaVersion": 1,
+    "sheets": {
+        "proj-dart-fire": {
+            "key": "proj-dart-fire",
+            "url": "assets/projectile/proj-dart-fire.png",
+            "frameWidth": 10,
+            "frameHeight": 10,
+            "frames": 5,
+            "fps": 14,
+            "kind": "bullet",
+            "dir": "+x",
+            "strip": "dart",
+            "palette": "fire",
+            "desc": "화염 다트. 꼬리가 펄럭이는 5프레임 루프",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_00.png",
+                "x": 0,
+                "y": 256,
+                "pitch": 16,
+                "union": [
+                    3,
+                    6,
+                    10,
+                    7
+                ]
+            }
+        },
+        "proj-spear-fire": {
+            "key": "proj-spear-fire",
+            "url": "assets/projectile/proj-spear-fire.png",
+            "frameWidth": 12,
+            "frameHeight": 12,
+            "frames": 5,
+            "fps": 14,
+            "kind": "bullet",
+            "dir": "+x",
+            "strip": "spear",
+            "palette": "fire",
+            "desc": "화염 창. 다트보다 길다 — 관통탄용",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_00.png",
+                "x": 0,
+                "y": 272,
+                "pitch": 16,
+                "union": [
+                    2,
+                    6,
+                    12,
+                    7
+                ]
+            }
+        },
+        "proj-comet-fire": {
+            "key": "proj-comet-fire",
+            "url": "assets/projectile/proj-comet-fire.png",
+            "frameWidth": 32,
+            "frameHeight": 32,
+            "frames": 5,
+            "fps": 12,
+            "kind": "bullet",
+            "dir": "+x",
+            "strip": "comet",
+            "palette": "fire",
+            "desc": "대형 혜성. 프레임이 커지는 성장 시퀀스라 yoyo 재생이 맞다",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_00.png",
+                "x": 448,
+                "y": 192,
+                "pitch": 32,
+                "union": [
+                    0,
+                    7,
+                    32,
+                    17
+                ]
+            }
+        },
+        "proj-dart-blood": {
+            "key": "proj-dart-blood",
+            "url": "assets/projectile/proj-dart-blood.png",
+            "frameWidth": 10,
+            "frameHeight": 10,
+            "frames": 5,
+            "fps": 14,
+            "kind": "bullet",
+            "dir": "+x",
+            "strip": "dart",
+            "palette": "blood",
+            "desc": "화염 다트. 꼬리가 펄럭이는 5프레임 루프",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_07.png",
+                "x": 0,
+                "y": 256,
+                "pitch": 16,
+                "union": [
+                    3,
+                    6,
+                    10,
+                    7
+                ]
+            }
+        },
+        "proj-burst-fire": {
+            "key": "proj-burst-fire",
+            "url": "assets/projectile/proj-burst-fire.png",
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frames": 4,
+            "fps": 20,
+            "kind": "impact",
+            "dir": null,
+            "strip": "burst",
+            "palette": "fire",
+            "desc": "구체 -> 불티 링. 소형 명중",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_00.png",
+                "x": 208,
+                "y": 288,
+                "pitch": 16,
+                "union": [
+                    0,
+                    0,
+                    16,
+                    16
+                ]
+            }
+        },
+        "proj-ring-fire": {
+            "key": "proj-ring-fire",
+            "url": "assets/projectile/proj-ring-fire.png",
+            "frameWidth": 30,
+            "frameHeight": 30,
+            "frames": 4,
+            "fps": 18,
+            "kind": "impact",
+            "dir": null,
+            "strip": "ring",
+            "palette": "fire",
+            "desc": "초승달 소용돌이. 대형 폭발",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_00.png",
+                "x": 448,
+                "y": 224,
+                "pitch": 32,
+                "union": [
+                    1,
+                    6,
+                    30,
+                    20
+                ]
+            }
+        },
+        "proj-spin-ash": {
+            "key": "proj-spin-ash",
+            "url": "assets/projectile/proj-spin-ash.png",
+            "frameWidth": 24,
+            "frameHeight": 24,
+            "frames": 4,
+            "fps": 20,
+            "kind": "impact",
+            "dir": null,
+            "strip": "spin",
+            "palette": "ash",
+            "desc": "회전하는 고리. 관통 명중",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_06.png",
+                "x": 448,
+                "y": 256,
+                "pitch": 32,
+                "union": [
+                    4,
+                    8,
+                    23,
+                    16
+                ]
+            }
+        },
+        "proj-shuriken-ash": {
+            "key": "proj-shuriken-ash",
+            "url": "assets/projectile/proj-shuriken-ash.png",
+            "frameWidth": 14,
+            "frameHeight": 14,
+            "frames": 4,
+            "fps": 16,
+            "kind": "bullet",
+            "dir": null,
+            "strip": "shuriken",
+            "palette": "ash",
+            "desc": "회전 수리검. 궤도 무기용",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_06.png",
+                "x": 96,
+                "y": 80,
+                "pitch": 16,
+                "union": [
+                    1,
+                    2,
+                    14,
+                    14
+                ]
+            }
+        },
+        "proj-star-gold": {
+            "key": "proj-star-gold",
+            "url": "assets/projectile/proj-star-gold.png",
+            "frameWidth": 14,
+            "frameHeight": 14,
+            "frames": 5,
+            "fps": 12,
+            "kind": "bullet",
+            "dir": null,
+            "strip": "star",
+            "palette": "gold",
+            "desc": "4각 별. 커졌다 작아진다",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_04.png",
+                "x": 0,
+                "y": 96,
+                "pitch": 16,
+                "union": [
+                    2,
+                    3,
+                    13,
+                    13
+                ]
+            }
+        },
+        "proj-burst-gold": {
+            "key": "proj-burst-gold",
+            "url": "assets/projectile/proj-burst-gold.png",
+            "frameWidth": 16,
+            "frameHeight": 16,
+            "frames": 4,
+            "fps": 20,
+            "kind": "impact",
+            "dir": null,
+            "strip": "burst",
+            "palette": "gold",
+            "desc": "구체 -> 불티 링. 소형 명중",
+            "src": {
+                "file": "All_Fire_Bullet_Pixel_16x16_04.png",
+                "x": 208,
+                "y": 288,
+                "pitch": 16,
+                "union": [
+                    0,
+                    0,
+                    16,
+                    16
+                ]
+            }
+        }
+    },
+    "projectiles": [
+        {
+            "id": "p_flame",
+            "name": "화염탄",
+            "sheet": "proj-dart-fire",
+            "scale": 1,
+            "hitR": 4,
+            "impact": "fx_flame_hit",
+            "trail": {
+                "every": 0.045,
+                "life": 0.14,
+                "alpha": 0.45,
+                "scale": 0.7
+            },
+            "behavior": {},
+            "_desc": "W2 Lv1~3. 직선 단발. 수치는 전부 weapons.json 이 넘긴다"
+        },
+        {
+            "id": "p_flame_pierce",
+            "name": "관통 화염창",
+            "sheet": "proj-spear-fire",
+            "scale": 1,
+            "hitR": 5,
+            "impact": "fx_pierce_hit",
+            "trail": {
+                "every": 0.04,
+                "life": 0.16,
+                "alpha": 0.5,
+                "scale": 0.75
+            },
+            "behavior": {
+                "pierce": 1
+            },
+            "_desc": "W2 Lv4~5. pierce 는 weapons.json 값이 우선한다 — 여기 값은 단독 호출용 기본값"
+        },
+        {
+            "id": "p_flame_great",
+            "name": "대화염구",
+            "sheet": "proj-comet-fire",
+            "scale": 1,
+            "hitR": 8,
+            "anim": {
+                "yoyo": true
+            },
+            "impact": "fx_flame_blast",
+            "trail": {
+                "every": 0.03,
+                "life": 0.2,
+                "alpha": 0.4,
+                "scale": 0.6
+            },
+            "behavior": {
+                "homing": {
+                    "turnRate": 150,
+                    "range": 130,
+                    "reacquire": 0.15
+                },
+                "aoe": {
+                    "radius": 34,
+                    "damageMult": 0.55,
+                    "onExpire": true,
+                    "impact": "fx_flame_blast",
+                    "fxScale": 1.2
+                }
+            },
+            "_desc": "각성/보스전용 대형탄. 유도 + 착탄 폭발. 아직 무기에 연결되어 있지 않다"
+        },
+        {
+            "id": "p_flame_split",
+            "name": "분열 화염탄",
+            "sheet": "proj-dart-fire",
+            "scale": 1,
+            "hitR": 4,
+            "impact": "fx_flame_hit",
+            "trail": {
+                "every": 0.045,
+                "life": 0.14,
+                "alpha": 0.45,
+                "scale": 0.7
+            },
+            "behavior": {
+                "split": {
+                    "on": "hit",
+                    "count": 2,
+                    "spreadDeg": 55,
+                    "childId": "p_ember",
+                    "damageMult": 0.5,
+                    "speedMult": 0.85,
+                    "rangeMult": 0.45,
+                    "maxGen": 1
+                }
+            },
+            "_desc": "명중 지점에서 잔불 2발로 갈라진다. maxGen 1 — 잔불은 다시 갈라지지 않는다"
+        },
+        {
+            "id": "p_ember",
+            "name": "잔불",
+            "sheet": "proj-dart-fire",
+            "scale": 0.7,
+            "hitR": 3,
+            "impact": "fx_flame_hit",
+            "behavior": {},
+            "_desc": "분열 자식 전용. 궤적 없음 — 분열탄이 화면을 잔상으로 덮는 것을 막는다"
+        },
+        {
+            "id": "p_blood_chain",
+            "name": "피의 도탄",
+            "sheet": "proj-dart-blood",
+            "scale": 1,
+            "hitR": 4,
+            "impact": "fx_blood_hit",
+            "trail": {
+                "every": 0.05,
+                "life": 0.18,
+                "alpha": 0.5,
+                "scale": 0.7
+            },
+            "behavior": {
+                "bounce": {
+                    "count": 2,
+                    "range": 96,
+                    "damageMult": 0.8
+                }
+            },
+            "_desc": "★ 이 맵에는 벽이 없다. bounce 는 벽 반사가 아니라 적 사이 연쇄다"
+        },
+        {
+            "id": "p_bone_shard",
+            "name": "뼈 파편",
+            "sheet": "proj-shuriken-ash",
+            "scale": 1,
+            "hitR": 5,
+            "spin": 540,
+            "impact": "fx_pierce_hit",
+            "behavior": {
+                "pierce": 2
+            },
+            "_desc": "W3 뼈 회오리 유골 교체용. 궤도 무기는 CombatSystem 이 위치를 잡으므로 시트만 쓴다"
+        },
+        {
+            "id": "p_holy_mote",
+            "name": "성수 방울",
+            "sheet": "proj-star-gold",
+            "scale": 1,
+            "hitR": 4,
+            "impact": "fx_holy_hit",
+            "behavior": {
+                "aoe": {
+                    "radius": 20,
+                    "damageMult": 0.4,
+                    "onExpire": true,
+                    "impact": "fx_holy_hit"
+                }
+            },
+            "_desc": "W4 성수 낙하 연출 교체용 후보. 현재 W4 는 zone 이라 이 정의를 쓰지 않는다"
+        }
+    ],
+    "impacts": [
+        {
+            "id": "fx_flame_hit",
+            "sheet": "proj-burst-fire",
+            "scale": 0.9,
+            "_desc": "소형 화염 명중. W2 기본"
+        },
+        {
+            "id": "fx_flame_blast",
+            "sheet": "proj-ring-fire",
+            "scale": 1,
+            "spin": 200,
+            "_desc": "대형 폭발. aoe 전용"
+        },
+        {
+            "id": "fx_pierce_hit",
+            "sheet": "proj-spin-ash",
+            "scale": 0.8,
+            "spin": -240,
+            "randomRotate": false,
+            "align": "heading",
+            "_desc": "관통탄이 몸을 뚫고 지나간 자리"
+        },
+        {
+            "id": "fx_holy_hit",
+            "sheet": "proj-burst-gold",
+            "scale": 0.9,
+            "_desc": "성수 계열 명중"
+        },
+        {
+            "id": "fx_blood_hit",
+            "sheet": "proj-burst-fire",
+            "scale": 0.75,
+            "_desc": "혈계 명중. 전용 시트가 생기면 sheet만 갈아끼운다"
+        }
+    ]
+}

@@ -1,0 +1,117 @@
+{
+    "schemaVersion": 1,
+    "_note": "수익화 정본 카탈로그. 설계 근거와 금지 목록은 docs/20-MONETIZATION.md. 여기 값을 임의로 바꾸지 말 것 — 스토어 콘솔의 상품 ID 와 1:1로 묶여 있다.",
+
+    "_adRule": "보상형 광고는 유저가 스스로 누른 것만 띄운다. 강제 전면광고 자리는 이 파일에 존재하지 않으며, 추가하려면 20-MONETIZATION.md 4장을 먼저 뒤집어야 한다.",
+
+    "adPlacements": [
+        {
+            "id": "revive",
+            "name": "한 번 더 서약한다",
+            "where": "death",
+            "desc": "쓰러진 자리에서 부활한다. HP 50%, 무적 2초.",
+            "reward": { "type": "revive", "hpPct": 0.5, "invulnSec": 2 },
+            "cost": { "humanity": 25 },
+            "caps": { "perRun": 1 },
+            "requires": { "minHumanity": 25 },
+            "_why": "런 안에서 광고를 허용하는 유일한 자리. 인간성으로 값을 치르므로 THE PACT 의 '대가를 치르는 선택'이 유지된다. 돈/광고로 대가를 지우는 게 아니라, 대가를 더 사는 것이다."
+        },
+        {
+            "id": "gold_double",
+            "name": "피의 대가를 두 배로",
+            "where": "result",
+            "desc": "이번 런에서 얻은 골드를 2배로 받는다.",
+            "reward": { "type": "goldMult", "mult": 2 },
+            "caps": { "perRun": 1 },
+            "_why": "런이 이미 끝난 뒤라 밸런스에 개입하지 않는다. 장르 전반에서 시청률이 가장 높은 자리이자, 성소 진행 속도만 당기는 순수 '시간 단축'이다."
+        },
+        {
+            "id": "sanctum_offering",
+            "name": "성소에 헌납한다",
+            "where": "sanctum",
+            "desc": "즉시 골드 120 을 받는다.",
+            "reward": { "type": "gold", "amount": 120 },
+            "caps": { "perDay": 4 },
+            "_why": "런을 돌지 않고도 성소를 굴릴 수 있는 자리. 복귀 유저의 첫 세션을 붙잡는다. 하루 480 골드 = 성소 총액 10,930 의 4.4% 라 무과금 진행 곡선을 무너뜨리지 않는다."
+        }
+    ],
+
+    "_rejectedPlacements": [
+        { "id": "reroll_extra", "why": "계약서 리롤을 광고로 무한 공급하면 '나쁜 대가를 감당한다'는 딜레마 자체가 사라진다. 리롤은 성소 「재계약」으로만 늘린다." },
+        { "id": "toll_remove", "why": "대가 제거는 이 게임을 파는 것과 같다. 광고로도 돈으로도 팔지 않는다." },
+        { "id": "interstitial_between_runs", "why": "강제 전면광고. 런 사이는 이 장르에서 리텐션이 가장 얇은 구간이라 D1 을 직접 깎는다. 소프트런치 이후에도 도입하지 않는다." }
+    ],
+
+    "products": [
+        {
+            "sku": "bs_eternal_pact",
+            "kind": "nonconsumable",
+            "name": "영원한 서약",
+            "desc": "광고를 보지 않아도 모든 보상형 보상을 즉시 받는다. 상한은 그대로다.",
+            "grants": [{ "type": "entitlement", "key": "removeAds" }],
+            "refPrice": { "KRW": 5500, "USD": 3.99 },
+            "_why": "이 게임에는 강제 광고가 없으므로 '광고 제거'는 제거할 대상이 없다. 대신 '광고 없이 같은 보상'을 판다 — 파는 것은 힘이 아니라 시간과 번거로움이다. 상한(perRun/perDay)은 결제자도 동일하다.",
+            "_entitlementKey": "removeAds"
+        },
+        {
+            "sku": "bs_gold_s",
+            "kind": "consumable",
+            "name": "핏빛 주머니",
+            "grants": [{ "type": "gold", "amount": 1200 }],
+            "refPrice": { "KRW": 1500, "USD": 0.99 }
+        },
+        {
+            "sku": "bs_gold_m",
+            "kind": "consumable",
+            "name": "핏빛 궤",
+            "grants": [{ "type": "gold", "amount": 4000 }],
+            "refPrice": { "KRW": 4900, "USD": 2.99 },
+            "badge": "best"
+        },
+        {
+            "sku": "bs_gold_l",
+            "kind": "consumable",
+            "name": "핏빛 성궤",
+            "grants": [{ "type": "gold", "amount": 11000 }],
+            "refPrice": { "KRW": 12000, "USD": 7.99 },
+            "_why": "성소 전체 완성에 필요한 골드 총액이 10,930 이다. 최상위 팩 하나가 성소를 끝낸다 — 그 이상 팔 것이 없다는 뜻이고, 이것이 P2W 이 되지 않는 이유다."
+        },
+        {
+            "sku": "bs_starter",
+            "kind": "nonconsumable",
+            "name": "첫 서약자의 궤",
+            "desc": "골드 4,000 + 영원한 서약. 설치 후 72시간 한정.",
+            "grants": [
+                { "type": "gold", "amount": 4000 },
+                { "type": "entitlement", "key": "removeAds" }
+            ],
+            "refPrice": { "KRW": 8800, "USD": 5.99 },
+            "window": { "afterFirstLaunchHours": 72 },
+            "_why": "개별 구매 대비 약 15% 할인. 장르 전반에서 최초 결제 전환이 가장 높은 상품 형태다. 한정 표기는 반드시 사실이어야 한다(허위 카운트다운은 스토어 정책 위반)."
+        },
+        {
+            "sku": "bs_skin_ashen",
+            "kind": "nonconsumable",
+            "name": "잿빛 진조 (외형)",
+            "desc": "플레이어 외형만 바뀐다. 능력치 변화 없음.",
+            "grants": [{ "type": "cosmetic", "key": "skin_ashen" }],
+            "refPrice": { "KRW": 3300, "USD": 1.99 }
+        }
+    ],
+
+    "_forbiddenForever": [
+        "인간성 회복 / 인간성 상한 증가",
+        "대가(Toll) 제거 · 약화 · 리롤",
+        "각성 상한(런당 2개) 해제, 각성 즉시 발동",
+        "부활 횟수 상한 해제 (런 1회는 결제자도 동일)",
+        "성소 상한(maxLevel) 초과 강화, 결제 전용 스탯",
+        "결제 전용 무기 · 축복 · 각성",
+        "확률형 아이템(가챠) 일체"
+    ],
+
+    "storeIdMapping": {
+        "_note": "Play Console / App Store Connect 에 등록할 상품 ID. 플랫폼별로 다르게 잡지 말 것 — 다르면 영수증 대조 로직이 두 벌이 된다.",
+        "android": "sku 를 그대로 사용",
+        "ios": "sku 를 그대로 사용"
+    }
+}

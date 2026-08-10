@@ -1,6 +1,7 @@
 {
     "_comment": "무기 수치. 출처 05-COMBAT 2.1(W1) 2.2(W2) 2.3(W3) 2.4(W4). Lv1~5 전개 완료.",
     "_note": "levels 배열 인덱스 = 레벨-1. 인게임 성장은 축복 bls_w1~bls_w4가 level을 +1 한다.",
+    "_projectile": "projectile 키는 data/projectiles.json 의 id 다. 표현만 정하며 수치에 관여하지 않는다 — damage/pierce 등은 여기 값이 항상 우선한다(ProjectileSystem.fire 의 opts).",
     "schemaVersion": 2,
     "weapons": [
         {
@@ -15,17 +16,19 @@
         },
         {
             "id": "W2", "name": "화염탄", "type": "projectile", "maxLevel": 5,
+            "_note": "Lv4에서 pierce가 붙는 순간 탄이 '통과하는 물건'으로 바뀐다 — 그래서 그때 스프라이트도 다트에서 창으로 바꾼다. 관통 여부를 발사 순간에 눈으로 알 수 있어야 한다.",
             "levels": [
-                { "damage": 14, "cooldown": 1.20, "range": 200, "count": 1, "pierce": 0, "speed": 220, "knockback": 12, "spreadDeg": 0 },
-                { "damage": 17, "cooldown": 1.15, "range": 210, "count": 1, "pierce": 0, "speed": 220, "knockback": 12, "spreadDeg": 0 },
-                { "damage": 20, "cooldown": 1.10, "range": 220, "count": 2, "pierce": 0, "speed": 235, "knockback": 12, "spreadDeg": 0, "burstGap": 0.08 },
-                { "damage": 24, "cooldown": 1.05, "range": 230, "count": 2, "pierce": 1, "speed": 235, "knockback": 14, "spreadDeg": 0, "burstGap": 0.08 },
-                { "damage": 29, "cooldown": 1.00, "range": 240, "count": 3, "pierce": 1, "speed": 250, "knockback": 16, "spreadDeg": 10 }
+                { "damage": 14, "cooldown": 1.20, "range": 200, "count": 1, "pierce": 0, "speed": 220, "knockback": 12, "spreadDeg": 0, "projectile": "p_flame" },
+                { "damage": 17, "cooldown": 1.15, "range": 210, "count": 1, "pierce": 0, "speed": 220, "knockback": 12, "spreadDeg": 0, "projectile": "p_flame" },
+                { "damage": 20, "cooldown": 1.10, "range": 220, "count": 2, "pierce": 0, "speed": 235, "knockback": 12, "spreadDeg": 0, "burstGap": 0.08, "projectile": "p_flame" },
+                { "damage": 24, "cooldown": 1.05, "range": 230, "count": 2, "pierce": 1, "speed": 235, "knockback": 14, "spreadDeg": 0, "burstGap": 0.08, "projectile": "p_flame_pierce" },
+                { "damage": 29, "cooldown": 1.00, "range": 240, "count": 3, "pierce": 1, "speed": 250, "knockback": 16, "spreadDeg": 10, "projectile": "p_flame_pierce" }
             ]
         },
         {
             "id": "W3", "name": "뼈 회오리", "type": "orbit", "maxLevel": 5,
             "_note": "쿨다운 없는 상시 발동. 단일 DPS 상한은 rehit(재타격 쿨)이 정하고 유골 수는 군중 DPS에만 기여한다. haste는 rehit을 나눈다 — 회전속도는 건드리지 않는다(눈이 어지러워짐).",
+            "_sprite": "유골을 원에서 스프라이트로 바꿀 때 쓸 시트: proj-shuriken-ash (projectiles.json sheets). 궤도는 CombatSystem이 위치를 잡으므로 투사체 정의(p_bone_shard)가 아니라 시트만 필요하다.",
             "levels": [
                 { "damage": 8, "radius": 46, "count": 2, "degPerSec": 120, "rehit": 0.60, "knockback": 8 },
                 { "damage": 9, "radius": 46, "count": 3, "degPerSec": 130, "rehit": 0.60, "knockback": 8 },
@@ -37,6 +40,7 @@
         {
             "id": "W4", "name": "성수 낙하", "type": "zone", "maxLevel": 5,
             "_note": "낙하 위치가 랜덤 — 조준 실력이 개입하지 않는 대신 단일 명중률 30%로 균형. 틱 수 4 = 진입 즉시 1틱 + 0.5s마다.",
+            "_sprite": "장판 자체는 원으로 두고 낙하/틱 순간에만 fx_holy_hit(proj-burst-gold)를 띄우는 편이 읽힌다. 장판을 스프라이트로 덮으면 반경이 흐려져 회피 판단이 어려워진다.",
             "levels": [
                 { "damage": 6, "cooldown": 3.00, "drops": 3, "radius": 30, "duration": 1.5, "tick": 0.5, "scatter": 200 },
                 { "damage": 7, "cooldown": 3.00, "drops": 3, "radius": 34, "duration": 1.5, "tick": 0.5, "scatter": 210 },

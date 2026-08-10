@@ -1,0 +1,66 @@
+{
+    "schemaVersion": 1,
+    "configVersion": 1,
+    "_note": "원격 설정의 **로컬 기본값이자 스키마**. 설계 근거는 docs/22-BACKEND-AND-REMOTE-CONFIG.md.",
+
+    "_rules": [
+        "이 파일만으로 게임이 100% 정상 동작해야 한다. 원격은 '덮어쓰기'일 뿐, 없으면 못 켜지는 값을 여기 두지 않는다.",
+        "원격으로 여는 것은 **스칼라(bool/int/num/str)** 뿐이다. 배열·객체·데이터 파일 전체는 열지 않는다 — 모양이 틀어지면 clamp 로 막을 수가 없다.",
+        "모든 수치 키에 min/max 를 둔다. 서버가 0 을 보내든 1e9 를 보내든 클라이언트는 살아 있어야 한다.",
+        "무기/적/축복/대가/각성 데이터(weapons.json 등)는 절대 원격 대상이 아니다. 밸런스는 아래 balance.* 전역 배율로만 흔든다.",
+        "문자열 목록이 필요하면 CSV 문자열로 보낸다(예: shop.hiddenSkus). 배열을 열지 않기 위한 의도적 우회다."
+    ],
+
+    "_fetch": {
+        "ttlSec": 21600,
+        "timeoutMs": 4000,
+        "_note": "6시간 캐시. 부팅을 절대 막지 않는다 — 타임아웃되면 캐시, 캐시도 없으면 이 파일의 기본값으로 즉시 진행한다."
+    },
+
+    "values": {
+        "ads.enabled":                        { "v": true,  "t": "bool" },
+        "ads.dailyImpressionCap":             { "v": 15,    "t": "int", "min": 0,   "max": 50 },
+        "ads.loadTimeoutMs":                  { "v": 10000, "t": "int", "min": 3000, "max": 30000 },
+        "ads.showTimeoutMs":                  { "v": 90000, "t": "int", "min": 15000, "max": 300000 },
+
+        "ads.revive.enabled":                 { "v": true,  "t": "bool" },
+        "ads.revive.humanityCost":            { "v": 25,    "t": "int", "min": 0,   "max": 100 },
+        "ads.revive.perRun":                  { "v": 1,     "t": "int", "min": 0,   "max": 3 },
+        "ads.goldDouble.enabled":             { "v": true,  "t": "bool" },
+        "ads.goldDouble.mult":                { "v": 2,     "t": "num", "min": 1,   "max": 5 },
+        "ads.goldDouble.perRun":              { "v": 1,     "t": "int", "min": 0,   "max": 3 },
+        "ads.sanctumOffering.enabled":        { "v": true,  "t": "bool" },
+        "ads.sanctumOffering.amount":         { "v": 120,   "t": "int", "min": 0,   "max": 2000 },
+        "ads.sanctumOffering.perDay":         { "v": 4,     "t": "int", "min": 0,   "max": 20 },
+
+        "shop.enabled":                       { "v": true,  "t": "bool" },
+        "shop.hiddenSkus":                    { "v": "",    "t": "str", "maxLen": 300 },
+        "shop.starterWindowHours":            { "v": 72,    "t": "int", "min": 0,   "max": 336 },
+        "shop.promoText":                     { "v": "",    "t": "str", "maxLen": 80 },
+
+        "analytics.enabled":                  { "v": true,  "t": "bool" },
+        "analytics.sampleRate":               { "v": 1,     "t": "num", "min": 0,   "max": 1 },
+        "analytics.batchSize":                { "v": 20,    "t": "int", "min": 1,   "max": 100 },
+        "analytics.flushIntervalSec":         { "v": 60,    "t": "int", "min": 5,   "max": 3600 },
+        "analytics.maxQueue":                 { "v": 500,   "t": "int", "min": 50,  "max": 5000 },
+        "analytics.maxEventsPerSession":      { "v": 300,   "t": "int", "min": 20,  "max": 3000 },
+
+        "balance.enemyHpMult":                { "v": 1,     "t": "num", "min": 0.5, "max": 2 },
+        "balance.enemyDamageMult":            { "v": 1,     "t": "num", "min": 0.5, "max": 2 },
+        "balance.bossHpMult":                 { "v": 1,     "t": "num", "min": 0.5, "max": 2 },
+        "balance.goldMult":                   { "v": 1,     "t": "num", "min": 0.5, "max": 3 },
+        "balance.xpMult":                     { "v": 1,     "t": "num", "min": 0.5, "max": 2 },
+
+        "liveops.motd":                       { "v": "",    "t": "str", "maxLen": 140 },
+        "liveops.eventId":                    { "v": "",    "t": "str", "maxLen": 32 },
+        "ux.reviewPromptAfterRuns":           { "v": 8,     "t": "int", "min": 0,   "max": 200 }
+    },
+
+    "_notRemote": [
+        "세이브 스키마 / 마이그레이션 (원격으로 바꾸면 복구 불가능한 손상이 난다)",
+        "성소 업그레이드 비용·효과 (sanctum.json — 결제 상품 가치와 직결. 원격으로 흔들면 이미 산 유저가 손해를 본다)",
+        "상품 가격 (스토어 콘솔이 유일한 정본. 앱이 가격을 그리면 환율·세금이 어긋난다)",
+        "무기/적/축복/대가/각성 테이블 전체",
+        "강제 업데이트 최소 버전 — 소프트런치 동안은 두지 않는다. 원격 값 하나로 전 유저의 앱을 잠글 수 있는 스위치는 서버 운영이 안정된 뒤에 만든다"
+    ]
+}

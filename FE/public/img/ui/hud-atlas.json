@@ -1,0 +1,95 @@
+{
+  "frames": {
+    "joy-base": {
+      "frame": {
+        "x": 2,
+        "y": 2,
+        "w": 96,
+        "h": 96
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 96
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 96
+      }
+    },
+    "joy-knob": {
+      "frame": {
+        "x": 102,
+        "y": 2,
+        "w": 32,
+        "h": 32
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 32,
+        "h": 32
+      },
+      "sourceSize": {
+        "w": 32,
+        "h": 32
+      }
+    },
+    "bar-hp": {
+      "frame": {
+        "x": 102,
+        "y": 38,
+        "w": 108,
+        "h": 16
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 108,
+        "h": 16
+      },
+      "sourceSize": {
+        "w": 108,
+        "h": 16
+      }
+    },
+    "bar-exp": {
+      "frame": {
+        "x": 102,
+        "y": 58,
+        "w": 66,
+        "h": 10
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 66,
+        "h": 10
+      },
+      "sourceSize": {
+        "w": 66,
+        "h": 10
+      }
+    }
+  },
+  "meta": {
+    "app": "FE/tools/build-ui.mjs",
+    "image": "hud-atlas.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 256,
+      "h": 128
+    },
+    "scale": "1",
+    "note": "손으로 고치지 말 것. npm run build:ui 로 다시 굽는다."
+  }
+}

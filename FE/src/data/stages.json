@@ -1,0 +1,717 @@
+{
+    "_comment": [
+        "스테이지 정의. 출처 docs/26-STAGES-AND-BOSSES.md / 03-GDD-CORE 8·9·11 / 05-COMBAT 5·6.",
+        "",
+        "★ 스테이지는 '맵이 다른 것'이 아니라 '규칙이 다른 것'이다.",
+        "  배경만 바꾸면 두 번째에서 바로 질린다. 그래서 스테이지마다 아래 다섯 축이 전부 다르다.",
+        "    runSec   런 길이 (300~480초. 전부 6분일 필요가 없다)",
+        "    waves    적 계열 조합과 난이도 곡선",
+        "    gimmick  환경 기믹 1개 (스테이지의 정체성)",
+        "    bossId   보스 (boss.json)",
+        "    unlock   해금 조건",
+        "",
+        "★ waves.inherit: 'phases' 는 phases.json 을 그대로 쓴다는 뜻이다.",
+        "  스테이지 1은 7일 프로토타입에서 실측·튜닝이 끝난 밸런스다. 곡선 공식으로 다시 유도하면",
+        "  소수점에서 미세하게 어긋나고, 그 어긋남이 '왜 갑자기 어려워졌지'로 돌아온다. 원본을 그대로 쓴다.",
+        "",
+        "★ waves.curve 는 03-GDD 11 의 배율 공식이다.",
+        "    hpMult(t)  = 1.00 + (t/60)^hpExp  * hpK",
+        "    dmgMult(t) = 1.00 + (t/60)^dmgExp * dmgK",
+        "  정본 계수(hpK 0.33 / hpExp 1.55 / dmgK 0.12 / dmgExp 1.30)를 t=330 에 넣으면 5.64·2.10 이 나와",
+        "  05-COMBAT 5.2 마스터 테이블의 마지막 행과 정확히 일치한다. 스테이지 2~6은 이 계수를 흔들어",
+        "  '짧고 가파른 성당' 과 '길고 완만한 늪' 을 만든다.",
+        "",
+        "★ mix 는 적 ID 가 아니라 계열(family) 가중치다.",
+        "  150종 카탈로그(다른 작업자 소유)가 계열별 종 목록을 채우면 이 파일을 고치지 않아도 종이 늘어난다.",
+        "  카탈로그 도착 전에는 StageSystem 의 LEGACY_FAMILY 가 E1~E8 로 대체한다.",
+        "  계열 10종: undead vermin animal monster humanoid humanoid2 magical demon dragon holy",
+        "",
+        "★ ground.texture 가 아직 없으면 fallbackTexture 에 tint 를 얹어 굴린다(03-GDD 8.2 재활용 원칙).",
+        "  맵 의뢰가 도착하기 전에도 6 스테이지가 서로 다르게 보이고, 도착하면 이 파일만 고치면 끝난다."
+    ],
+    "schemaVersion": 1,
+    "defaultStageId": "stage1",
+    "stages": [
+        {
+            "id": "stage1",
+            "order": 1,
+            "name": "봉인묘",
+            "subtitle": "23:00 — 자정 전",
+            "runSec": 360,
+            "bossId": "BOSS1",
+            "goldOnClear": 200,
+            "unlock": {
+                "type": "always"
+            },
+            "ground": {
+                "texture": "ground_grave",
+                "props": "props_grave",
+                "fallbackTexture": "ground_grave",
+                "fallbackProps": "props_grave",
+                "tint": 16777215
+            },
+            "gimmick": {
+                "type": "sanctuary",
+                "name": "성수 웅덩이",
+                "duringBoss": "off",
+                "params": {
+                    "every": 60,
+                    "firstAt": 45,
+                    "radius": 30,
+                    "ringMin": 120,
+                    "ringMax": 220,
+                    "duration": 12,
+                    "tickInterval": 1,
+                    "heal": 6,
+                    "maxActive": 2
+                }
+            },
+            "waves": {
+                "inherit": "phases"
+            }
+        },
+        {
+            "id": "stage2",
+            "order": 2,
+            "name": "잿빛 성당",
+            "subtitle": "향로가 꺼지지 않는 곳",
+            "_note": "짧고 가파르다(300초). 시야가 좁아지므로 동시 상한을 120으로 낮춰 '안 보이는 곳에서 맞았다'를 막는다.",
+            "runSec": 300,
+            "bossId": "BOSS2",
+            "goldOnClear": 240,
+            "unlock": {
+                "type": "bossDefeated",
+                "stageId": "stage1"
+            },
+            "ground": {
+                "texture": "ground_cathedral",
+                "props": "props_cathedral",
+                "fallbackTexture": "ground_grave",
+                "fallbackProps": "props_grave",
+                "tint": 9085120
+            },
+            "gimmick": {
+                "type": "haze",
+                "name": "향로 연기",
+                "duringBoss": "reduced",
+                "_note": "24초 주기로 시야가 320→150px 로 조여든다. 보스전에서는 절반만 조인다(reduced) — 0.6s 텔레그래프가 안 보이면 T525 위반이다.",
+                "params": {
+                    "period": 24,
+                    "closeSec": 6,
+                    "holdSec": 6,
+                    "openSec": 4,
+                    "visionFrom": 320,
+                    "visionTo": 150,
+                    "bands": 14,
+                    "bandWidth": 18,
+                    "color": 722704
+                }
+            },
+            "waves": {
+                "segments": 12,
+                "segmentSec": 25,
+                "curve": {
+                    "hpK": 0.4,
+                    "hpExp": 1.5,
+                    "dmgK": 0.14,
+                    "dmgExp": 1.25,
+                    "intervalFrom": 1.1,
+                    "intervalTo": 0.24,
+                    "capFrom": 18,
+                    "capTo": 120
+                },
+                "mix": [
+                    {
+                        "t": 0,
+                        "families": {
+                            "humanoid": 45,
+                            "holy": 35,
+                            "undead": 20
+                        }
+                    },
+                    {
+                        "t": 100,
+                        "families": {
+                            "humanoid": 35,
+                            "holy": 35,
+                            "undead": 15,
+                            "magical": 15
+                        }
+                    },
+                    {
+                        "t": 200,
+                        "families": {
+                            "humanoid": 25,
+                            "holy": 30,
+                            "magical": 25,
+                            "humanoid2": 20
+                        }
+                    }
+                ],
+                "events": {
+                    "orbs": 8,
+                    "elite": [
+                        {
+                            "t": 75,
+                            "id": "EL1"
+                        },
+                        {
+                            "t": 160,
+                            "id": "EL1"
+                        },
+                        {
+                            "t": 230,
+                            "id": "EL2"
+                        }
+                    ],
+                    "swarm": {
+                        "id": "E7",
+                        "count": 8,
+                        "from": 150,
+                        "to": 292,
+                        "every": 16
+                    }
+                },
+                "moments": [
+                    {
+                        "phase": 1,
+                        "t": 0,
+                        "label": "성당 — 봉헌",
+                        "bgmTier": "bgm_ambient",
+                        "flash": [
+                            140,
+                            130,
+                            110
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 2,
+                        "t": 75,
+                        "label": "성당 — 첫 종",
+                        "bgmTier": "bgm_perc1",
+                        "flash": [
+                            130,
+                            110,
+                            140
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 3,
+                        "t": 160,
+                        "label": "성당 — 셋째 종",
+                        "bgmTier": "bgm_perc2",
+                        "flash": [
+                            150,
+                            80,
+                            110
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 4,
+                        "t": 230,
+                        "label": "성당 — 마지막 종",
+                        "bgmTier": "bgm_rush",
+                        "flash": [
+                            200,
+                            60,
+                            60
+                        ],
+                        "tint": 5917298,
+                        "tintAlpha": 0.16
+                    }
+                ]
+            }
+        },
+        {
+            "id": "stage3",
+            "order": 3,
+            "name": "역병 늪",
+            "subtitle": "발이 빠지는 물",
+            "_note": "길고 완만하다(420초). 늪에 발이 묶이면 회피가 어려워지므로 동시 상한(110)과 스폰 간격(0.30까지)을 스테이지1보다 느슨하게 잡았다. 대신 hpExp 1.60 으로 후반이 급격히 무거워진다.",
+            "runSec": 420,
+            "bossId": "BOSS3",
+            "goldOnClear": 300,
+            "unlock": {
+                "type": "bossDefeated",
+                "stageId": "stage2"
+            },
+            "ground": {
+                "texture": "ground_mire",
+                "props": "props_mire",
+                "fallbackTexture": "ground_grave",
+                "fallbackProps": "props_grave",
+                "tint": 7309918
+            },
+            "gimmick": {
+                "type": "mire",
+                "name": "수렁",
+                "duringBoss": "on",
+                "_note": "청크 시드 고정 배치라 같은 자리는 언제 와도 같은 수렁이다 — 외워서 대응할 수 있어야 불공정이 아니다. 이동속도 -35% 는 StatSystem 의 toll 경로를 그대로 쓴다(하한 32px/s 가 자동 적용된다).",
+                "params": {
+                    "chunk": 256,
+                    "radius": 2,
+                    "perChunk": 1.4,
+                    "minR": 34,
+                    "maxR": 62,
+                    "slow": 0.35,
+                    "color": 3099178,
+                    "alpha": 0.42
+                }
+            },
+            "waves": {
+                "segments": 12,
+                "segmentSec": 35,
+                "curve": {
+                    "hpK": 0.3,
+                    "hpExp": 1.6,
+                    "dmgK": 0.1,
+                    "dmgExp": 1.35,
+                    "intervalFrom": 1.3,
+                    "intervalTo": 0.3,
+                    "capFrom": 12,
+                    "capTo": 110
+                },
+                "mix": [
+                    {
+                        "t": 0,
+                        "families": {
+                            "vermin": 50,
+                            "animal": 30,
+                            "monster": 20
+                        }
+                    },
+                    {
+                        "t": 140,
+                        "families": {
+                            "vermin": 35,
+                            "animal": 22,
+                            "monster": 28,
+                            "undead": 15
+                        }
+                    },
+                    {
+                        "t": 280,
+                        "families": {
+                            "vermin": 24,
+                            "monster": 30,
+                            "demon": 26,
+                            "undead": 20
+                        }
+                    }
+                ],
+                "events": {
+                    "orbs": 6,
+                    "elite": [
+                        {
+                            "t": 100,
+                            "id": "EL1"
+                        },
+                        {
+                            "t": 210,
+                            "id": "EL1"
+                        },
+                        {
+                            "t": 320,
+                            "id": "EL2"
+                        }
+                    ],
+                    "swarm": {
+                        "id": "E7",
+                        "count": 8,
+                        "from": 120,
+                        "to": 410,
+                        "every": 20
+                    }
+                },
+                "moments": [
+                    {
+                        "phase": 1,
+                        "t": 0,
+                        "label": "늪 — 발목",
+                        "bgmTier": "bgm_ambient",
+                        "flash": [
+                            120,
+                            140,
+                            110
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 2,
+                        "t": 105,
+                        "label": "늪 — 무릎",
+                        "bgmTier": "bgm_perc1",
+                        "flash": [
+                            110,
+                            140,
+                            100
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 3,
+                        "t": 225,
+                        "label": "늪 — 허리",
+                        "bgmTier": "bgm_perc2",
+                        "flash": [
+                            130,
+                            120,
+                            80
+                        ],
+                        "tint": 3099178,
+                        "tintAlpha": 0.1
+                    },
+                    {
+                        "phase": 4,
+                        "t": 330,
+                        "label": "늪 — 목",
+                        "bgmTier": "bgm_rush",
+                        "flash": [
+                            190,
+                            70,
+                            60
+                        ],
+                        "tint": 4864530,
+                        "tintAlpha": 0.18
+                    }
+                ]
+            }
+        },
+        {
+            "id": "stage4",
+            "order": 4,
+            "name": "무너진 첨탑",
+            "subtitle": "위에서 내려온다",
+            "_note": "낙석이 바닥을 계속 뺏으므로 물량이 아니라 개체 강도로 압박한다 — 상한 90, hpK 0.48. 화면에 적이 적어야 낙석 예고 원이 읽힌다.",
+            "runSec": 330,
+            "bossId": "BOSS4",
+            "goldOnClear": 340,
+            "unlock": {
+                "type": "all",
+                "of": [
+                    {
+                        "type": "bossDefeated",
+                        "stageId": "stage3"
+                    },
+                    {
+                        "type": "awakenCount",
+                        "n": 3
+                    }
+                ]
+            },
+            "ground": {
+                "texture": "ground_spire",
+                "props": "props_spire",
+                "fallbackTexture": "ground_grave",
+                "fallbackProps": "props_grave",
+                "tint": 11049606
+            },
+            "gimmick": {
+                "type": "rockfall",
+                "name": "붕괴",
+                "duringBoss": "on",
+                "_note": "windup 0.95s 는 T525 하한 0.6s 보다 길다. 낙석은 보스 패턴과 달리 예고가 화면 여기저기서 동시에 뜨므로 읽는 데 시간이 더 든다.",
+                "params": {
+                    "every": 7.5,
+                    "firstAt": 12,
+                    "countFrom": 1,
+                    "countTo": 4,
+                    "windup": 0.95,
+                    "radius": 34,
+                    "damage": 14,
+                    "spread": 180,
+                    "maxActive": 6
+                }
+            },
+            "waves": {
+                "segments": 11,
+                "segmentSec": 30,
+                "curve": {
+                    "hpK": 0.48,
+                    "hpExp": 1.48,
+                    "dmgK": 0.13,
+                    "dmgExp": 1.28,
+                    "intervalFrom": 1.15,
+                    "intervalTo": 0.3,
+                    "capFrom": 14,
+                    "capTo": 90
+                },
+                "mix": [
+                    {
+                        "t": 0,
+                        "families": {
+                            "magical": 45,
+                            "humanoid2": 35,
+                            "undead": 20
+                        }
+                    },
+                    {
+                        "t": 110,
+                        "families": {
+                            "magical": 38,
+                            "humanoid2": 30,
+                            "undead": 17,
+                            "dragon": 15
+                        }
+                    },
+                    {
+                        "t": 220,
+                        "families": {
+                            "magical": 30,
+                            "humanoid2": 25,
+                            "dragon": 25,
+                            "demon": 20
+                        }
+                    }
+                ],
+                "events": {
+                    "orbs": 6,
+                    "elite": [
+                        {
+                            "t": 80,
+                            "id": "EL1"
+                        },
+                        {
+                            "t": 175,
+                            "id": "EL2"
+                        },
+                        {
+                            "t": 265,
+                            "id": "EL2"
+                        }
+                    ],
+                    "swarm": {
+                        "id": "E7",
+                        "count": 8,
+                        "from": 130,
+                        "to": 322,
+                        "every": 18
+                    }
+                },
+                "moments": [
+                    {
+                        "phase": 1,
+                        "t": 0,
+                        "label": "첨탑 — 1층",
+                        "bgmTier": "bgm_ambient",
+                        "flash": [
+                            140,
+                            130,
+                            120
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 2,
+                        "t": 85,
+                        "label": "첨탑 — 균열",
+                        "bgmTier": "bgm_perc1",
+                        "flash": [
+                            140,
+                            120,
+                            100
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 3,
+                        "t": 175,
+                        "label": "첨탑 — 기둥",
+                        "bgmTier": "bgm_perc2",
+                        "flash": [
+                            160,
+                            100,
+                            80
+                        ],
+                        "tint": 3814213,
+                        "tintAlpha": 0.12
+                    },
+                    {
+                        "phase": 4,
+                        "t": 262,
+                        "label": "첨탑 — 붕괴",
+                        "bgmTier": "bgm_rush",
+                        "flash": [
+                            210,
+                            80,
+                            50
+                        ],
+                        "tint": 7031314,
+                        "tintAlpha": 0.18
+                    }
+                ]
+            }
+        },
+        {
+            "id": "stage5",
+            "order": 5,
+            "name": "지옥문",
+            "subtitle": "불이 지나가는 길",
+            "_note": "정면 물량 스테이지(450초, 상한 150). 돌풍이 주기적으로 화면을 가로질러 '서 있으면 죽는다'를 만든다. 카이팅 스테이지가 아니라 계속 도는 스테이지다.",
+            "runSec": 450,
+            "bossId": "BOSS5",
+            "goldOnClear": 420,
+            "unlock": {
+                "type": "bossDefeated",
+                "stageId": "stage4"
+            },
+            "ground": {
+                "texture": "ground_hellgate",
+                "props": "props_hellgate",
+                "fallbackTexture": "ground_grave",
+                "fallbackProps": "props_grave",
+                "tint": 12610122
+            },
+            "gimmick": {
+                "type": "emberwind",
+                "name": "화염 돌풍",
+                "duringBoss": "reduced",
+                "_note": "예고선 1.1s 뒤에 불길 띠가 화면을 가로지른다. 띠 두께 56px 은 대시(쿨 3.0s) 없이도 걸어서 빠져나올 수 있는 폭이다 — 대시 의존은 T525 정신에 어긋난다.",
+                "params": {
+                    "every": 11,
+                    "firstAt": 18,
+                    "windup": 1.1,
+                    "halfWidth": 28,
+                    "speed": 240,
+                    "damage": 16,
+                    "tickInterval": 0.5,
+                    "color": 16738858
+                }
+            },
+            "waves": {
+                "segments": 15,
+                "segmentSec": 30,
+                "curve": {
+                    "hpK": 0.34,
+                    "hpExp": 1.52,
+                    "dmgK": 0.12,
+                    "dmgExp": 1.3,
+                    "intervalFrom": 1,
+                    "intervalTo": 0.18,
+                    "capFrom": 20,
+                    "capTo": 150
+                },
+                "mix": [
+                    {
+                        "t": 0,
+                        "families": {
+                            "demon": 45,
+                            "monster": 35,
+                            "vermin": 20
+                        }
+                    },
+                    {
+                        "t": 150,
+                        "families": {
+                            "demon": 40,
+                            "monster": 25,
+                            "dragon": 20,
+                            "vermin": 15
+                        }
+                    },
+                    {
+                        "t": 300,
+                        "families": {
+                            "demon": 34,
+                            "dragon": 30,
+                            "monster": 20,
+                            "undead": 16
+                        }
+                    }
+                ],
+                "events": {
+                    "orbs": 6,
+                    "elite": [
+                        {
+                            "t": 90,
+                            "id": "EL1"
+                        },
+                        {
+                            "t": 200,
+                            "id": "EL2"
+                        },
+                        {
+                            "t": 300,
+                            "id": "EL2"
+                        },
+                        {
+                            "t": 390,
+                            "id": "EL2"
+                        }
+                    ],
+                    "swarm": {
+                        "id": "E7",
+                        "count": 8,
+                        "from": 150,
+                        "to": 442,
+                        "every": 13
+                    }
+                },
+                "moments": [
+                    {
+                        "phase": 1,
+                        "t": 0,
+                        "label": "지옥문 — 첫 열",
+                        "bgmTier": "bgm_ambient",
+                        "flash": [
+                            150,
+                            110,
+                            90
+                        ],
+                        "tint": 0,
+                        "tintAlpha": 0
+                    },
+                    {
+                        "phase": 2,
+                        "t": 115,
+                        "label": "지옥문 — 둘째 열",
+                        "bgmTier": "bgm_perc1",
+                        "flash": [
+                            170,
+                            100,
+                            70
+                        ],
+                        "tint": 4856330,
+                        "tintAlpha": 0.08
+                    },
+                    {
+                        "phase": 3,
+                        "t": 240,
+                        "label": "지옥문 — 셋째 열",
+                        "bgmTier": "bgm_perc2",
+                        "flash": [
+                            200,
+                            80,
+                            50
+                        ],
+                        "tint": 7019018,
+                        "tintAlpha": 0.14
+                    },
+                    {
+                        "phase": 4,
+                        "t": 355,
+                        "label": "지옥문 — 열림",
+                        "bgmTier": "bgm_rush",
+                        "flash": [
+                            230,
+                            60,
+                            40
+                        ],
+                        "tint": 9310752,
+                        "tintAlpha": 0.2
+                    }
+                ]
+            }
+        }
+    ]
+}
