@@ -22,8 +22,12 @@
             "url": "img/ui/joystick-knob.png"
         },
         {
-            "key": "map_crypt",
-            "url": "assets/map/map-crypt.png"
+            "key": "ground_grave",
+            "url": "assets/map/ground-grave.png"
+        },
+        {
+            "key": "props_grave",
+            "url": "assets/map/props-grave.png"
         }
     ],
     "spritesheets": [
@@ -160,12 +164,8 @@
     "audio": [],
     "json": [
         {
-            "key": "map_collision",
-            "url": "assets/map/map-collision.json"
-        },
-        {
-            "key": "map_objects",
-            "url": "assets/map/map-objects.json"
+            "key": "props_grave",
+            "url": "assets/map/props-grave.json"
         }
     ]
 }

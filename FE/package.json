@@ -9,7 +9,7 @@
         "preview": "vite preview",
         "lint": "eslint .",
         "build:assets": "node tools/build-assets.mjs",
-        "fix:mask": "node tools/fix-mask.mjs",
+        "build:props": "node tools/build-props.mjs",
         "format": "prettier --write \"src/**/*.{js,jsx,css}\"",
         "cap:sync": "npx cap sync",
         "cap:open:android": "npx cap open android",

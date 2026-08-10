@@ -18,6 +18,7 @@ import { SpawnSystem } from "../systems/SpawnSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
 import { CombatSystem } from "../systems/CombatSystem";
 import { installCheats } from "../debugCheats";
+import { GroundSystem } from "../systems/GroundSystem";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -27,10 +28,9 @@ export default class GameScene extends Phaser.Scene {
     create() {
         this.timeScale = 1; // 치트: 시간 배속
         this.buildMap();
-        this.placeProps();
         this.spawnPlayer();
 
-        this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+        // 끝없는 맵이라 카메라·월드 경계를 두지 않는다
         if (this.player) {
             // 플레이어는 항상 화면 중앙에 둔다 — 조이스틱(좌하단)과 손가락이 겹치지 않는다(10-UIUX 5.2 원칙 3)
             this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -57,77 +57,17 @@ export default class GameScene extends Phaser.Scene {
         const dt = Math.min(delta, 50) / 1000 * this.timeScale;
         // 사망하면 전부 멈춘다 — 결과 화면이 뜨는데 뒤에서 스폰이 계속 돌면 안 된다
         if (this.combatSystem?.dead) return;
+        this.groundSystem?.update();
         this.playerSystem?.update();
         this.spawnSystem?.update(dt);
         this.aiSystem?.update(dt);
         this.combatSystem?.update(dt);
     }
 
-    /** 배경 이미지 + 충돌 격자 */
+    /** 끝없는 바닥 + 소품. 벽도 충돌도 없다(18번 문서 4차 개정) */
     buildMap() {
-        if (this.textures.exists("map_crypt")) {
-            this.add.image(0, 0, "map_crypt").setOrigin(0, 0).setDepth(DEPTH.GROUND);
-        } else {
-            console.warn("[GameScene] map_crypt 텍스처가 없다");
-        }
-
-        const col = this.cache.json.get("map_collision");
-        if (!col?.data) {
-            console.warn("[GameScene] map-collision.json 이 없다. 벽에 막히지 않는다");
-            return;
-        }
-
-        // ★ 충돌은 타일맵으로 만든다. 셀마다 정적 바디를 만들면 3천 개가 넘어 예산 밖이다.
-        //   Phaser 타일맵은 -1을 빈 칸으로 본다 → walkable(1)을 -1로, solid(0)을 0으로 뒤집는다.
-        const data = col.data.map((row) => row.map((v) => (v ? -1 : 0)));
-
-        // 렌더하지 않을 레이어라 텍스처는 투명 16x16 한 장이면 된다.
-        if (!this.textures.exists("blank16")) {
-            const g = this.make.graphics({ add: false });
-            g.fillStyle(0xffffff, 0).fillRect(0, 0, TILE_SIZE, TILE_SIZE);
-            g.generateTexture("blank16", TILE_SIZE, TILE_SIZE);
-            g.destroy();
-        }
-
-        this.map = this.make.tilemap({ data, tileWidth: TILE_SIZE, tileHeight: TILE_SIZE });
-        const ts = this.map.addTilesetImage("blank16");
-        this.wallLayer = this.map.createLayer(0, ts, 0, 0);
-        this.wallLayer.setVisible(false); // 충돌 전용. 그림은 배경 이미지가 담당한다
-        this.wallLayer.setCollisionByExclusion([-1]);
-
-        if (DEBUG) {
-            const solid = col.data.flat().filter((v) => !v).length;
-            console.log("[GameScene] 충돌 격자 " + col.width + "x" + col.height + " · solid " + solid + "칸");
-        }
-    }
-
-    /** 좌표 목록으로 횃불·촛불을 얹는다. 불꽃은 맵 이미지에 없다(정본 8.1 청록 광원 연출) */
-    placeProps() {
-        const objs = this.cache.json.get("map_objects");
-        if (!objs) return;
-
-        const light = (x, y, radius, color, alpha) =>
-            this.add
-                .circle(x, y, radius, color, alpha)
-                .setDepth(DEPTH.DECO)
-                .setBlendMode(Phaser.BlendModes.ADD);
-
-        let lit = 0;
-        for (const t of objs.torches ?? []) {
-            if (!this.textures.exists("torch")) break;
-            const s = this.add.sprite(t.x, t.y, "torch", 0).setDepth(DEPTH.DECO + 1);
-            if (this.anims.exists("deco.torch")) s.play("deco.torch");
-            light(t.x, t.y + 2, 30, 0xff3b4a, 0.06);
-            lit++;
-        }
-        for (const c of objs.candles ?? []) {
-            if (!this.textures.exists("candle-a")) break;
-            const s = this.add.sprite(c.x, c.y, "candle-a", 0).setDepth(DEPTH.DECO + 1);
-            if (this.anims.exists("deco.candleA")) s.play("deco.candleA");
-            light(c.x, c.y + 1, 18, 0x8ff0dc, 0.05);
-            lit++;
-        }
-        if (DEBUG) console.log("[GameScene] 광원 " + lit + "개 배치");
+        this.groundSystem = new GroundSystem(this);
+        this.wallLayer = null; // 벽이 없다 — 대시 경로 검사도 통과시킨다
     }
 
     spawnPlayer() {
@@ -143,8 +83,7 @@ export default class GameScene extends Phaser.Scene {
         this.player.setDepth(DEPTH.PLAYER);
         // 바디는 발 밑 작은 사각형. 09-ART 2.1 실측 권장값.
         this.player.body.setSize(14, 12).setOffset(41, 44);
-        this.physics.world.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        this.player.setCollideWorldBounds(true);
+
 
         if (this.anims.exists("player.idle.down")) this.player.play("player.idle.down");
         if (this.wallLayer) this.physics.add.collider(this.player, this.wallLayer);
