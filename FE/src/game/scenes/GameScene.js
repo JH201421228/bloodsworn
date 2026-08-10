@@ -13,6 +13,7 @@ import Phaser from "phaser";
 import { SCENES, DEPTH } from "../constants";
 import { WORLD_WIDTH, WORLD_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT, TILE_SIZE } from "../config";
 import { DEBUG } from "../debug";
+import { PlayerSystem } from "../systems/PlayerSystem";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -25,7 +26,11 @@ export default class GameScene extends Phaser.Scene {
         this.spawnPlayer();
 
         this.cameras.main.setBounds(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
-        if (this.player) this.cameras.main.centerOn(this.player.x, this.player.y);
+        if (this.player) {
+            // 플레이어는 항상 화면 중앙에 둔다 — 조이스틱(좌하단)과 손가락이 겹치지 않는다(10-UIUX 5.2 원칙 3)
+            this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+            this.playerSystem = new PlayerSystem(this, this.player, this.wallLayer);
+        }
 
         // ?overview=1 — 맵 전체를 한 화면에 담아 구조를 검수한다. 개발 전용.
         if (new URLSearchParams(location.search).get("overview") === "1") {
@@ -35,6 +40,10 @@ export default class GameScene extends Phaser.Scene {
 
         this.scene.launch(SCENES.HUD);
         if (DEBUG) this.scene.launch(SCENES.DEBUG);
+    }
+
+    update() {
+        this.playerSystem?.update();
     }
 
     /** 배경 이미지 + 충돌 격자 */

@@ -9,6 +9,7 @@
 import Phaser from "phaser";
 import { GAME_CONFIG } from "./config";
 import { EventBus } from "./EventBus";
+import { DEBUG } from "./debug";
 import BootScene from "./scenes/BootScene";
 import PreloadScene from "./scenes/PreloadScene";
 import GameScene from "./scenes/GameScene";
@@ -41,6 +42,8 @@ class GameManagerImpl {
             parent: container,
             scene: [BootScene, PreloadScene, GameScene, HudScene, DebugScene],
         });
+        // DEBUG일 때만 전역 노출 — 브라우저 콘솔과 자동 검증 스크립트가 게임 상태를 읽는다
+        if (DEBUG && typeof window !== "undefined") window.__PHASER_GAME__ = this.game;
         return this.game;
     }
 
