@@ -83,14 +83,20 @@ export class PactSystem {
                 rarity,
                 blessing: this.describeBlessing(bls, rarity),
                 toll: null,
-                humanityCost: noToll ? 0 : this.cfg.humanityCost[rarity],
+                humanityCost: 0, // 대가가 실제로 붙을 때만 아래에서 매긴다
             };
 
             if (!noToll) {
-                const toll = this.pickToll(rng, usedTags);
+                // 상한 초과(각성을 찍는 대가)는 마지막 장에만 허용한다. S3 가 마지막 장에서
+                // Common 을 보장하는 것과 같은 자리다 — 3장이 전부 초과 선택지가 되는 것을 막되,
+                // "인간성을 태워서라도 태그를 정리한다"는 플레이는 살려 둔다.
+                const toll = this.pickToll(rng, usedTags, rarity, i === 2);
                 if (toll) {
                     usedTags.add(toll.tag);
                     card.toll = this.describeToll(toll, rarity);
+                    // 인간성은 "대가를 받았기 때문에" 준다. 후보 고갈로 대가가 안 붙었는데도
+                    // 값을 매기면 플레이어는 아무것도 안 잃고 인간성만 잃는다.
+                    card.humanityCost = this.cfg.humanityCost[rarity];
                 }
             }
             cards.push(card);
@@ -132,15 +138,31 @@ export class PactSystem {
      * ★ 하한(floor)에 닿은 태그는 x0.3. 더 깎여도 수치가 안 변하는 대가는
      *   "공짜 축복"이 되어 선택의 무게가 사라진다.
      */
-    pickToll(rng, usedTags) {
+    pickToll(rng, usedTags, rarity = "common", allowOverflow = false) {
         const atCap = this.awakened.size >= AWAKEN_CAP;
+        // ★ "3중첩 직전"은 중첩 수가 아니라 "이 카드가 3을 찍게 만드는가"로 판정해야 한다.
+        //   2중첩만 보면, 1중첩 태그가 Epic 카드(+2중첩)로 한 번에 3을 찍는 경로가 그물을
+        //   그대로 빠져나간다. 실측에서 런당 각성이 상한 2를 크게 넘어 평균 5회가 나왔고,
+        //   초과분마다 인간성 −20 이라 그게 사실상 기본값이 되어 있었다.
+        const addStacks = this.cfg.rarityStacks[rarity] ?? 1;
         const pool = [];
         const weights = [];
         let total = 0;
         for (const t of this.tolls) {
             if (this.awakened.has(t.tag) || usedTags.has(t.tag)) continue;
             let w = 1;
-            if (atCap && (this.tagCounts[t.tag] ?? 0) === AWAKEN_STACKS - 1) w *= 0.2;
+            const cur = this.tagCounts[t.tag] ?? 0;
+            // ★ 정본 §6.3 은 x0.2 로 "낮추라"고 하지만, 실측에서 그것으로는 못 막는다.
+            //   상한 도달 시 남은 태그가 4개인데 카드는 3장이라 가중치를 아무리 낮춰도
+            //   3장이 전부 채워진다(풀 크기 ≈ 뽑는 수). 800런 시뮬 결과 상한 초과가
+            //   런당 2.6~3.1회 발생해 인간성 −52~62 가 추가되고, 그 결과
+            //   「완전 흡혈귀화」가 무작위 96.6% / 욕심 100% 로 터졌다.
+            //   P2 특수 상태가 기본값이 되고 엔딩 3분기가 진조 하나로 붕괴한다.
+            //   그래서 후보에서 통째로 뺀다 — 남는 게 없으면 그 카드는 대가가 없다.
+            //   녹턴이 그 방향으로는 더 가져갈 게 없다는 뜻이라 서사와도 맞는다.
+            const willOverflow = atCap && cur + addStacks >= AWAKEN_STACKS;
+            if (willOverflow && !allowOverflow) continue;
+            if (willOverflow) w *= 0.2; // 정본 §6.3 — 남겨두되 드물게
             if (this.isAtFloor(t)) w *= 0.3;
             pool.push(t); weights.push(w); total += w;
         }
