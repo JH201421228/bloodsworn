@@ -1,9 +1,8 @@
 /**
  * GameScene — 런의 중심. 시스템 소유, update 순서 고정.
  *
- * ⚠ 블록 A 시점의 스텁이다. 실제 내용은 Day 1 블록 B/C에서 채운다.
- *   - 블록 B: 타일맵 로드, 플레이어 배치 (T130/T131)
- *   - 블록 C: 이동·카메라·대시 (T133~T137)
+ * ⚠ 블록 B 시점의 스텁이다. 실제 런 로직은 블록 C 이후에 들어온다.
+ *   현재는 에셋 파이프라인 산출물이 실제로 올바르게 잘려 들어오는지 검증하는 용도다.
  * 규격: 06-TECH-DESIGN.md 4.2 (update 순서)
  */
 import Phaser from "phaser";
@@ -17,31 +16,58 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // 부팅 경로가 끝까지 돌았음을 눈으로 확인하기 위한 임시 표식.
-        // 블록 B에서 타일맵이 들어오면 이 블록은 통째로 사라진다.
         const cx = LOGICAL_WIDTH / 2;
-        const cy = LOGICAL_HEIGHT / 2;
 
-        this.add
-            .text(cx, cy - 10, "BOOT OK — GameScene", {
-                fontFamily: "monospace",
-                fontSize: "14px",
-                color: "#35c9b4",
-            })
-            .setOrigin(0.5);
+        // ── 바닥: 타일셋 8칸 중 바닥 타일만 깔아 격자 정렬을 눈으로 검증한다
+        if (this.textures.exists("tiles_main")) {
+            const tex = this.textures.get("tiles_main");
+            // 128x16 = 16px 타일 8칸. 1~6번이 바닥, 0=void, 7=벽
+            for (let y = 0; y < LOGICAL_HEIGHT; y += 16) {
+                for (let x = 0; x < LOGICAL_WIDTH; x += 16) {
+                    const idx = 1 + ((x / 16 + y / 16) % 6);
+                    this.add
+                        .image(x, y, "tiles_main")
+                        .setOrigin(0, 0)
+                        .setCrop(idx * 16, 0, 16, 16)
+                        .setPosition(x - idx * 16, y);
+                }
+            }
+            void tex;
+        }
 
-        this.add
-            .text(cx, cy + 12, "Day 1 블록 A — 스캐폴드 재건 완료", {
+        // ── 플레이어: 96x80 8프레임이 제대로 잘렸는지
+        if (this.textures.exists("player-idle-down")) {
+            const t = this.textures.get("player-idle-down");
+            this.add.text(8, 6, `player-idle-down 프레임 ${t.frameTotal - 1}개`, {
                 fontFamily: "monospace",
                 fontSize: "10px",
-                color: "#7b7488",
+                color: "#8ff0dc",
+            });
+            for (let i = 0; i < 4; i++) {
+                this.add.sprite(60 + i * 100, 120, "player-idle-down", i);
+            }
+        }
+
+        // ── 적: 16x16 40프레임. 10종의 첫 프레임만 늘어놓는다
+        if (this.textures.exists("enemies")) {
+            const t = this.textures.get("enemies");
+            this.add.text(8, 200, `enemies 프레임 ${t.frameTotal - 1}개 (10종 x 4)`, {
+                fontFamily: "monospace",
+                fontSize: "10px",
+                color: "#8ff0dc",
+            });
+            for (let i = 0; i < 10; i++) {
+                this.add.sprite(24 + i * 32, 232, "enemies", i * 4).setScale(2);
+            }
+        }
+
+        this.add
+            .text(cx, LOGICAL_HEIGHT - 16, "Day 1 블록 B — 에셋 파이프라인 검증", {
+                fontFamily: "monospace",
+                fontSize: "10px",
+                color: "#c9b792",
             })
             .setOrigin(0.5);
-
-        // 로드된 에셋이 실제로 화면에 그려지는지 확인 (매니페스트 경로 검증)
-        if (this.textures.exists("joystick_base")) {
-            this.add.image(64, LOGICAL_HEIGHT - 64, "joystick_base").setAlpha(0.5);
-        }
 
         this.scene.launch(SCENES.HUD);
         if (DEBUG) this.scene.launch(SCENES.DEBUG);
