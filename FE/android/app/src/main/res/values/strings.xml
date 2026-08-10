@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">SuperDimension</string>
-    <string name="title_activity_main">SuperDimension</string>
-    <string name="package_name">com.superdimension.app</string>
-    <string name="custom_url_scheme">com.superdimension.app</string>
+    <!-- T704 — 런처에 뜨는 이름. 한글 병기는 넣지 않는다. 런처 아이콘 아래 2줄로 잘린다. -->
+    <string name="app_name">BLOODSWORN</string>
+    <string name="title_activity_main">BLOODSWORN</string>
+    <string name="package_name">com.bloodsworn.game</string>
+    <string name="custom_url_scheme">com.bloodsworn.game</string>
 </resources>

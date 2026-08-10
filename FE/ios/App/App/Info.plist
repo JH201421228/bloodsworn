@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>ko</string>
 	<key>CFBundleDisplayName</key>
-        <string>SuperDimension</string>
+	<string>BLOODSWORN</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -26,24 +26,58 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
+
+	<!--
+		T750 수출 규정(Export Compliance).
+		★ 이 키가 없으면 TestFlight 에 빌드가 올라갈 때마다 App Store Connect 에서
+		  "암호화를 사용합니까?"에 사람이 직접 답해야 처리(Processing)가 끝난다.
+		  자동 배포 파이프라인이 매번 여기서 멈추므로 반드시 박아둔다.
+		★ false 로 적는 근거: 이 앱은 자체 암호화를 구현하지 않고, 네트워크 전송도 없다
+		  (privacy/privacy-policy.html 과 동일한 사실). HTTPS/OS 표준 암호화조차 쓰지 않는다.
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<!--
+		T708 가로 전용.
+		★ iPhone/iPad 모두 LandscapeLeft/Right 2종만 남긴다. Portrait 를 남기면
+		  기동 순간 세로로 떴다가 회전하면서 캔버스 리사이즈가 두 번 일어난다.
+		★ iPad 는 UIRequiresFullScreen 이 없으면 Split View 대상이 되고,
+		  그 순간 iOS 가 Portrait 지원을 강제 요구해 빌드 검증에서 반려된다.
+	-->
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+
+	<!-- 상태바를 plist 레벨에서 끈다. ViewController 기반이면 Capacitor 뷰마다 따로 꺼야 한다. -->
+	<key>UIStatusBarHidden</key>
+	<true/>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+
+	<!--
+		⚠ Capacitor 템플릿 기본값은 armv7 이다. 배포 타깃이 iOS 14 이면 armv7 기기는
+		  존재하지 않고, 잘못된 요구사항은 App Store 검증에서 경고로 잡힌다. arm64 로 바로잡는다.
+	-->
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+
+	<!--
+		iPad 트랙패드·마우스의 포인터 입력을 터치로 변환해 받는다.
+		끄면 Apple Silicon Mac 의 TestFlight 설치본에서 조이스틱이 아예 반응하지 않는다.
+	-->
+	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>
 </plist>

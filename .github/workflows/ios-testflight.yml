@@ -1,0 +1,182 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  BLOODSWORN — iOS 릴리스 CI (예비 경로)
+#  주 경로는 저장소 루트 codemagic.yaml 이다. 근거: 14-BUILD-AND-DEPLOY.md §6.4.1
+#
+#  ★ 왜 예비인가
+#    GitHub Actions 무료 2,000분/월은 **macOS 러너에 10배 배수**가 붙는다.
+#    실질 200 macOS 분 ≈ 빌드 20회. Codemagic 은 500분 ≈ 50회다.
+#    첫 iOS 파이프라인은 시행착오 횟수가 곧 성공 확률이므로 Codemagic 이 먼저다.
+#
+#  ★ 언제 이걸 쓰나 — Codemagic 무료분 소진 / 장애·계정 문제로 막혔을 때.
+#    두 경로를 다 준비하는 이유는 Day 7 에 한쪽이 막히면 대안을 만들 시간이 없기 때문이다.
+#
+#  🔴 Codemagic 과 달리 keychain / xcode-project CLI 가 없다.
+#     security 로 키체인을 직접 만들고 ExportOptions.plist 도 즉석 생성한다
+#     (그 파일은 팀 ID 가 들어가 루트 .gitignore 가 커밋을 막는다).
+# ═══════════════════════════════════════════════════════════════════════════
+name: iOS to TestFlight
+
+on:
+    push:
+        tags:
+            - "v*" # 태그 push 에만 돈다. 커밋마다 돌면 무료분이 즉시 녹는다.
+    workflow_dispatch: # 수동 실행(디버깅용)
+
+concurrency:
+    # 같은 태그로 두 번 돌면 CFBundleVersion 이 충돌해 둘 다 업로드에 실패한다.
+    group: ios-testflight
+    cancel-in-progress: false
+
+jobs:
+    build:
+        # ⚠ macOS 러너는 분당 10배로 과금된다. 이 잡이 도는 시간을 그대로 곱하라.
+        runs-on: macos-15
+        timeout-minutes: 40
+
+        env:
+            BUNDLE_ID: com.bloodsworn.game
+            XCODE_SCHEME: App
+            XCODE_WORKSPACE: FE/ios/App/App.xcworkspace
+
+        steps:
+            - uses: actions/checkout@v4
+
+            # Capacitor 7 은 Xcode 16.0 이상을 요구한다. 러너 기본값이 내려가는 사고를 막는다.
+            - name: Xcode 버전 고정
+              run: |
+                  sudo xcode-select -s /Applications/Xcode_16.4.app
+                  xcodebuild -version
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "22" # Vite 7: ^20.19 || >=22.12
+                  cache: npm
+                  cache-dependency-path: FE/package-lock.json
+
+            - name: 웹 빌드 + iOS 동기화
+              working-directory: FE
+              run: |
+                  npm ci
+                  npm run build
+                  test -f dist/index.html || { echo "::error::dist/index.html 이 없다"; exit 1; }
+                  npx cap sync ios
+
+            - name: CocoaPods 설치
+              working-directory: FE/ios/App
+              # 🔴 Pods/ 는 커밋하지 않으므로 이 스텝이 빠지면 .xcworkspace 를 열 수 없다.
+              run: pod install --repo-update
+
+            - name: 서명 자산 설치
+              env:
+                  IOS_DIST_P12_BASE64: ${{ secrets.IOS_DIST_P12_BASE64 }}
+                  IOS_DIST_P12_PASSWORD: ${{ secrets.IOS_DIST_P12_PASSWORD }}
+                  IOS_PROVISION_PROFILE_BASE64: ${{ secrets.IOS_PROVISION_PROFILE_BASE64 }}
+              run: |
+                  set -euo pipefail
+                  # 러너 전용 임시 키체인. 기본 login 키체인을 건드리지 않는다.
+                  KEYCHAIN="$RUNNER_TEMP/build.keychain"
+                  KEYCHAIN_PW=$(uuidgen)
+                  security create-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+                  security set-keychain-settings -lut 3600 "$KEYCHAIN"
+                  security unlock-keychain -p "$KEYCHAIN_PW" "$KEYCHAIN"
+                  security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+
+                  echo "$IOS_DIST_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/dist.p12"
+                  security import "$RUNNER_TEMP/dist.p12" -k "$KEYCHAIN" \
+                      -P "$IOS_DIST_P12_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+                  rm -f "$RUNNER_TEMP/dist.p12"
+                  # ★ 이 줄이 없으면 codesign 실행마다 GUI 암호창을 띄우고,
+                  #   헤드리스 러너에서는 그대로 40분 타임아웃까지 멈춰 있는다.
+                  security set-key-partition-list -S apple-tool:,apple:,codesign: \
+                      -s -k "$KEYCHAIN_PW" "$KEYCHAIN" > /dev/null
+
+                  PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+                  mkdir -p "$PROFILE_DIR"
+                  echo "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode \
+                      > "$PROFILE_DIR/bloodsworn_appstore.mobileprovision"
+
+                  # 프로파일에서 이름/팀 ID 를 뽑아 다음 스텝으로 넘긴다.
+                  # 손으로 적어두면 프로파일을 재발급할 때마다 워크플로를 고쳐야 한다.
+                  security cms -D -i "$PROFILE_DIR/bloodsworn_appstore.mobileprovision" \
+                      > "$RUNNER_TEMP/profile.plist"
+                  PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print :Name" "$RUNNER_TEMP/profile.plist")
+                  TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print :TeamIdentifier:0" "$RUNNER_TEMP/profile.plist")
+                  echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+                  echo "TEAM_ID=$TEAM_ID" >> "$GITHUB_ENV"
+                  echo "프로파일=$PROFILE_NAME / 팀=$TEAM_ID"
+
+            - name: 빌드 번호 결정
+              working-directory: FE/ios/App
+              # ★ CFBundleVersion 은 같은 버전 문자열 안에서 유일해야 한다.
+              #   github.run_number 는 저장소 단위로 단조 증가하므로 조건을 만족한다.
+              #   ⚠ Codemagic 과 번갈아 쓰면 두 카운터가 어긋난다. 런북 §7.4 참조.
+              run: agvtool new-version -all "${{ github.run_number }}"
+
+            - name: archive
+              run: |
+                  set -euo pipefail
+                  mkdir -p "$RUNNER_TEMP/logs"
+                  xcodebuild archive \
+                      -workspace "$XCODE_WORKSPACE" \
+                      -scheme "$XCODE_SCHEME" \
+                      -configuration Release \
+                      -archivePath "$RUNNER_TEMP/App.xcarchive" \
+                      -destination "generic/platform=iOS" \
+                      CODE_SIGN_STYLE=Manual \
+                      DEVELOPMENT_TEAM="$TEAM_ID" \
+                      PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+                      CODE_SIGN_IDENTITY="Apple Distribution" \
+                      | tee "$RUNNER_TEMP/logs/archive.log"
+
+            - name: exportArchive (.ipa)
+              run: |
+                  set -euo pipefail
+                  # ExportOptions.plist 는 팀 ID·프로파일명이 들어가 커밋 금지 대상이다.
+                  # 매 빌드마다 프로파일에서 뽑은 값으로 즉석 생성한다.
+                  /usr/libexec/PlistBuddy -c "Clear dict" \
+                      -c "Add :method string app-store-connect" \
+                      -c "Add :signingStyle string manual" \
+                      -c "Add :teamID string $TEAM_ID" \
+                      -c "Add :uploadSymbols bool true" \
+                      -c "Add :provisioningProfiles dict" \
+                      -c "Add :provisioningProfiles:$BUNDLE_ID string $PROFILE_NAME" \
+                      "$RUNNER_TEMP/ExportOptions.plist"
+                  # ⚠ method 값은 Xcode 15 이전이 'app-store', 16 이후가 'app-store-connect' 다.
+                  #   틀리면 exportArchive 가 즉시 실패하며 로그에 유효값 목록을 뿌려준다.
+                  xcodebuild -exportArchive \
+                      -archivePath "$RUNNER_TEMP/App.xcarchive" \
+                      -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+                      -exportPath "$RUNNER_TEMP/export" \
+                      | tee "$RUNNER_TEMP/logs/export.log"
+                  ls -la "$RUNNER_TEMP/export"
+
+            - name: TestFlight 업로드
+              env:
+                  APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.ASC_KEY_P8_BASE64 }}
+                  APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+                  APP_STORE_CONNECT_API_KEY_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+                  APP_STORE_CONNECT_API_KEY_IS_KEY_CONTENT_BASE64: "true"
+              run: |
+                  set -euo pipefail
+                  # ★ Apple ID + 비밀번호는 2FA 때문에 CI 에서 쓸 수 없다.
+                  #   ASC API 키(.p8)가 비대화식 업로드의 유일한 수단이다.
+                  # ★ skip_waiting_for_build_processing=true 로 두는 이유:
+                  #   처리 대기는 수십 분이 걸릴 수 있고 그동안 macOS 러너 요금이 10배로 계속 붙는다.
+                  #   처리 완료는 App Store Connect 웹에서 확인한다(런북 §7.6).
+                  gem install fastlane --no-document
+                  IPA=$(ls "$RUNNER_TEMP/export"/*.ipa | head -1)
+                  fastlane pilot upload \
+                      --ipa "$IPA" \
+                      --skip_waiting_for_build_processing true \
+                      --skip_submission true
+
+            - name: 로그·산출물 보관
+              if: always() # 실패했을 때가 로그가 가장 필요한 순간이다
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ios-build-${{ github.run_number }}
+                  path: |
+                      ${{ runner.temp }}/export/*.ipa
+                      ${{ runner.temp }}/logs/*.log
+                  retention-days: 14
+                  if-no-files-found: warn

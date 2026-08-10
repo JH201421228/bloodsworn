@@ -1,6 +1,19 @@
 {
-    "appId": "com.superdimension.app",
-    "appName": "SuperDimension",
+    "appId": "com.bloodsworn.game",
+    "appName": "BLOODSWORN",
     "webDir": "dist",
-    "bundledWebRuntime": false
+    "android": {
+        "backgroundColor": "#0b0710",
+        "allowMixedContent": false,
+        "webContentsDebuggingEnabled": false
+    },
+    "ios": {
+        "backgroundColor": "#0b0710",
+        "contentInset": "never",
+        "scrollEnabled": false
+    },
+    "server": {
+        "androidScheme": "https",
+        "iosScheme": "capacitor"
+    }
 }

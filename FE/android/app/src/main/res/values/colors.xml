@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    ⚠ 이 파일은 원래 없었다. styles.xml 의 AppTheme 이 @color/colorPrimary 를 참조하는데
+      colors.xml 이 누락돼 있어 릴리스 빌드가 aapt 링크 단계에서 깨진다. (T705 에서 발견)
+    값은 09-ART-AUDIO-AND-ASSET-MAP.md §1.1 코어 팔레트 16색 토큰명 그대로 가져온다.
+    ★ 팔레트 밖 색을 여기서 만들지 마라. 네이티브 셸과 웹 캔버스의 배경색이 1비트라도
+      다르면 부팅 순간 경계선이 보인다.
+-->
+<resources>
+    <color name="colorPrimary">#0B0710</color>       <!-- VOID  — 정본 §2.1 배경 지정값 -->
+    <color name="colorPrimaryDark">#0B0710</color>   <!-- VOID  — 상태바도 같은 값(경계선 방지) -->
+    <color name="colorAccent">#8E1220</color>        <!-- BLOOD -->
+    <color name="splashBackground">#0B0710</color>   <!-- VOID  — capacitor.config.json backgroundColor 와 동일해야 한다 -->
+</resources>

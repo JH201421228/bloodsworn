@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    T711 적응형 아이콘 배경.
+    ⚠ Capacitor 템플릿 기본값은 #FFFFFF 였다. 흰 배경 위에 어두운 전경을 올리면
+      런처에서 우리 아이콘만 형광등처럼 튀고, 원형/스퀘어클 마스크 어디서도 톤이 맞지 않는다.
+    VOID(#0B0710) 단색으로 간다. 배경에 그림을 넣지 않는 이유:
+      적응형 아이콘 배경은 마스크와 패럴랙스로 최대 ±12dp 움직인다. 무늬가 있으면 흔들려 보인다.
+-->
 <resources>
-    <color name="ic_launcher_background">#FFFFFF</color>
+    <color name="ic_launcher_background">#0B0710</color>
 </resources>

@@ -2,20 +2,36 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!--
+            ⚠ Android 16(API 36) "adaptive apps" 대응 — T705
+            targetSdk 36 부터는 smallestWidth ≥ 600dp 인 기기(태블릿·폴더블 펼침)에서
+            screenOrientation / resizeableActivity / aspect-ratio 제한을 시스템이 **무시**한다.
+            즉 아래 landscape 잠금은 폰에서만 효력이 있다.
+            이 property 는 API 37 까지만 유효한 한시적 opt-out 이다. 그때는 UI 를 세로에서도
+            성립하게 만들거나 레터박스를 받아들여야 한다.
+            https://developer.android.com/about/versions/16/behavior-changes-16#adaptive-layouts
+        -->
+        <property
+            android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
+            android:value="true" />
+
         <activity
-            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode|navigation"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
-            android:exported="true">
+            android:exported="true"
+            android:resizeableActivity="false"
+            android:supportsPictureInPicture="false"
+            android:screenOrientation="landscape">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,7 +51,16 @@
         </provider>
     </application>
 
-    <!-- Permissions -->
-
+    <!--
+        Permissions
+        ★ INTERNET 은 게임이 서버를 부르기 때문이 아니다. Capacitor 의 WebView 가
+          https://localhost 로 로컬 자산을 서빙하는 구조라 없으면 흰 화면이 뜬다.
+          실제 외부 네트워크 전송은 없다(privacy/privacy-policy.html 근거).
+        ★ 그 외 권한은 하나도 선언하지 않는다. 권한이 늘면 Play 데이터 보안 신고서와
+          스토어 등록정보가 전부 따라 바뀐다.
+    -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- 폰 전용은 아니지만 터치스크린이 없으면 조작이 불가능하다. -->
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 </manifest>

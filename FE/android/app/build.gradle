@@ -1,14 +1,31 @@
 apply plugin: 'com.android.application'
 
+// T720 — 릴리스 서명.
+//   key.properties 는 절대 커밋하지 않는다(루트 .gitignore 43~44행).
+//   파일이 없으면 signingConfig 자체를 붙이지 않아 debug 서명으로 fallback 한다 →
+//   CI/동료 환경에서 `assembleDebug` 가 키 없이도 그냥 돌아간다.
+// 버전은 version.properties 한 곳에서만 관리한다(§11.1). gradle 파일을 매번 여는 실수를 막는다.
+def versionPropsFile = rootProject.file("version.properties")
+def versionProps = new Properties()
+versionProps.load(new FileInputStream(versionPropsFile))
+
+def keystorePropertiesFile = rootProject.file("key.properties")
+def keystoreProperties = new Properties()
+def hasReleaseSigning = keystorePropertiesFile.exists()
+if (hasReleaseSigning) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
-    namespace "com.superdimension.app"
+    namespace "com.bloodsworn.game"
     compileSdk rootProject.ext.compileSdkVersion
+
     defaultConfig {
-        applicationId "com.superdimension.app"
+        applicationId "com.bloodsworn.game"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode versionProps['versionCode'].toInteger()
+        versionName versionProps['versionName']
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,11 +33,50 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+
+    if (hasReleaseSigning) {
+        signingConfigs {
+            release {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // ★ minifyEnabled false 를 유지한다.
+            //   게임 로직은 전부 WebView 안 JS 라 R8 이 줄일 자바 코드가 거의 없다.
+            //   반면 Capacitor 브리지는 리플렉션으로 플러그인을 찾으므로 난독화가 깨지기 쉽다.
+            //   얻는 것 대비 릴리스 전용 크래시 위험이 커서 켜지 않는다.
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            shrinkResources false
+            debuggable false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hasReleaseSigning) {
+                signingConfig signingConfigs.release
+            }
         }
+        debug {
+            // 릴리스 서명 빌드를 지운 뒤에야 디버그를 깔 수 있는 상황을 없앤다.
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+            debuggable true
+        }
+    }
+
+    // AAB 분할. Play 가 기기별로 필요한 조각만 내려보낸다.
+    bundle {
+        language { enableSplit = false }  // 앱 내 한국어 문자열뿐이라 언어 분할은 이득이 없다
+        density  { enableSplit = true }
+        abi      { enableSplit = true }
+    }
+
+    packagingOptions {
+        // 웹 에셋(png/json)은 이미 최적화돼 있다. aapt 재압축은 시간만 먹고 크기는 되레 늘 수 있다.
+        jniLibs { useLegacyPackaging = false }
     }
 }
 
@@ -34,6 +90,7 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core:$androidxCoreVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"

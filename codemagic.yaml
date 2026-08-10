@@ -1,0 +1,141 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  BLOODSWORN / 피의 서약 — iOS 릴리스 CI (주 경로)
+#  근거: 14-BUILD-AND-DEPLOY.md §6.4 / 태스크 T750~T753
+#
+#  ★ 왜 Codemagic 이 주 경로인가
+#    무료 macOS 500분/월(M2). GitHub Actions 는 무료 2,000분이지만 macOS 러너에
+#    10배 배수가 붙어 실질 200분이다. 첫 iOS 파이프라인에서는 시행착오 횟수가
+#    곧 성공 확률이므로 50회 시도할 수 있는 쪽을 고른다.
+#    예비 경로는 .github/workflows/ios-testflight.yml 에 있다.
+#
+#  ★ 개발자에게 Mac 이 없다. 이 파일이 유일한 iOS 빌드 수단이다.
+#    로컬에서 재현할 방법이 없으므로 실패를 진단할 근거는 로그뿐이다 →
+#    xcodebuild 로그를 반드시 아티팩트로 남긴다.
+#
+#  🔴 시크릿은 전부 Codemagic 환경 변수 그룹 `apple_signing` 에만 존재한다.
+#     이 파일에 값을 적지 마라. 값을 echo 하는 스텝도 만들지 마라 —
+#     base64 를 조각내 출력하면 Codemagic 의 자동 마스킹을 빠져나간다.
+# ═══════════════════════════════════════════════════════════════════════════
+
+workflows:
+    ios-testflight:
+        name: BLOODSWORN iOS → TestFlight
+        instance_type: mac_mini_m2
+        # 30분 상한. 무한 대기로 무료분을 태우지 않기 위한 방어선이다.
+        # 정상 빌드는 8~12분 안에 끝난다. 25분을 넘기면 뭔가 잘못된 것이다.
+        max_build_duration: 30
+
+        environment:
+            # Vite 7 은 Node ^20.19 || >=22.12 를 요구한다. Capacitor 7 은 20+ 를 요구한다.
+            # 22 를 쓰면 양쪽을 동시에 만족하고, 20.x 패치 버전 함정에도 걸리지 않는다.
+            node: 22
+            # ⚠ Capacitor 7 은 Xcode 16.0 이상을 요구한다. latest 가 16 미만으로
+            #   떨어지는 일은 없지만, 첫 빌드 로그에서 실제 버전을 눈으로 확인할 것.
+            xcode: latest
+            cocoapods: default
+            vars:
+                BUNDLE_ID: "com.bloodsworn.game"
+                XCODE_WORKSPACE: "FE/ios/App/App.xcworkspace"
+                XCODE_SCHEME: "App"
+            groups:
+                # 이 그룹에 들어가야 하는 변수는 docs/19-RELEASE-RUNBOOK.md §6.2 표를 볼 것.
+                - apple_signing
+
+        triggering:
+            events:
+                - tag
+            tag_patterns:
+                # ★ 태그 push 에만 돈다. 커밋마다 돌면 무료 500분이 하루에 녹는다.
+                - pattern: "v*"
+                  include: true
+
+        scripts:
+            - name: 웹 빌드 + iOS 동기화
+              script: |
+                  set -e
+                  cd "$CM_BUILD_DIR/FE"
+                  npm ci
+                  npm run build
+                  # dist 가 비어 있으면 여기서 죽어야 한다. 빈 dist 로 archive 까지 가면
+                  # 흰 화면 ipa 가 TestFlight 에 올라가고 원인 파악에 하루가 든다.
+                  test -f dist/index.html || { echo "::error:: dist/index.html 이 없다"; exit 1; }
+                  npx cap sync ios
+
+            - name: CocoaPods 설치
+              script: |
+                  set -e
+                  # 🔴 ios/App/Pods/ 는 커밋하지 않는다(루트 .gitignore). 이 스텝이 빠지면
+                  #    xcodebuild 가 .xcworkspace 를 열지 못하고 곧바로 실패한다.
+                  cd "$CM_BUILD_DIR/FE/ios/App"
+                  pod install --repo-update
+
+            - name: 서명 자산 설치 (수동 서명)
+              script: |
+                  set -e
+                  # Mac 없이 openssl 로 만든 인증서라 Apple 의 자동 서명 대상이 아니다.
+                  # .p12 를 키체인에 넣고 .mobileprovision 을 배치한 뒤,
+                  # xcode-project use-profiles 가 pbxproj 의 CODE_SIGN_STYLE 을
+                  # Automatic → Manual 로 덮어쓴다. 저장소의 pbxproj 는 건드리지 않는다.
+                  keychain initialize
+
+                  echo "$IOS_DIST_P12_BASE64" | base64 --decode > /tmp/dist.p12
+                  keychain add-certificates \
+                      --certificate /tmp/dist.p12 \
+                      --certificate-password "$IOS_DIST_P12_PASSWORD"
+                  rm -f /tmp/dist.p12
+
+                  PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+                  mkdir -p "$PROFILE_DIR"
+                  echo "$IOS_PROVISION_PROFILE_BASE64" | base64 --decode \
+                      > "$PROFILE_DIR/bloodsworn_appstore.mobileprovision"
+
+                  cd "$CM_BUILD_DIR/FE/ios/App"
+                  xcode-project use-profiles
+
+            - name: 빌드 번호 결정
+              script: |
+                  set -e
+                  # ★ CFBundleVersion 은 같은 CFBundleShortVersionString 안에서 유일해야 한다.
+                  #   TestFlight 에 이미 올라간 번호를 재사용하면 업로드가 거부된다.
+                  #   $BUILD_NUMBER 는 Codemagic 이 워크플로별로 증가시키는 카운터다.
+                  #   ⚠ CI 제공자를 바꾸면 이 카운터가 1로 리셋된다. 그때는 마지막 값 + 1 을
+                  #     수동으로 넣어야 한다(런북 §7.4).
+                  cd "$CM_BUILD_DIR/FE/ios/App"
+                  agvtool new-version -all "$BUILD_NUMBER"
+
+            - name: archive + export (.ipa)
+              script: |
+                  set -e
+                  cd "$CM_BUILD_DIR/FE/ios/App"
+                  # xcode-project build-ipa 는 archive → exportArchive 를 한 번에 한다.
+                  # ExportOptions.plist 를 손으로 만들 필요가 없다 —
+                  # 루트 .gitignore 가 그 파일을 무시하도록 되어 있어 커밋할 수도 없다.
+                  xcode-project build-ipa \
+                      --workspace "App.xcworkspace" \
+                      --scheme "$XCODE_SCHEME"
+
+        artifacts:
+            - FE/ios/App/build/ios/ipa/*.ipa
+            # ★ 로그를 반드시 남긴다. Mac 이 없으면 실패 원인을 볼 수 있는 곳이 여기뿐이다.
+            - /tmp/xcodebuild_logs/*.log
+            - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
+
+        publishing:
+            app_store_connect:
+                # 인증은 environment group 의 APP_STORE_CONNECT_* 3종을 자동으로 집어간다.
+                # (APP_STORE_CONNECT_ISSUER_ID / _KEY_IDENTIFIER / _PRIVATE_KEY)
+                auth: integration
+                # ★ 내부 TestFlight 까지만. 심사가 없다.
+                submit_to_testflight: true
+                # ⚠ beta_groups 를 지정하지 않으면 "App Store Connect 사용자" 전원이
+                #   내부 테스터로 잡힌다. 그룹 이름을 만들었다면 여기에 적어라.
+                # beta_groups:
+                #     - "Internal"
+                # 🔴 submit_to_app_store 는 켜지 않는다. 이번 주 목표가 아니고,
+                #    켜면 전체 심사 큐에 들어가 되돌리는 데 시간이 든다.
+            email:
+                recipients:
+                    - 741u741@gmail.com
+                notify:
+                    success: true
+                    failure: true

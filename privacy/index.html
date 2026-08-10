@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BLOODSWORN 개인정보 처리방침 / Privacy Policy</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 2rem 1.25rem 5rem;
+    background: #0b0710; color: #d8cfc0;
+    font: 16px/1.75 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+  }
+  main { max-width: 44rem; margin: 0 auto; }
+  h1 { font-size: 1.55rem; color: #d6203a; letter-spacing: .02em; margin: 0 0 .25rem; }
+  h2 { font-size: 1.1rem; color: #2fbfa8; margin: 2.5rem 0 .5rem; border-bottom: 1px solid #241e2e; padding-bottom: .35rem; }
+  .sub { color: #6e6478; font-size: .9rem; margin: 0 0 2rem; }
+  .lead { background: #14101c; border-left: 3px solid #8e1220; padding: 1rem 1.15rem; margin: 1.5rem 0; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .93rem; }
+  th, td { border: 1px solid #241e2e; padding: .55rem .7rem; text-align: left; vertical-align: top; }
+  th { background: #14101c; color: #9aa0a6; font-weight: 600; }
+  code { background: #14101c; padding: .12em .4em; border-radius: 3px; font-size: .88em; color: #e8b44c; }
+  a { color: #2fbfa8; }
+  hr { border: 0; border-top: 1px solid #241e2e; margin: 3.5rem 0; }
+  footer { color: #6e6478; font-size: .85rem; margin-top: 3rem; }
+  ul { padding-left: 1.2rem; }
+  li { margin: .3rem 0; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>BLOODSWORN / 피의 서약 — 개인정보 처리방침</h1>
+<p class="sub">최종 개정일: 2026-08-16 · 시행일: 2026-08-16</p>
+
+<div class="lead">
+  <strong>요약: 이 게임은 개인정보를 일절 수집하지 않습니다.</strong><br>
+  BLOODSWORN 은 완전한 오프라인 단일 기기 게임입니다. 서버가 없고, 계정이 없으며,
+  광고·분석 도구가 없습니다. 앱이 만들어내는 모든 데이터는 이용자의 기기 안에만 저장되며
+  어떤 경우에도 외부로 전송되지 않습니다.
+</div>
+
+<h2>1. 수집하는 개인정보 항목</h2>
+<p><strong>없습니다.</strong> 본 앱은 다음 정보를 수집·요구·전송하지 않습니다.</p>
+<ul>
+  <li>이름, 이메일, 전화번호, 주소 등 일체의 식별 정보</li>
+  <li>계정 정보 (회원가입·로그인 기능 자체가 없습니다)</li>
+  <li>기기 식별자 (광고 ID, IDFA, IDFV, Android ID 등)</li>
+  <li>위치 정보</li>
+  <li>연락처, 사진, 카메라, 마이크, 파일 등 기기 내 다른 데이터</li>
+  <li>이용 기록, 접속 로그, 쿠키, 크래시 리포트, 분석 이벤트</li>
+</ul>
+
+<h2>2. 기기에만 저장되는 게임 데이터</h2>
+<p>
+  게임 진행을 이어가기 위해 아래 데이터를 <strong>이용자의 기기 내부 저장소에만</strong> 기록합니다.
+  이는 개인정보가 아니며, 개발자를 포함한 누구도 이 데이터에 접근할 수 없습니다.
+</p>
+<table>
+  <tr><th>저장 위치</th><th>내용</th></tr>
+  <tr>
+    <td><code>localStorage</code><br>(앱 내장 WebView)</td>
+    <td rowspan="2">
+      게임 진행도 — 보유 골드, 성소(은신처) 업그레이드 단계, 해금 상태,
+      게임 설정(음량·조작), 플레이 통계.<br>
+      저장 키: <code>bloodsworn.save.v1</code>
+    </td>
+  </tr>
+  <tr>
+    <td>OS 앱 전용 저장소<br>(Android <code>SharedPreferences</code> /
+        iOS <code>UserDefaults</code>, <code>@capacitor/preferences</code> 경유)</td>
+  </tr>
+</table>
+<p>
+  같은 값을 두 곳에 기록하는 이유는 기술적인 것입니다. iOS 의 WebView 는 저장 공간이
+  부족할 때 <code>localStorage</code> 를 운영체제 판단으로 비울 수 있어, 그 경우에도
+  진행도가 사라지지 않도록 OS 저장소에 사본을 둡니다. 두 저장소 모두 기기 내부이며
+  네트워크를 통해 전송되지 않습니다.
+</p>
+<p>
+  <strong>삭제 방법:</strong> 게임 내 설정 화면의 데이터 초기화를 사용하거나,
+  앱을 삭제하면 위 데이터는 기기에서 완전히 제거됩니다. 별도의 삭제 요청 절차는 필요하지 않습니다
+  (개발자가 보관하는 사본이 존재하지 않기 때문입니다).
+</p>
+
+<h2>3. 제3자 제공 및 처리 위탁</h2>
+<p>
+  <strong>없습니다.</strong> 수집하는 정보가 없으므로 제공·위탁·판매할 정보도 존재하지 않습니다.
+  본 앱에는 광고 네트워크, 분석 SDK, 크래시 리포팅 도구, 소셜 로그인,
+  인앱 결제가 <strong>일체 포함되어 있지 않습니다</strong>.
+</p>
+
+<h2>4. 네트워크 통신</h2>
+<p>
+  본 앱은 게임 플레이를 위해 인터넷에 연결하지 않습니다. 모든 게임 자원은 앱 설치 파일에
+  포함되어 있습니다.
+</p>
+<p>
+  Android 버전은 시스템 권한 목록에 <code>INTERNET</code> 권한을 선언합니다. 이는 앱의 화면이
+  기기 내부 주소(<code>https://localhost</code>)로 동작하는 구조 때문에 요구되는 것으로,
+  <strong>외부 서버와의 통신에는 사용되지 않습니다.</strong> 그 외의 권한은 요청하지 않습니다.
+</p>
+
+<h2>5. 아동의 개인정보</h2>
+<p>
+  본 앱은 만 13세 미만 아동을 대상으로 하지 않으며(권장 이용 연령: 만 13세 이상),
+  연령을 포함한 어떠한 개인정보도 수집하지 않습니다.
+</p>
+
+<h2>6. 이용자의 권리</h2>
+<p>
+  개인정보를 수집·보관하지 않으므로 열람·정정·삭제·처리정지를 요청할 대상 정보가 존재하지 않습니다.
+  기기에 저장된 게임 데이터는 이용자가 언제든지 직접 삭제할 수 있습니다(제2항 참조).
+</p>
+
+<h2>7. 처리방침의 변경</h2>
+<p>
+  본 방침이 변경될 경우 이 페이지에 개정 내용과 시행일을 게시합니다.
+  앱의 기능이 변경되어 데이터 처리 방식이 달라지는 경우, 변경된 앱 버전의 배포 전에 이 페이지를 갱신합니다.
+</p>
+
+<h2>8. 문의처</h2>
+<p>개인정보 보호책임자 / 개발자: <a href="mailto:741u741@gmail.com">741u741@gmail.com</a></p>
+
+<hr>
+
+<h1 id="en">BLOODSWORN — Privacy Policy</h1>
+<p class="sub">Last updated: 2026-08-16 · Effective: 2026-08-16</p>
+
+<div class="lead">
+  <strong>Summary: this game collects no personal data.</strong><br>
+  BLOODSWORN is a fully offline, single-device game. There is no server, no account,
+  and no advertising or analytics software. Everything the app writes stays on the
+  user's device and is never transmitted anywhere.
+</div>
+
+<h2>1. Personal data we collect</h2>
+<p><strong>None.</strong> The app does not collect, request, or transmit:</p>
+<ul>
+  <li>Name, email address, phone number, postal address, or any other identifier</li>
+  <li>Account credentials (the app has no sign-up or login at all)</li>
+  <li>Device identifiers (advertising ID, IDFA, IDFV, Android ID, etc.)</li>
+  <li>Location data</li>
+  <li>Contacts, photos, camera, microphone, or files on the device</li>
+  <li>Usage logs, access logs, cookies, crash reports, or analytics events</li>
+</ul>
+
+<h2>2. Game data stored on your device only</h2>
+<p>
+  To let you continue your progress, the app writes the following
+  <strong>exclusively to storage on your own device</strong>. This is not personal data,
+  and no one — including the developer — can access it.
+</p>
+<table>
+  <tr><th>Storage location</th><th>Contents</th></tr>
+  <tr>
+    <td><code>localStorage</code><br>(in-app WebView)</td>
+    <td rowspan="2">
+      Game progress: gold, sanctum upgrade levels, unlocks,
+      settings (volume, controls), and play statistics.<br>
+      Storage key: <code>bloodsworn.save.v1</code>
+    </td>
+  </tr>
+  <tr>
+    <td>OS app-private storage<br>(Android <code>SharedPreferences</code> /
+        iOS <code>UserDefaults</code>, via <code>@capacitor/preferences</code>)</td>
+  </tr>
+</table>
+<p>
+  The same value is written to two places for a purely technical reason: on iOS the WebView's
+  <code>localStorage</code> may be cleared by the operating system under storage pressure, so a
+  copy is kept in OS storage to avoid losing progress. Both locations are on-device and are
+  never transmitted over a network.
+</p>
+<p>
+  <strong>How to delete it:</strong> use the reset option in the in-game settings screen, or
+  uninstall the app. Either action removes this data from the device completely. There is no
+  deletion request process, because no copy exists anywhere else.
+</p>
+
+<h2>3. Sharing with third parties</h2>
+<p>
+  <strong>None.</strong> Since nothing is collected, there is nothing to share, sell, or
+  process on our behalf. The app contains <strong>no</strong> ad networks, analytics SDKs,
+  crash reporting tools, social logins, or in-app purchases.
+</p>
+
+<h2>4. Network communication</h2>
+<p>
+  The app does not connect to the internet in order to play. All game assets are bundled
+  inside the installed application.
+</p>
+<p>
+  The Android build declares the <code>INTERNET</code> permission. This is required because the
+  app's screen is served from a device-local address (<code>https://localhost</code>);
+  <strong>it is not used to contact any external server.</strong> No other permissions are requested.
+</p>
+
+<h2>5. Children's privacy</h2>
+<p>
+  The app is not directed at children under 13 (recommended age: 13+) and collects no
+  personal information, including age.
+</p>
+
+<h2>6. Your rights</h2>
+<p>
+  Because no personal data is collected or retained, there is no data to access, correct,
+  delete, or restrict. Game data stored on your device can be deleted by you at any time
+  (see section 2).
+</p>
+
+<h2>7. Changes to this policy</h2>
+<p>
+  Any change will be posted on this page together with its effective date. If a future version
+  of the app changes how data is handled, this page will be updated before that version is released.
+</p>
+
+<h2>8. Contact</h2>
+<p>Developer / data protection contact: <a href="mailto:741u741@gmail.com">741u741@gmail.com</a></p>
+
+<footer>
+  BLOODSWORN / 피의 서약 · Android package &amp; iOS bundle ID: <code>com.bloodsworn.game</code><br>
+  이 페이지는 Google Play 데이터 보안 신고 및 App Store 개인정보 정보와 동일한 내용을 기술합니다.<br>
+  This page states the same facts as the Google Play Data safety declaration and the App Store privacy details.
+</footer>
+
+</main>
+</body>
+</html>

@@ -50,6 +50,8 @@ key.properties
 *.mobileprovision        # 프로비저닝 프로파일
 *.cer                    # Apple이 발급한 인증서
 *.certSigningRequest     # CSR
+*.csr                    # CSR (openssl 기본 확장자). Mac 없이 만들 때 이쪽 이름이 나온다
+*.pem                    # openssl 중간 산출물. 개인키가 그대로 들어있는 경우가 있다
 *.key                    # openssl 개인키. 이것만 잃어도 인증서를 다시 만들어야 한다
 ExportOptions.plist      # 팀 ID·프로파일 이름이 들어간다
 
