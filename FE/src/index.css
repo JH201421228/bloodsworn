@@ -164,3 +164,81 @@ button:disabled {
     background: var(--stone-2);
     border: 1px solid var(--stone-4);
 }
+
+/* ── PACT 카드 (10-UIUX 2.5) ────────────────────────────────
+   Phaser가 Scale.FIT으로 640x360(16:9)을 중앙 배치하므로
+   같은 비율 박스를 만들어 두 좌표계를 맞춘다. */
+.ui-stage {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    aspect-ratio: 16 / 9;
+    max-width: 100%;
+    max-height: 100%;
+    pointer-events: none;
+}
+.pact-stage {
+    pointer-events: auto;
+    background: rgba(11, 7, 16, 0.82);
+}
+
+.pact-card {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5%;
+    padding: 4% 5%;
+    text-align: left;
+    color: var(--parchment);
+    background: linear-gradient(180deg, #221c28 0%, #16121c 100%);
+    border: 2px solid var(--ash);
+    cursor: pointer;
+    overflow: hidden;
+}
+.pact-card.is-common { border-color: var(--ash); }
+.pact-card.is-rare { border-color: var(--candle-light); border-width: 3px; }
+.pact-card.is-epic {
+    border-color: var(--blood-light);
+    border-width: 4px;
+    box-shadow: 0 0 12px rgba(196, 24, 43, 0.45);
+}
+/* T342 각성 임박 — 금빛 맥동. 이 카드가 저주를 뒤집는다 */
+.pact-card.is-awakening {
+    border-color: var(--gold);
+    animation: pact-pulse 900ms ease-in-out infinite;
+}
+@keyframes pact-pulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(201, 162, 39, 0.4); }
+    50% { box-shadow: 0 0 18px rgba(201, 162, 39, 0.95); }
+}
+
+.pact-card__rarity { font-size: 0.62em; color: inherit; opacity: 0.85; }
+.pact-card__name { font-size: 1.05em; line-height: 1.15; color: var(--parchment); }
+.pact-card__effect { font-size: 0.72em; color: var(--candle-light); }
+.pact-card__lv { font-size: 0.62em; color: var(--stone-4); }
+.pact-card__divider {
+    margin-top: 4%;
+    padding-top: 3%;
+    border-top: 1px solid var(--blood);
+    font-size: 0.62em;
+    color: var(--blood-light);
+}
+.pact-card__divider--none { color: var(--stone-4); border-top-color: var(--stone-3); }
+.pact-card__toll { font-size: 0.85em; color: var(--blood-light); }
+.pact-card__tollv { font-size: 0.7em; color: #b4707a; }
+.pact-card__stacks { font-size: 0.62em; color: var(--stone-4); }
+.pact-dot { margin-left: 2px; }
+.pact-dot.is-filled { color: var(--blood-light); }
+.pact-dot.is-gain { color: var(--gold); }
+.pact-dot.is-empty { color: var(--stone-3); }
+.pact-card__awaken { font-size: 0.62em; color: var(--gold); }
+.pact-card__humanity { margin-top: auto; font-size: 0.62em; color: var(--blood); }
+
+.pact-skip {
+    position: absolute;
+    height: 11%;
+    color: var(--ash);
+    background: transparent;
+    border: 1px solid var(--stone-3);
+    font-size: 0.8em;
+}

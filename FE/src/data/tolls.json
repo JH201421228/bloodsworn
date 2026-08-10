@@ -1,0 +1,16 @@
+{
+    "_comment": "대가 6종. 출처 04-PACT-SYSTEM 4. rate=1중첩당 감소율(Common 기준), floor=안전장치 S1 하한.",
+    "schemaVersion": 1,
+    "rarityMult": { "common": 1.0, "rare": 1.8, "epic": 1.0 },
+    "rarityStacks": { "common": 1, "rare": 1, "epic": 2 },
+    "humanityCost": { "common": 3, "rare": 6, "epic": 12 },
+    "rarityWeights": { "common": 60, "rare": 30, "epic": 10 },
+    "tolls": [
+        { "tag": "FRAIL",  "name": "허약", "stat": "maxHp",    "rate": 0.12, "floor": 25,   "floorType": "abs",  "desc": "최대 체력 −{v}%",   "feel": "스치면 죽는다" },
+        { "tag": "SLOW",   "name": "둔족", "stat": "moveSpeed","rate": 0.10, "floor": 32,   "floorType": "abs",  "desc": "이동 속도 −{v}%",   "feel": "도망칠 수 없다" },
+        { "tag": "MYOPIA", "name": "근시", "stat": "range",    "rate": 0.18, "floor": 0.35, "floorType": "mult", "desc": "무기 사거리 −{v}%", "feel": "붙어야 한다" },
+        { "tag": "GREED",  "name": "탐욕", "stat": "expMult",  "rate": 0.15, "floor": 0.40, "floorType": "mult", "desc": "경험치 −{v}%",     "feel": "레벨이 안 오른다" },
+        { "tag": "BLIND",  "name": "암야", "stat": "vision",   "rate": 0.22, "floor": 90,   "floorType": "abs",  "desc": "시야 −{v}%",       "feel": "안 보인다" },
+        { "tag": "HUNGER", "name": "갈증", "stat": "drain",    "rate": 0.8,  "floor": 4.0,  "floorType": "cap",  "desc": "초당 HP −{v}",     "feel": "계속 사냥해야 한다" }
+    ]
+}

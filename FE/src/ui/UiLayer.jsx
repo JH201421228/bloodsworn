@@ -8,6 +8,7 @@
  */
 import { useStore } from "@/state/store";
 import { SCREENS } from "@/state/uiSlice";
+import PactOverlay from "@/ui/pact/PactOverlay";
 
 export default function UiLayer() {
     const screen = useStore((s) => s.screen);
@@ -16,6 +17,7 @@ export default function UiLayer() {
 
     return (
         <div className="ui-layer">
+            <PactOverlay />
             {screen === SCREENS.LOADING && (
                 <div className="ui-loading">
                     <p className="ui-loading__label">봉인을 여는 중</p>

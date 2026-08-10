@@ -24,18 +24,19 @@ const PLAYER_IFRAME = 400; // ms. 정본 05-COMBAT 1
 const ORB_MAGNET2 = 48 * 48;
 
 export class CombatSystem {
-    constructor(scene, player, spawn, playerSystem) {
+    constructor(scene, player, spawn, playerSystem, stats, pact) {
         this.scene = scene;
         this.player = player;
         this.spawn = spawn;
         this.playerSystem = playerSystem;
+        this.stats = stats;
+        this.pact = pact;
 
         this.hash = new SpatialHash(64);
         this.queryBuf = [];
         this.damageQueue = [];
 
-        this.maxHp = 100; // 정본 03-GDD 4
-        this.hp = this.maxHp;
+        this.hp = stats.get("maxHp");
         this.exp = 0;
         this.level = 1;
         this.hurtUntil = 0;
@@ -64,6 +65,11 @@ export class CombatSystem {
         this.arcRadius = 0;
     }
 
+    get maxHp() { return this.stats.get("maxHp"); }
+
+    /** EXP 곡선 — floor(5 + lv*4 + lv^1.55). 정본 03-GDD 5 */
+    get expToNext() { const lv = this.level; return Math.floor(5 + lv * 4 + Math.pow(lv, 1.55)); }
+
     get invulnerable() {
         return this.godMode || this.scene.time.now < this.hurtUntil || !!this.playerSystem?.invulnerable;
     }
@@ -76,6 +82,7 @@ export class CombatSystem {
         this.projectileHits();
         this.contactDamage();
         this.flushDamage();
+        this.updateVitals(dt);
         this.updateOrbs(dt);
         this.drawArcFx();
     }
@@ -87,9 +94,10 @@ export class CombatSystem {
     }
 
     fireWeapons(dt) {
-        this.w1.timer -= dt;
+        const haste = this.stats.get("haste");
+        this.w1.timer -= dt * haste;
         if (this.w1.timer <= 0) { this.w1.timer += this.w1.cooldown; this.fireW1(); }
-        this.w2.timer -= dt;
+        this.w2.timer -= dt * haste;
         if (this.w2.timer <= 0) { this.w2.timer += this.w2.cooldown; this.fireW2(); }
     }
 
@@ -106,7 +114,7 @@ export class CombatSystem {
             if (dist2(e.x, e.y, this.player.x, this.player.y) > r2) continue;
             const a = Math.atan2(e.y - this.player.y, e.x - this.player.x);
             if (Math.abs(Phaser.Math.Angle.Wrap(a - base)) > half) continue;
-            this.queueDamage(e, w.damage, w.knockback);
+            this.queueDamage(e, w.damage * this.stats.get("damage"), w.knockback * this.stats.get("knockback"));
         }
         this.arcBase = base;
         this.arcHalf = half;
@@ -250,18 +258,66 @@ export class CombatSystem {
             const o = list[i];
             const d2 = dist2(o.x, o.y, this.player.x, this.player.y);
             if (d2 < 36) {
-                this.exp += o.value;
+                this.exp += o.value * this.stats.get("expMult");
                 o.setVisible(false).setPosition(-999, -999);
                 this.orbs.release(o);
+                this.checkLevelUp();
                 continue;
             }
-            if (d2 < ORB_MAGNET2) {
+            const magnet2 = ORB_MAGNET2 * this.stats.get("magnet") * this.stats.get("magnet");
+            if (d2 < magnet2) {
                 const d = Math.sqrt(d2) || 1;
                 const sp = 160 * dt;
                 o.x += ((this.player.x - o.x) / d) * sp;
                 o.y += ((this.player.y - o.y) / d) * sp;
             }
         }
+    }
+
+    /** 초당 회복(축복)과 감소(HUNGER 대가) */
+    updateVitals(dt) {
+        const regen = this.stats.get("regen");
+        const drain = this.stats.get("drain");
+        const net = (regen - drain) * dt;
+        if (net === 0) return;
+        this.hp = Math.min(this.maxHp, this.hp + net);
+        // ★ 안전장치 S5 — HUNGER 드레인만으로는 죽지 않는다 (04-PACT 6)
+        if (this.hp < 1 && drain > regen) this.hp = 1;
+        else if (this.hp <= 0) this.die();
+    }
+
+    checkLevelUp() {
+        if (this.exp < this.expToNext) return;
+        this.exp -= this.expToNext;
+        this.level++;
+        const cards = this.pact.generate(this.level);
+        this.pendingCards = cards;
+        // 카드가 뜨는 동안 게임을 멈춘다 (T304)
+        this.scene.scene.pause();
+        EventBus.emit(EVENTS.RUN_LEVELUP, {
+            level: this.level,
+            cards,
+            canSkip: true,
+            humanity: this.pact.humanity,
+            rerollLeft: this.pact.rerollLeft,
+        });
+    }
+
+    /** React에서 카드를 고르면 호출된다 */
+    applyCard(index) {
+        const cards = this.pendingCards;
+        const card = cards?.[index];
+        if (card) {
+            const r = this.pact.choose(card);
+            this.hp = Math.min(this.hp, this.maxHp);
+            EventBus.emit(EVENTS.PACT_APPLIED, {
+                level: this.level, humanity: r.humanity, tagCounts: r.tagCounts,
+                ownedBlessings: { ...this.pact.owned },
+            });
+            if (r.awakened) EventBus.emit(EVENTS.AWAKENING_TRIGGERED, { tag: r.awakened });
+        }
+        this.pendingCards = null;
+        this.scene.scene.resume();
     }
 
     drawArcFx() {

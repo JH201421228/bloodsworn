@@ -51,7 +51,8 @@ export class PlayerSystem {
         input.pollKeyboard();
 
         const v = input.vector;
-        this.player.setVelocity(v.x * this.moveSpeed, v.y * this.moveSpeed);
+        const speed = this.stats ? this.stats.get("moveSpeed") : this.moveSpeed;
+        this.player.setVelocity(v.x * speed, v.y * speed);
 
         const moving = v.x !== 0 || v.y !== 0;
         if (moving) this.facing = this.dirFromVector(v.x, v.y);
@@ -101,7 +102,7 @@ export class PlayerSystem {
         }
 
         this.player.setPosition(lastX, lastY);
-        this.dashReadyAt = this.scene.time.now + DASH_COOLDOWN;
+        this.dashReadyAt = this.scene.time.now + DASH_COOLDOWN * (this.stats ? this.stats.get("dashCd") : 1);
         this.invulnUntil = this.scene.time.now + DASH_IFRAME;
 
         // 무적 동안 반짝임 — 피격 판정이 없다는 것을 눈으로 알려준다

@@ -19,6 +19,10 @@ import { EnemyAISystem } from "../systems/EnemyAISystem";
 import { CombatSystem } from "../systems/CombatSystem";
 import { installCheats } from "../debugCheats";
 import { GroundSystem } from "../systems/GroundSystem";
+import { StatSystem } from "../systems/StatSystem";
+import { PactSystem } from "../systems/PactSystem";
+import { EventBus } from "../EventBus";
+import { EVENTS } from "../constants";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -37,7 +41,17 @@ export default class GameScene extends Phaser.Scene {
             this.playerSystem = new PlayerSystem(this, this.player, this.wallLayer);
             this.spawnSystem = new SpawnSystem(this, this.player);
             this.aiSystem = new EnemyAISystem(this, this.player, this.spawnSystem);
-            this.combatSystem = new CombatSystem(this, this.player, this.spawnSystem, this.playerSystem);
+            this.stats = new StatSystem();
+            this.pact = new PactSystem(this.stats);
+            this.combatSystem = new CombatSystem(this, this.player, this.spawnSystem, this.playerSystem, this.stats, this.pact);
+            this.playerSystem.stats = this.stats;
+
+            // React -> Phaser 커맨드. key를 줘 StrictMode 이중 등록을 막는다(T107b)
+            this.offCmds = [
+                EventBus.on(EVENTS.CMD_PACT_CHOOSE, (p) => this.combatSystem.applyCard(p?.index ?? 0), { key: "game:pact-choose" }),
+                EventBus.on(EVENTS.CMD_PACT_SKIP, () => this.combatSystem.applyCard(-1), { key: "game:pact-skip" }),
+            ];
+            this.events.once("shutdown", () => this.offCmds?.forEach((f) => f()));
             if (DEBUG) installCheats(this);
         }
 

@@ -22,6 +22,12 @@ export function installCheats(scene) {
         kill: () => scene.combatSystem.hurt(9999),
         /** 체력 회복 + 부활. 사망 상태도 푼다 */
         heal: (v) => { const c = scene.combatSystem; c.hp = v ?? c.maxHp; c.dead = false; return c.hp; },
+        /** 즉시 레벨업 — 각성 6종을 Day 4에 10초 만에 검증하려면 필수다 */
+        levelup: (n = 1) => { const c = scene.combatSystem; for (let i = 0; i < n; i++) { c.exp = c.expToNext; c.checkLevelUp(); } return c.level; },
+        /** 특정 대가 태그를 n중첩 주입 — 각성 직전 상태를 즉시 만든다 */
+        toll: (tag, n = 2) => { const p2 = scene.pact; p2.tagCounts[tag] = n; return p2.tagCounts; },
+        /** 스탯 스냅샷 */
+        stats: () => ({ ...scene.stats.all }),
         /** 적 전멸 */
         clear: () => { const s = scene.spawnSystem; while (s.pool.active.length) s.kill(s.pool.active[0], false); return 0; },
         /** 현재 상태 스냅샷 */
