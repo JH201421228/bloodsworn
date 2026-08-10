@@ -47,6 +47,8 @@ export class CombatSystem {
         this.gold = 0;
         /** @type {import("./AwakeningSystem").AwakeningSystem|null} 각성. GameScene이 주입한다 */
         this.awakening = null;
+        /** @type {any} 연출. 없으면 조용히 건너뛴다 — 전투 로직이 연출에 의존하면 안 된다 */
+        this.fx = null;
 
         /**
          * 무기 레지스트리. id -> { def, level, s(=현재 레벨 수치), timer }
@@ -285,6 +287,7 @@ export class CombatSystem {
 
             // 피격 플래시 60ms (T213). 치명타는 금색으로 구분한다.
             e.setTintFill(isCrit ? 0xffd24a : 0xffffff);
+            this.fx?.damageNumber(e.x, e.y, isCrit ? d.amount * critMult : d.amount, isCrit);
             this.scene.time.delayedCall(60, () => { if (e.__active) e.clearTint(); });
 
             if (d.knockback) {
@@ -302,6 +305,7 @@ export class CombatSystem {
                 if (src && src.pendingReset && Math.random() < (src.s.resetChance ?? 0)) src.timer = 0;
                 this.orbitHit.delete(e);
                 this.awakening?.onKill(e);
+                this.fx?.killBurst(e.x, e.y);
                 this.gold += e.goldValue ?? 1;
                 const leech = this.stats.get("lifeOnKill");
                 if (leech > 0) this.hp = Math.min(this.maxHp, this.hp + leech);
@@ -334,6 +338,7 @@ export class CombatSystem {
         this.hurtUntil = this.scene.time.now + PLAYER_IFRAME * this.stats.get("iframe");
         this.player.setTintFill(0xffffff);
         this.scene.time.delayedCall(60, () => this.player.clearTint());
+        this.fx?.playerHurt();
         this.scene.cameras.main.shake(90, 0.004);
         if (this.hp <= 0) this.die();
     }

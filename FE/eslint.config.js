@@ -30,7 +30,9 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // 언더스코어 접두 인자는 '계약상 존재하지만 아직 안 쓰는 값'이다.
+      // 시스템 스텁의 시그니처를 지우면 통합 계약이 깨진다.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', argsIgnorePattern: '^_' }],
     },
   },
 ])

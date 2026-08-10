@@ -24,6 +24,8 @@ import { PactSystem } from "../systems/PactSystem";
 import { AwakeningSystem } from "../systems/AwakeningSystem";
 import { BossSystem } from "../systems/BossSystem";
 import { AudioSystem } from "../systems/AudioSystem";
+import { FxSystem } from "../systems/FxSystem";
+import { QualitySystem } from "../systems/QualitySystem";
 import { EventBus } from "../EventBus";
 import { EVENTS } from "../constants";
 
@@ -59,6 +61,9 @@ export default class GameScene extends Phaser.Scene {
             this.bossSystem = new BossSystem(this, {
                 player: this.player, spawn: this.spawnSystem, combat: this.combatSystem, stats: this.stats,
             });
+            this.fxSystem = new FxSystem(this, { player: this.player });
+            this.combatSystem.fx = this.fxSystem;
+            this.quality = new QualitySystem(this, { fx: this.fxSystem });
             this.audio = new AudioSystem(this);
             this.input.once("pointerdown", () => this.audio.unlock());
 
@@ -93,6 +98,8 @@ export default class GameScene extends Phaser.Scene {
         this.aiSystem?.update(dt);
         this.combatSystem?.update(dt);
         this.bossSystem?.update(dt);
+        this.fxSystem?.update(dt);
+        this.quality?.update(dt);
     }
 
     /** 끝없는 바닥 + 소품. 벽도 충돌도 없다(18번 문서 4차 개정) */
