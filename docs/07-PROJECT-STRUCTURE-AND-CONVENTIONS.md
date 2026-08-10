@@ -855,24 +855,68 @@ Mac이 없어 로컬 재현이 불가능하고 **CI 로그가 유일한 진단 �
 > **이 사슬에는 우회로가 없다.** Mac을 사서 로컬 빌드로 가는 길 외에는 전부 원격 저장소를 지난다.
 > 그래서 이 작업이 Day 1 최상위 블로커다. → `12-TASK-BACKLOG.md` D0.
 
-### 6.2 브랜치 전략 — **main 단일**
+### 6.2 브랜치 전략 — **main / stage / dev 3단** (2026-08-10 확정)
 
-1인 개발이다. 브랜치를 나눌 이유가 없다. PR도 코드리뷰도 없다.
+> **변경 이력:** 이 문서의 초판은 "1인 개발이므로 `main` 단일"이었다.
+> 2026-08-10에 사용자가 **main / stage / dev 3단 + 작업 브랜치** 방식으로 확정했다.
 
-| 규칙 | 내용 |
-|---|---|
-| 브랜치 | **`main` 하나.** feature 브랜치를 만들지 않는다 |
-| 예외 | Day 5 이후 "될지 안 될지 모르는 실험"(W6 그림자 메아리, 스테이지 2)만 `spike/xxx` 브랜치. 실패하면 브랜치째 버린다 |
-| **일일 태그** | 매일 작업 종료 시 `git tag day1 && git tag day1-eod` 형식으로 태그. **되돌아갈 지점을 매일 만든다** |
-| 원격 | GitHub private 저장소 1개. **매일 최소 1회 push**(로컬 디스크 사고 대비) |
+**원격:** `https://github.com/JH201421228/bloodsworn.git`
+
+| 브랜치 | 역할 | 무엇이 들어오는가 |
+|---|---|---|
+| **`main`** | **배포 가능 상태.** 릴리스 태그(`v0.1.x`)가 찍히는 곳이며 **CI가 여기서 릴리스 빌드를 만든다** | `stage`에서만 머지 |
+| **`stage`** | **통합 검증.** Day 6 기능 동결 후 회귀 테스트, Day 7 릴리스 리허설 | `dev`에서만 머지 |
+| **`dev`** | **기본 통합 브랜치.** 평소 작업의 종착지이자 모든 작업 브랜치의 출발점 | 작업 브랜치에서 머지 |
+
+**작업 흐름**
+
+```
+dev ──┬── feat/pact-cards ──┐
+      │                     ├──▶ dev ──▶ stage ──▶ main ──▶ 태그 v0.1.x ──▶ CI 릴리스 빌드
+      └── ci/ios-signing ───┘
+```
 
 ```bash
-# 매일 종료 시 (예: Day 3)
+# 1) 새 작업 시작 — 반드시 dev에서 판다
+git switch dev && git pull origin dev
+git switch -c feat/pact-cards
+
+# 2) 작업 중 커밋 (하루 최소 3회 — 6.5)
 git add -A
-git commit -m "feat(pact): 카드 3장 UI + 축복/대가 적용 완료"
+git commit -m "feat(pact): 카드 3장 UI + 축복/대가 적용"
+git push -u origin feat/pact-cards
+
+# 3) dev로 머지
+git switch dev
+git merge --no-ff feat/pact-cards      # --no-ff: 작업 단위를 히스토리에 남긴다
+git push origin dev
+git branch -d feat/pact-cards          # 로컬 정리
+git push origin --delete feat/pact-cards
+
+# 4) 매일 종료 시 태그 (되돌아갈 지점을 매일 만든다)
 git tag -a day3 -m "Day3: PACT 시스템 최소 생존선 도달"
-git push origin main --tags
+git push origin dev --tags
+
+# 5) 승격 (Day 6 동결 시 / Day 7 릴리스 시)
+git switch stage && git merge --no-ff dev   && git push origin stage
+git switch main  && git merge --no-ff stage && git push origin main
+git tag -a v0.1.1 -m "Day7 릴리스" && git push origin main --tags
 ```
+
+**작업 브랜치 이름** — 커밋 `type`(6.3)과 같은 어휘를 쓴다: `feat/…` `fix/…` `perf/…` `ci/…` `docs/…` `spike/…`
+`spike/`는 "될지 안 될지 모르는 실험"용이며 **실패하면 브랜치째 버린다**(머지하지 않는다).
+
+> ⚠ **7일 스프린트에서 3단 브랜치는 그 자체로 오버헤드다.** 가볍게 유지하는 규칙 2가지:
+> 1. **작업 브랜치는 하루를 넘기지 않는다.** 당일 안에 `dev`로 머지한다. 오래 살수록 충돌 비용이 기하급수로 는다.
+> 2. **충돌이 나면 `rebase`로 씨름하지 말고 `dev` 기준으로 브랜치를 다시 판다.** 1인 개발이라 잃을 리뷰 이력이 없다.
+>    25분 룰(`11-ROADMAP-7DAYS.md` 0.1)은 git에도 적용된다.
+>
+> **일정이 밀리면 `stage`를 건너뛰고 `dev → main` 직행해도 된다.** 브랜치 규칙 때문에 배포가 막히는 것이
+> 가장 나쁜 결과다. 다만 그 경우 **Day 6 회귀 테스트를 `dev`에서 수행했다는 사실을 devlog에 남긴다.**
+
+> **CI 트리거와의 관계:** 클라우드 macOS CI는 **`main`의 태그 push**를 릴리스 빌드 트리거로 잡는다
+> (`14-BUILD-AND-DEPLOY.md` 6.4). Day 1~2 관통 리허설 동안에는 예외적으로 `dev` push도 트리거에 넣어 왕복을 줄이고,
+> 관통이 끝나면 **`dev` 트리거를 끈다** — CI 분량(무료 500분)이 시행착오로 소진되는 걸 막기 위해서다.
 
 ### 6.3 커밋 메시지 규칙
 
