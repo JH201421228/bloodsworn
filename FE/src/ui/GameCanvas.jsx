@@ -4,7 +4,8 @@
  *
  * 규격 출처: 06-TECH-DESIGN.md 3.7
  *
- * ★ 캔버스 폭의 소유자다.
+ * ★ 캔버스 폭의 소유자다. 그리고 --canvas-w/--canvas-h(React HUD 가 읽는 캔버스 실측 크기)의
+ *   갱신 시점도 여기가 정한다 — fitCanvasToViewport 안에서 함께 쓴다(config.js 참조).
  *   Phaser 는 640x360 으로 부팅하지만 실제 논리 폭은 기기 비율이 정한다(config.js 좌표계 주석).
  *   여기서 부팅 직후 한 번, 그리고 뷰포트가 바뀔 때마다 fitCanvasToViewport 를 불러
  *   캔버스가 화면을 꽉 채우게 한다. 이 훅이 없으면 20:9 기기에서 좌우 91px 씩 검게 남는다.
@@ -34,6 +35,10 @@ export default function GameCanvas({ hidden = false }) {
 
         // 부팅 직후 즉시 1회. Phaser 가 아직 첫 프레임을 그리기 전이라 깜빡임이 없다.
         if (game) fitCanvasToViewport(game, el);
+        // ★ 위 호출 시점에 game.canvas 가 아직 없을 수 있다(document.readyState 에 따라
+        //   Phaser 의 boot 가 한 틱 미뤄진다). 그러면 fitCanvasToViewport 가 --canvas-w/h 를
+        //   못 써서 React HUD 가 16:9 폴백 폭으로 한동안 남는다. 'ready' 에서 한 번 더 접는다.
+        game?.events?.once?.("ready", schedule);
 
         window.addEventListener("resize", schedule);
         // ★ orientationchange 는 resize 보다 먼저 오고, 그 시점의 innerWidth/Height 는

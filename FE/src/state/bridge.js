@@ -65,15 +65,17 @@ export function installBridge() {
         s().bumpStats({ runs: 1 });
     }, "bridge:run-started");
 
-    sub(EVENTS.RUN_LEVELUP, (p) => {
-
     // M-1 부활 제안. Phaser 가 씬을 멈추고 답을 기다린다(8초 타임아웃 있음).
-
+    // ★ 이 두 줄은 원래 아래 RUN_LEVELUP 핸들러 **안**에 중첩돼 있었다. 그래서 구독이
+    //   "첫 레벨업이 일어난 뒤"에야 걸렸고, 레벨 1에서 죽으면 부활 오버레이가 영원히
+    //   안 떴다. EventBus 의 key 옵션이 중복 등록만 막아 줄 뿐 이 문제는 못 막는다.
+    //   구독은 반드시 최상위에서 1회 등록한다.
     sub(EVENTS.REVIVE_OFFER, (p) => s().openRevive(p ?? {}), "bridge:revive-offer");
 
     // 결정이 나면 오버레이를 닫는다. 수락이면 RUN_RESUMED, 거절이면 RUN_ENDED 가 뒤따른다.
-
     sub(EVENTS.RUN_RESUMED, () => s().closeRevive(), "bridge:revive-close");
+
+    sub(EVENTS.RUN_LEVELUP, (p) => {
         // 리롤 응답도 같은 이벤트로 온다(GameScene 패치). 카드를 새로 열고 남은 횟수를 맞춘다.
         if (typeof p?.rerollLeft === "number") s().setRerollLeft(p.rerollLeft);
         if (typeof p?.humanity === "number") s().setHumanity(p.humanity);

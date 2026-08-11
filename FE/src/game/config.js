@@ -71,6 +71,36 @@ export function logicalWidthFor(viewportW, viewportH) {
 }
 
 /**
+ * 캔버스의 **실측 CSS 사각형**을 --canvas-w / --canvas-h 로 흘려보낸다.
+ *
+ * ★ 왜 필요한가: .ui-stage 는 16:9 고정이라 20:9 기기에서 캔버스보다 좌우 91px 씩 좁다.
+ *   React HUD(인간성 심장·장비 슬롯·토스트)를 물리적 화면 끝에 붙이려면 캔버스와 1:1 인
+ *   박스가 따로 있어야 한다. 그 박스가 index.css 의 .ui-hud-stage 이고, 크기를 여기서 준다.
+ *   (PACT·각성·전면 화면은 계속 .ui-stage 16:9 를 쓴다 — 넓히면 카드 좌표가 흩어진다.)
+ * ★ 왜 CSS 만으로는 못 하나: 논리 폭이 floor() 정수 내림이라 순수 CSS 로는 최대 2~3 CSS px
+ *   어긋나고, CSS floor() 는 빌드 타깃(chrome87 / safari14)에 없다. 캔버스의 진짜 크기를
+ *   아는 곳은 여기뿐이므로 여기서 한 번 쓰고 CSS 는 읽기만 한다.
+ * ★ 세로는 언제나 캔버스 높이 == .ui-stage 높이다(둘 다 논리 360 에 같은 배율). 그래서
+ *   --u 는 양쪽에서 같은 값이고, HUD 크기는 화면비가 바뀌어도 변하지 않는다.
+ */
+function publishCanvasMetrics(game) {
+    if (typeof document === "undefined") return;
+    const el = game?.canvas;
+    const root = document.documentElement;
+    if (!el || !root) return;
+
+    const rect = el.getBoundingClientRect?.();
+    const ds = game.scale?.displaySize;
+    // 레이아웃 전이라 rect 가 0 인 구간에서는 Phaser 가 계산해 둔 표시 크기로 폴백한다.
+    const w = rect?.width > 0 ? rect.width : (ds?.width ?? 0);
+    const h = rect?.height > 0 ? rect.height : (ds?.height ?? 0);
+    if (!(w > 0) || !(h > 0)) return;
+
+    root.style.setProperty("--canvas-w", w + "px");
+    root.style.setProperty("--canvas-h", h + "px");
+}
+
+/**
  * 캔버스를 뷰포트에 맞춰 다시 재단한다. GameCanvas 가 부팅 직후와 리사이즈마다 부른다.
  *
  * ★ Scale.FIT 을 유지한 채 게임 크기만 바꾸는 이유:
@@ -100,6 +130,8 @@ export function fitCanvasToViewport(game, container) {
     }
     // 부모 크기가 바뀌었을 수 있으니 배율·입력 좌표 변환을 다시 계산시킨다.
     s.refresh();
+    // ★ refresh() 뒤여야 한다. Phaser 가 canvas.style.width/height 를 여기서 확정한다.
+    publishCanvasMetrics(game);
     return w;
 }
 

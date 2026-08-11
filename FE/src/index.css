@@ -56,6 +56,16 @@
     --stage-w: calc(var(--stage-h) * 16 / 9);
     --u: calc(var(--stage-h) / 360);
 
+    /* ── 캔버스 실측 사각형 ──
+       Phaser 캔버스의 진짜 CSS 크기다. game/config.js 의 publishCanvasMetrics 가
+       리사이즈마다 documentElement 인라인 스타일로 덮어쓴다(인라인이 이 기본값을 이긴다).
+       ★ 여기 적힌 값은 Phaser 부팅 전 1~2프레임용 폴백이다. 그 구간에는 캔버스가 아직
+         없으니 16:9 스테이지와 같다고 보는 것이 정확하다.
+       ★ 순수 CSS 로 계산하지 않는 이유: 논리 폭이 floor() 내림이라 최대 2~3 CSS px
+         어긋나고, CSS floor() 는 빌드 타깃(chrome87 / safari14)에 없다. */
+    --canvas-w: var(--stage-w);
+    --canvas-h: var(--stage-h);
+
     /* ── 세이프에어리어 인셋 (10-UIUX 3.3.3) ──
        ★ max() 를 쓰는 이유: iOS는 하단 인셋을 0으로 돌려줄 수 있다. env() 를 그대로 믿으면
        홈 인디케이터 위에 버튼이 깔린다. 논리 px 하한(상8/하24/좌우16)과 큰 쪽을 취한다. */
@@ -161,6 +171,45 @@ button:disabled {
     width: var(--stage-w);
     height: var(--stage-h);
     /* 논리 1px = --u 이므로 폰트도 같은 배율로 따라간다. em 로 짠 자식들이 저절로 맞는다. */
+    font-size: calc(16 * var(--u));
+    pointer-events: none;
+}
+
+/* ── HUD 스테이지 박스 ──────────────────────────────────────
+   ★ .ui-stage 와 무엇이 다른가: 이 박스는 **Phaser 캔버스와 정확히 같은 사각형**이다.
+     .ui-stage 는 16:9 640x360 고정이라 20:9 기기에서 캔버스보다 좌우 91 CSS px 씩 좁고,
+     그 안에 넣은 HUD(인간성 심장·장비 슬롯·토스트)는 화면 끝이 아니라 허공에 뜬다.
+     "HUD 는 화면 끝, PACT 는 중앙 16:9" 를 동시에 만족시키려면 박스가 두 개여야 한다.
+     ★★ 그래서 .ui-stage 를 넓히는 방식은 금지다 — PACT 카드가 pct(x, 640) 로 재단돼 있어
+        스테이지를 넓히면 카드 3장이 초광폭에 흩어진다(screenUtils.js / config.js 주석).
+
+   ★ --u 는 .ui-stage 와 같은 값을 쓴다(세로 배율). 캔버스 세로와 스테이지 세로는 언제나
+     같으므로, 화면비가 바뀌어도 HUD 글자·아이콘 크기는 1픽셀도 변하지 않는다. 가로만 벌어진다.
+
+   ★ 세이프 인셋 (10-UIUX 3.3.3)
+     좌우만 인셋한다. 이제 이 박스의 좌우변이 곧 물리적 화면 가장자리라 노치/펀치홀이
+     정확히 여기로 온다(가로 모드에서 컷아웃은 좌 또는 우). --safe-l/--safe-r 은 계약대로
+     max(env(...), 16 논리px) 다 — iOS 가 0 을 돌려줘도 컷아웃 방어 마진이 남는다.
+     상하는 인셋 0 이다: 캔버스 세로 == 스테이지 세로라 이 작업으로 세로 기하가 전혀 바뀌지
+     않았고, React HUD 에는 하단 요소가 없다(가장 아래가 토스트 y~212). 하단 제스처 바를
+     피해야 하는 것은 Phaser 대시 버튼(y=292)이고 그건 HudScene 이 이미 상수로 갖고 있다.
+     여기에 --safe-t 를 얹으면 심장이 이유 없이 8px 내려갈 뿐이다.
+
+   ★★ padding 으로 인셋을 주면 안 된다 — 실측으로 확인했다.
+     절대 배치 자식의 컨테이닝 블록은 **패딩 박스**(= 패딩을 포함한 안쪽 테두리)다.
+     그래서 padding-left 를 아무리 줘도 left:0 인 자식은 여전히 박스의 좌변에 붙는다.
+     .ui-screen 이 padding 으로 되는 이유는 그쪽 자식이 전부 일반 흐름(grid/flex)이라서다.
+     여기서는 박스 자체를 세이프 인셋만큼 줄인다. 그래서 transform 중앙 정렬 대신
+     left/width 를 직접 적는다 — 노치는 한쪽에만 오므로(좌 또는 우) 좌우 인셋이
+     비대칭일 수 있고, 비대칭인 채로 중앙 정렬하면 박스가 통째로 한쪽으로 밀린다. */
+.ui-hud-stage {
+    position: absolute;
+    /* 캔버스 좌변(= 화면 중앙 - 캔버스폭/2) 에서 좌측 세이프 인셋만큼 안쪽 */
+    left: calc(50% - var(--canvas-w) / 2 + var(--safe-l));
+    top: calc(50% - var(--canvas-h) / 2);
+    width: calc(var(--canvas-w) - var(--safe-l) - var(--safe-r));
+    height: var(--canvas-h);
+    /* .ui-stage 와 같은 값. em 로 짠 자식이 스테이지에서 옮겨와도 크기가 안 바뀐다. */
     font-size: calc(16 * var(--u));
     pointer-events: none;
 }

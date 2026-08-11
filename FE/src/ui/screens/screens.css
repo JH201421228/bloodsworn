@@ -110,10 +110,15 @@
 .humanity__mark { font-size: calc(13 * var(--u)); }
 .humanity__label { font-size: calc(10 * var(--u)); letter-spacing: calc(1 * var(--u)); }
 
-/* 플레이 중 좌상단 HUD. HP바(y12~22)와 HP숫자(y26)를 피해 y38에 놓는다. */
+/* 플레이 중 좌상단 HUD. HP바(y12~22)와 HP숫자(y26)를 피해 y38에 놓는다.
+   ★ 부모는 .ui-hud-stage(= Phaser 캔버스와 1:1) 다. .ui-stage(16:9)가 아니다 —
+     16:9 박스 안에 두면 20:9 기기에서 심장이 화면 왼쪽 끝이 아니라 91px 안쪽에 뜬다.
+   ★ left:0 이 곧 --safe-l(= max(env(safe-area-inset-left), 16 논리px)) 이다.
+     .ui-hud-stage 의 박스 자체가 세이프 인셋만큼 줄어 있다(index.css 참조).
+     여기에 env() 를 또 쓰면 노치 기기에서 인셋을 두 번 먹어 심장이 안쪽으로 밀린다. */
 .hud-humanity {
     position: absolute;
-    left: max(env(safe-area-inset-left, 0px), calc(16 * var(--u)));
+    left: 0;
     top: calc(38 * var(--u));
     pointer-events: none;
 }
