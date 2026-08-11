@@ -224,18 +224,38 @@ function buildPlayAssets() {
 //  ★ 스플래시의 요구사항은 단 하나다 — "흰 플래시가 없을 것".
 //    그림이 잘려도 상관없지만 배경색이 VOID 가 아니면 즉시 눈에 띈다.
 //    그래서 전부 -background VOID 로 평탄화하고 알파를 없앤다.
+//
+//  ★ 2026-08-12 — 세로(drawable-port-*) 5장을 **의도적으로 만들지 않는다.**
+//    이 게임은 가로 고정이다(AndroidManifest 의 screenOrientation="landscape" +
+//    resizeableActivity="false", APK 로 검증됨). 세로 스플래시가 화면에 나오려면
+//    회전 잠금이 걸리기 전 한 프레임을 스쳐야 하는데, 그 한 프레임조차
+//    밀도 없는 기본 `drawable/splash.png` 가 폴백으로 받아준다.
+//    (Android 리소스 해석: -port 한정자가 없으면 한정자 없는 drawable/ 이 매칭된다.)
+//    대가는 APK 3.21MB 였다 — 스플래시 총량 6.24MB 의 절반, APK 17.8MB 의 18%.
+//
+//  ★ 되살리는 법 — 아래 PORTRAIT_SPLASH 를 ANDROID_SPLASH 에 이어붙이고
+//    `npm run build:icons` 를 돌리면 그대로 복구된다. 세로를 지원하게 되는 날
+//    (예: Android 16 대화면 적응형 대응으로 세로 UI 를 만들 때) 그렇게 한다.
+//    ⚠ res/drawable-port-* 를 만드는 도구는 이 스크립트 하나뿐이다.
+//      @capacitor/assets 는 이 프로젝트에 설치돼 있지 않고, `npx cap sync` 도
+//      res/ 의 이미지 리소스는 건드리지 않는다. 즉 지운 것은 다시 안 생긴다.
+const PORTRAIT_SPLASH = [
+    ["drawable-port-mdpi", 320, 480],
+    ["drawable-port-hdpi", 480, 720],
+    ["drawable-port-xhdpi", 640, 960],
+    ["drawable-port-xxhdpi", 960, 1440],
+    ["drawable-port-xxxhdpi", 1280, 1920],
+];
+void PORTRAIT_SPLASH; // 참조 보존용. 위 주석의 "되살리는 법" 참조.
+
 const ANDROID_SPLASH = [
+    // ★ 한정자 없는 drawable/ 은 지우지 마라. 세로 구성의 유일한 폴백이다.
     ["drawable", 480, 320],
     ["drawable-land-mdpi", 480, 320],
     ["drawable-land-hdpi", 720, 480],
     ["drawable-land-xhdpi", 960, 640],
     ["drawable-land-xxhdpi", 1440, 960],
     ["drawable-land-xxxhdpi", 1920, 1280],
-    ["drawable-port-mdpi", 320, 480],
-    ["drawable-port-hdpi", 480, 720],
-    ["drawable-port-xhdpi", 640, 960],
-    ["drawable-port-xxhdpi", 960, 1440],
-    ["drawable-port-xxxhdpi", 1280, 1920],
 ];
 
 function buildSplash() {
@@ -243,8 +263,8 @@ function buildSplash() {
         const d = resolve(RES, dir);
         ensure(d);
         const out = resolve(d, "splash.png");
-        // ^ = 짧은 변 기준으로 맞춘 뒤 중앙 크롭. 세로(port) 는 좌우가 크게 잘리지만
-        //   가로 전용 게임이라 세로 스플래시는 회전 직전 한 프레임만 스친다.
+        // ^ = 짧은 변 기준으로 맞춘 뒤 중앙 크롭.
+        //   가로 전용 게임이라 세로 밀도별 산출물은 만들지 않는다(위 PORTRAIT_SPLASH 주석).
         run([
             SRC_SPLASH,
             "-filter", "Lanczos", "-resize", `${w}x${h}^`,

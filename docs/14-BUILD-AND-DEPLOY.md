@@ -733,6 +733,34 @@ Get-ChildItem -Recurse dist -File |
 > **BGM(`asset/bgm/`)이 용량의 최대 위협이다.** WAV가 섞여 있으면 즉시 OGG/MP3(96~128kbps)로 변환할 것. §12-D 참조.
 > **용량은 iOS에서 CI 시간으로도 환산된다.** 업로드·처리 대기가 길어지고, 그 대기는 §6.4의 유한한 빌드 분(minute)을 직접 갉아먹는다.
 
+#### ★ APK 안의 리소스도 예산에 든다 — 스플래시 (2026-08-12 정리)
+
+`dist/` 만 재면 안 된다. **APK 크기의 상당 부분이 `android/app/src/main/res/` 다.**
+실제로 이 프로젝트는 스플래시 PNG 11장이 6.24MB 를 먹고 있었고, 그중 **세로용 5장(3.18MB)이 죽은 용량**이었다.
+
+| | APK 크기 | 스플래시 PNG |
+|---|---|---|
+| 세로 스플래시 제거 전 | 18,622,231 B (17.76 MiB) | 11장 · 6.24 MiB |
+| 제거 후 | 15,437,832 B (14.72 MiB) | 6장 · 3.05 MiB |
+| 차이 | **−3,184,399 B (−3.04 MiB, −17.1%)** | −5장 |
+
+**왜 지워도 되는가**
+- 이 앱은 가로 고정이다 — `AndroidManifest.xml` 의 `screenOrientation="landscape"` + `resizeableActivity="false"`.
+- `res/drawable/splash.png`(한정자 없는 기본)가 남아 있어 **세로 구성이 잡히더라도 그것으로 폴백**된다.
+  Android 리소스 해석 규칙상 `-port` 한정자 후보가 없으면 한정자 없는 `drawable/` 이 매칭된다.
+- 세로 스플래시가 보일 수 있는 유일한 순간은 "런처에서 뜬 직후, 회전 잠금이 적용되기 전 한 프레임" 뿐이고
+  그 프레임의 배경색은 `styles.xml` 의 `windowSplashScreenBackground` = `@color/splashBackground`(VOID `#0b0710`)라
+  **흰 플래시는 애초에 나지 않는다.** (에뮬레이터 검증 완료 — 콜드 스타트 → 타이틀 → 전투 진입 정상)
+
+**되살리는 법**
+`FE/tools/build-icons.mjs` 의 `PORTRAIT_SPLASH` 배열을 `ANDROID_SPLASH` 에 이어붙이고 `npm run build:icons`.
+⚠ `res/drawable-port-*` 를 만드는 도구는 이 스크립트 하나뿐이다. `@capacitor/assets` 는 설치돼 있지 않고
+`npx cap sync` 도 `res/` 의 이미지 리소스는 건드리지 않는다. **한 번 지우면 다시 생기지 않는다.**
+
+> ⏭ 더 줄일 여지 — 남은 land 5장을 WebP(품질 80)로 바꾸면 추가로 2MB 안팎을 더 줄일 수 있다.
+> minSdk 23 이므로 WebP 는 안전하다. 이번 주 스코프에서는 하지 않았다.
+
+
 ---
 
 ## 5. 서명 자산 생성 및 관리 (Android 키스토어 · iOS 인증서)
@@ -756,12 +784,14 @@ Get-ChildItem -Recurse dist -File |
 
 ### 5.1 keytool 명령 전문 (Windows)
 
-`keytool` 은 JDK에 포함되어 있다. Android Studio를 설치했다면 보통 다음 경로에 있다:
-`C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe`
+`keytool` 은 **모든 JDK 에 들어 있다** — 어느 버전이든 상관없다(키스토어 생성에는 21 이 아니어도 된다).
+⚠ 이 PC 에는 **Android Studio 가 설치돼 있지 않다.** 예전 판 문서가 안내하던
+`C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe` 는 **존재하지 않는 경로**다. 실제 경로는:
+`C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\keytool.exe`
 
 ```powershell
 # 0) keytool 위치 확인 (PATH에 없으면 절대 경로로 실행)
-$keytool = "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"
+$keytool = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\keytool.exe"
 if (-not (Test-Path $keytool)) { $keytool = (Get-Command keytool).Source }
 & $keytool -help | Select-Object -First 3
 
@@ -908,9 +938,14 @@ android {
     }
 
     // 빌드 재현성: 소스/타깃 자바 버전 명시
+    // ★ 21 이다. 17 로 적으면 소스 레벨 21 로 컴파일된 :capacitor-android 를
+    //   :app 이 읽지 못해 깨진다. 근거는 §6.0 표.
+    // ⚠ 실제로는 이 블록을 손으로 넣을 필요가 없다 — `cap sync` 가 생성하는
+    //   android/app/capacitor.build.gradle 이 이미 VERSION_21 을 넣어준다.
+    //   (현재 저장소의 app/build.gradle 에 compileOptions 가 없는 이유다.)
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
 
     packagingOptions {
@@ -929,13 +964,13 @@ android {
 
 ```powershell
 $keyDir  = "$env:USERPROFILE\.android-keys\bloodsworn"
-$keytool = "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"
+$keytool = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\keytool.exe"
 
 # ① 키스토어 내용 + SHA-256 지문 확인 (Play Console에 등록된 지문과 대조용)
 & $keytool -list -v -keystore "$keyDir\bloodsworn-upload.jks" -alias bloodsworn-upload
 
 # ② AAB가 실제로 서명되었는지 확인 (AAB는 jarsigner 서명)
-$jarsigner = "C:\Program Files\Android\Android Studio\jbr\bin\jarsigner.exe"
+$jarsigner = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\jarsigner.exe"
 & $jarsigner -verify -verbose -certs `
   "android\app\build\outputs\bundle\release\app-release.aab" | Select-String -Pattern "jar verified|CN="
 
@@ -1117,18 +1152,82 @@ base64 -w0 AuthKey_XXXXXXXXXX.p8     > p8.b64
 ```powershell
 node -v          # v20 이상 권장 (Vite 7 요구사항)
 npm -v
-java -version    # ⚠ JDK 17 (AGP 8.10.1 / Gradle 8.11.1 조합의 요구사항)
+java -version    # ★ JDK 21 이어야 한다. 17 이면 빌드가 죽는다 — 아래 근거
 adb version
 echo $env:JAVA_HOME
 echo $env:ANDROID_HOME     # 보통 C:\Users\<user>\AppData\Local\Android\Sdk
 ```
-- **JDK는 17을 쓴다.** Android Studio 내장 JBR(`…\Android Studio\jbr`)이 가장 안전하다.
-  ```powershell
-  $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
-  # 영구 설정
-  [Environment]::SetEnvironmentVariable("JAVA_HOME","C:\Program Files\Android\Android Studio\jbr","User")
-  ```
-- JDK 21/24가 잡혀 있으면 Gradle 8.11.1이 "Unsupported class file major version" 계열 에러를 낸다. §12-B
+
+#### ★ JDK 21 이 필요한 이유 (2026-08-12 실측 정정)
+
+**이 문서는 원래 "JDK 17 을 쓰라"고 단언했다. 틀렸다.** 왜 그렇게 적혀 있었는지부터 알아야 다시 헷갈리지 않는다.
+
+| 무엇이 | 최소 요구 JDK | 근거 파일 |
+|---|---|---|
+| Gradle 8.11.1 자체 | 8 이상 (정식 지원 상한 21) | `android/gradle/wrapper/gradle-wrapper.properties` |
+| AGP 8.10.1 자체 | **17** | `android/build.gradle` |
+| **`:capacitor-android` 모듈** | **21** | `FE/node_modules/@capacitor/android/capacitor/build.gradle` 의 `compileOptions` → `sourceCompatibility JavaVersion.VERSION_21` |
+| `:app`, `:capacitor-cordova-android-plugins` | **21** | `android/app/capacitor.build.gradle`, `android/capacitor-cordova-android-plugins/build.gradle` — 둘 다 `VERSION_21`. `cap sync` 가 생성하므로 손으로 못 내린다 |
+
+즉 **원래 서술이 본 것은 "AGP/Gradle 툴체인"이고, 실제로 발목을 잡는 것은 "Capacitor 7 이 요구하는 소스 레벨"이다.**
+AGP·Gradle 만 놓고 보면 17 이 맞다. 그래서 그럴듯해 보였고 오래 살아남았다.
+하지만 이 프로젝트는 Capacitor 7 을 쓰므로 **JDK 17 로 빌드하면 이렇게 죽는다**:
+
+```
+> Task :capacitor-android:compileDebugJavaWithJavac FAILED
+  error: invalid source release: 21
+```
+
+> ⚠ **`invalid source release: 21` 과 `Unsupported class file major version` 은 정반대 방향의 에러다.**
+> 앞의 것은 **JDK 가 낮아서** 21 소스를 못 컴파일하는 것이고, 뒤의 것은 **JDK 가 Gradle 이 감당 못 할 만큼 높을 때** 난다.
+> Gradle 8.11.1 은 JDK 21 을 정식 지원하므로 이 조합에서 뒤의 에러는 나지 않는다. §12-B
+
+**이 PC 의 검증된 설정** (2026-08-12 디버그 APK 빌드 + 에뮬레이터 전투 진입까지 확인)
+
+```powershell
+# PowerShell — 세션 한정
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
+$env:PATH      = "$env:JAVA_HOME\bin;$env:PATH"
+# 영구 설정
+[Environment]::SetEnvironmentVariable("JAVA_HOME","C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot","User")
+```
+```bash
+# Git Bash — 세션마다 export 한다
+export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-21.0.12.8-hotspot"
+export ANDROID_HOME="/c/Users/741u7/AppData/Local/Android/Sdk"
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+```
+
+**검증된 빌드 명령** (Git Bash, `FE/` 에서)
+```bash
+npm run build && npx cap sync android && cd android && ./gradlew.bat assembleDebug
+# 산출물: FE/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+- ⚠ **Android Studio 내장 JBR 을 그대로 쓰지 마라.** Studio 2024.x 계열의 JBR 은 JDK 17 이라 위 에러에 그대로 걸린다.
+  Studio 로 빌드해야 한다면 `File → Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JDK` 를 **21** 로 바꾼다.
+- ⚠ **`JAVA_HOME` 을 바꿨는데 안 먹으면 `.\gradlew --stop`** 을 안 한 것이다. 데몬이 옛 JDK 로 살아 있다. §12-B
+- JDK 를 더 올리는 것(24 등)은 검증하지 않았다. Gradle 8.11.1 의 정식 지원 상한이 21 이므로 **21 에 고정한다.**
+
+**CI 는 어떤가 (2026-08-12 점검)**
+
+| 파일 | Android 를 빌드하나 | JDK 지정 | 상태 |
+|---|---|---|---|
+| `codemagic.yaml` | ❌ iOS 전용 (`xcode-project build-ipa`) | 없음 | 문제 없음 |
+| `.github/workflows/ios-testflight.yml` | ❌ iOS 전용 (`xcodebuild`) | 없음 | 문제 없음 |
+
+**즉 현재 CI 에는 JDK 버전 문제가 없다.** Gradle 을 도는 CI 잡 자체가 없기 때문이다.
+Android 릴리스는 §6.2 대로 이 PC 에서 굽는다.
+
+> ⚠ **나중에 Android CI 를 붙이는 사람에게** — 러너의 기본 JDK 를 믿지 마라. 반드시 21 을 명시한다.
+> ```yaml
+> - uses: actions/setup-java@v4
+>   with: { distribution: temurin, java-version: '21' }
+> ```
+> Codemagic 이라면 워크플로 `environment:` 에 `java: 21`. 명시하지 않으면 러너 기본값이 17 로
+> 떨어지는 날 `invalid source release: 21` 로 릴리스가 막힌다.
+> 그때 `versionCode` 주입 방법은 §11.1 (`ANDROID_VERSION_CODE`) 을 볼 것.
 
 > **iOS에는 이 절에 대응하는 로컬 확인 항목이 없다.** Xcode 16+ / CocoaPods / macOS는 **전부 CI 이미지 안에 있고**,
 > 이 PC에는 설치할 수도 없다. 로컬에서 확인할 수 있는 것은 **Node 20+ 하나뿐**이며 그건 위 `node -v` 로 이미 본다.
@@ -1187,6 +1286,19 @@ Write-Host "설치 완료. logcat: adb logcat *:E chromium:V" -ForegroundColor G
 
 ### 6.2 B코스 — 릴리스 AAB 생성 (Day 6~7)
 
+> **선행 조건 2가지**
+> 1. **JDK 21** 이어야 한다(§6.0). 17 이면 `:capacitor-android:compileDebugJavaWithJavac` 에서 죽는다.
+> 2. `versionCode` 는 **건드리지 않는다.** 아래 `bundleRelease` 가 `version.properties` 를 자동으로 +1 한다(§11.1 T243).
+>    빌드 로그의 `[T243] versionCode N -> N+1` 줄을 확인하고, **끝난 뒤 그 파일을 커밋한다.**
+>
+> **한 방 명령** — 아래 2~6단계를 묶은 npm 스크립트가 있다. JDK 21 검사까지 먼저 해준다.
+> ```powershell
+> npm run release:aab      # = npm run build && npx cap sync android && gradlew bundleRelease
+> npm run release:apk      # 릴리스 APK 가 필요할 때
+> ```
+> 두 스크립트의 실체는 `FE/tools/gradle.mjs` 다.
+
+
 ```powershell
 cd "C:\Users\741u7\OneDrive\바탕 화면\PJT20260810\FE"
 
@@ -1217,7 +1329,7 @@ $aab = "app\build\outputs\bundle\release\app-release.aab"
 Get-Item $aab | Select-Object FullName, @{n='MB';e={"{0:N2}" -f ($_.Length/1MB)}}, LastWriteTime
 
 # 8) 서명 검증
-& "C:\Program Files\Android\Android Studio\jbr\bin\jarsigner.exe" -verify $aab
+& "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\jarsigner.exe" -verify $aab
 ```
 
 **참고: 릴리스 APK도 필요하다면** (Play를 거치지 않고 지인에게 직접 전달하거나, 디바이스 팜에 올릴 용도)
@@ -2413,6 +2525,56 @@ Android 트러블슈팅(§12)은 "재현 → 관찰 → 수정"이 5분 루프�
 | `versionCode` | **정수. Play에 업로드할 때마다 무조건 +1.** 절대 감소 불가, 재사용 불가 | `1 → 2 → 3 …` |
 | `versionName` | 사람이 읽는 버전. `MAJOR.MINOR.PATCH` | `0.1.0` (내부 테스트) → `1.0.0` (프로덕션) |
 
+**단일 진실원천은 `FE/android/version.properties` 다.** `app/build.gradle` 이 이 파일을 읽는다.
+`build.gradle` 을 열어 숫자를 고치는 일은 없다.
+
+```properties
+versionCode=1
+versionName=1.0.0
+```
+
+#### ★ T243 — `versionCode` 자동 증가 (2026-08-12 구현 완료)
+
+**이 자동화의 존재 이유는 하나다. "손으로 올리다 잊는 것"을 막는 것.**
+Day 7 오후에 `versionCode` 를 안 올린 AAB 를 올리면 Play Console 이 즉시 거부하고,
+그때부터 빌드를 다시 굽는 시간이 통째로 날아간다.
+
+**어디서 도는가** — `FE/android/app/build.gradle` 최상단 `[T243]` 블록(설정 단계에서 1회 실행).
+iOS 는 CI 가 이 일을 한다(`codemagic.yaml` 의 "빌드 번호 결정" 스텝 → `agvtool new-version -all $BUILD_NUMBER`,
+`.github/workflows/ios-testflight.yml` → `agvtool new-version -all ${{ github.run_number }}`).
+Android 는 릴리스 AAB 를 로컬에서 굽는 구조라 CI 카운터가 없으므로 **Gradle 이 같은 역할을 맡는다.**
+
+**동작 규칙**
+
+| 상황 | versionCode | 이유 |
+|---|---|---|
+| `assembleDebug`, `installDebug`, Android Studio Gradle sync, `gradlew tasks` | **그대로** | 개발 중 하루 50번 빌드해도 번호가 튀면 안 된다 |
+| `bundleRelease` / `assembleRelease` / `installRelease` / `publish…Release` | **저장값 +1** 후 `version.properties` 에 되쓰기 | 릴리스 산출물 = 업로드 후보다 |
+| `-PskipVersionBump` 를 준 릴리스 빌드 | **그대로** | 같은 번호로 빌드를 재현해야 할 때의 탈출구 |
+| 환경변수 `ANDROID_VERSION_CODE=N` (또는 `-PandroidVersionCode=N`) | `N > 저장값` 이면 `N`, **아니면 저장값 +1** | 나중에 Android CI 를 붙일 때 CI 빌드 카운터를 그대로 주입하는 자리. 카운터가 리셋돼도 절대 내려가지 않는다 |
+
+```powershell
+# 릴리스 빌드 — 아무것도 안 해도 올라간다
+.\gradlew bundleRelease
+#  > [T243] versionCode 1 -> 2 (릴리스 태스크 자동 증가) — version.properties 가 갱신됐다. ★ 이 변경을 커밋하라.
+
+# 같은 번호로 다시 굽기(디버깅용)
+.\gradlew bundleRelease -PskipVersionBump
+
+# CI 카운터 주입 (Android CI 를 붙이는 날)
+$env:ANDROID_VERSION_CODE = "57"; .\gradlew bundleRelease
+```
+
+**🔴 반드시 지켜야 하는 것 — 바뀐 `version.properties` 를 커밋한다.**
+커밋하지 않으면 다음 릴리스 빌드가 같은 값에서 다시 시작해 결국 같은 에러로 돌아온다.
+`version.properties` 는 비밀이 아니므로 커밋 대상이다(키스토어와 다르다).
+
+**⚠ 빌드가 실패해도 올린 값은 되돌리지 않는다.** `versionCode` 에 구멍(1, 2, 5 …)이 나는 것을 Play 는 허용한다.
+되돌리려다 같은 값을 두 번 쓰는 쪽이 훨씬 위험하다.
+
+**⚠ `gradlew build` 는 자동 증가에 걸리지 않는다.** 태스크 이름에 `Release` 가 없기 때문이다.
+업로드용 산출물은 항상 `bundleRelease` 로 만든다.
+
 **7일 프로젝트 권장 매핑**
 
 | 단계 | versionName | versionCode |
@@ -2423,33 +2585,10 @@ Android 트러블슈팅(§12)은 "재현 → 관찰 → 수정"이 5분 루프�
 | 폐쇄형 테스트 시작 | `0.2.0` | 4 |
 | 프로덕션 출시 | `1.0.0` | 10 |
 
+> 표는 "이렇게 되면 좋다"는 예시고, 실제 값은 자동 증가가 만든다. **표에 맞추려고 숫자를 내리지 마라.**
+
 > **`versionCode` 를 올리지 않고 재업로드하면 Play Console이 즉시 거부한다.**
-> "이미 versionCode 2를 사용하는 APK가 있습니다" — Day 7 오후에 이 에러를 만나면 시간을 잃는다. 습관화할 것.
-
-**자동 증가 (선택)** — `FE/android/app/build.gradle`:
-```gradle
-// versionCode 를 파일로 관리해 실수를 없앤다
-def vcFile = rootProject.file("version.properties")
-def vcProps = new Properties()
-if (vcFile.exists()) { vcProps.load(new FileInputStream(vcFile)) }
-def buildNumber = (vcProps['versionCode'] ?: "0").toInteger()
-
-defaultConfig {
-    versionCode buildNumber
-    versionName "0.1.0"
-}
-```
-`FE/android/version.properties` (이 파일은 **git에 커밋한다** — 키와 달리 비밀이 아님):
-```properties
-versionCode=1
-```
-업로드 직전 수동으로 +1 하거나:
-```powershell
-$p = "C:\Users\741u7\OneDrive\바탕 화면\PJT20260810\FE\android\version.properties"
-$n = [int]((Get-Content $p) -replace 'versionCode=','') + 1
-Set-Content -Encoding utf8 $p "versionCode=$n"
-Write-Host "versionCode -> $n"
-```
+> "이미 versionCode 2를 사용하는 APK가 있습니다" — T243 은 정확히 이 문장을 안 보기 위한 장치다.
 
 ### 11.2 iOS — `CFBundleShortVersionString` / `CFBundleVersion`, 그리고 Android와의 동기화
 
@@ -2569,8 +2708,9 @@ adb logcat -c; adb logcat chromium:V *:S
 
 | 에러 메시지 | 원인 | 해결 |
 |---|---|---|
-| `Unsupported class file major version 65/67/68` | JDK 21/23/24로 Gradle 8.11.1 실행 | JDK 17로 전환 (§6.0) |
-| `Android Gradle plugin requires Java 17 to run. You are currently using Java 11` | JDK 11 | JDK 17 설치 |
+| ★ `error: invalid source release: 21` — `:capacitor-android:compileDebugJavaWithJavac FAILED` | **JDK 17 이하로 빌드했다.** Capacitor 7 모듈이 소스 레벨 21 을 요구한다(`node_modules/@capacitor/android/capacitor/build.gradle`) | **JDK 21 로 전환** (§6.0). Android Studio 내장 JBR 이 17 인 것이 최다 원인이다 |
+| `Android Gradle plugin requires Java 17 to run. You are currently using Java 11` | JDK 11 | JDK 21 설치 (§6.0) |
+| `Unsupported class file major version 65/67/68` | Gradle 이 감당 못 하는 **상위** JDK. ⚠ **Gradle 8.11.1 + JDK 21 조합에서는 나지 않는다** — 이게 보이면 JDK 24 등을 잡은 것이다 | JDK 21 로 되돌린다 (§6.0) |
 | `compileSdk 36 requires Android Gradle Plugin 8.x.x or higher` | AGP 버전 부족 | `android/build.gradle` 의 `com.android.tools.build:gradle` 버전 상향 |
 | `SDK location not found` | `ANDROID_HOME` 미설정 | `android/local.properties` 에 `sdk.dir=C\:\\Users\\741u7\\AppData\\Local\\Android\\Sdk` |
 | `Could not resolve all files… google()` | 오프라인/프록시 | 네트워크 확인. `--offline` 플래그 제거 |
@@ -2582,7 +2722,8 @@ cd "C:\Users\741u7\OneDrive\바탕 화면\PJT20260810\FE\android"
 .\gradlew --stop      # 데몬 종료 후 재시작하면 JAVA_HOME 변경이 반영된다
 ```
 > **JAVA_HOME을 바꿨는데 안 먹으면 `gradlew --stop` 을 잊은 것이다.** Gradle 데몬이 옛 JDK로 살아 있다.
-> 대안: `android/gradle.properties` 에 `org.gradle.java.home=C:\\Program Files\\Android\\Android Studio\\jbr` 명시.
+> 대안: `android/gradle.properties` 에 `org.gradle.java.home=C:\\Program Files\\Eclipse Adoptium\\jdk-21.0.12.8-hotspot` 명시.
+> 🔴 **여기에 Android Studio 의 `jbr` 을 적지 마라.** Studio 2024.x 의 JBR 은 JDK 17 이라 `invalid source release: 21` 로 죽는다(§6.0).
 
 ### C. `cap sync` 후 에셋 누락
 

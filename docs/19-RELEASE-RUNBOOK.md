@@ -35,7 +35,8 @@
 | T706 | `base: './'` + phaser 청크 분리 | `FE/vite.config.js` |
 | T707 | iOS 번들 식별자 (Debug/Release 2곳) | `FE/ios/App/App.xcodeproj/project.pbxproj` |
 | T708 | iOS 가로 2종 + 전체화면 + **수출 규정 키** | `FE/ios/App/App/Info.plist` |
-| T710·711·714·715 | 아이콘·적응형·피처그래픽·스플래시·iOS 무알파 아이콘 **33개 생성 완료** | `FE/tools/build-icons.mjs` |
+| T710·711·714·715 | 아이콘·적응형·피처그래픽·스플래시·iOS 무알파 아이콘 **28개 생성 완료** | `FE/tools/build-icons.mjs` |
+| T243 | **Android `versionCode` 자동 증가** — 릴리스 태스크에서만 +1. 손으로 올리지 않는다 | `FE/android/app/build.gradle` `[T243]` 블록, `FE/android/version.properties` |
 | T713 | 스토어 문안 | `docs/store/listing-ko.md`, `listing-en.md` |
 | T724(문안) | 개인정보 처리방침 HTML | `privacy/index.html` |
 | T750~753(정의) | iOS CI 2종 | `codemagic.yaml`, `.github/workflows/ios-testflight.yml` |
@@ -56,6 +57,8 @@ CI 시크릿 등록 · GitHub Pages 게시 · 스크린샷 촬영 · Play Consol
 
 > 🔴 **되돌릴 수 없는 방향이 하나뿐이다.** `versionCode` 도 `MARKETING_VERSION` 도 **낮출 수 없다.**
 > 안 A 로 올리면 이후 0.x 를 쓸 수 없다(실무상 문제는 없다). 안 B 로 시작하면 나중에 1.0.0 으로 올릴 수 있다.
+> ★ **T243 이후 `versionCode` 는 손으로 안 건드려도 된다.** 저장값 `1` 에서 첫 `bundleRelease` 를 돌리면
+> 자동으로 `2` 가 된다(§6.2). 아래 표에서 정할 것은 사실상 `versionName` / `MARKETING_VERSION` 뿐이다.
 > **안 B 를 고르려면 아래 파일 2곳만 고치면 된다:**
 > ```
 > FE/android/version.properties        versionCode=2 / versionName=0.1.1
@@ -150,7 +153,7 @@ App Store Connect → 앱 → 연령 등급. 2025년에 체계가 개편되어 *
 
 ```powershell
 # keytool 위치 확인
-$keytool = "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe"
+$keytool = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\keytool.exe"
 if (-not (Test-Path $keytool)) { $keytool = (Get-Command keytool).Source }
 
 # ⚠ 프로젝트 폴더 "밖"에 만든다 — git 혼입을 원천 차단한다
@@ -471,6 +474,24 @@ grep -rni "firebase\|analytics\|gtag\|admob\|sentry" src/ package.json ; echo "�
 
 ## 6. Android 릴리스 빌드 (60분)
 
+### 6.0 🔴 먼저 — JDK 21 인지 확인한다 (30초, 건너뛰면 §6.3 에서 죽는다)
+
+```powershell
+java -version    # "21.0.x" 여야 한다
+$env:JAVA_HOME
+```
+21 이 아니면 이렇게 잡는다.
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot"
+$env:PATH      = "$env:JAVA_HOME\bin;$env:PATH"
+```
+
+> **왜 21 인가** — Capacitor 7 의 `:capacitor-android` 모듈이 소스 레벨 21 로 컴파일된다.
+> JDK 17 로 돌리면 `error: invalid source release: 21` 로 즉시 실패한다.
+> ⚠ **Android Studio 내장 JBR 은 17 이라 쓰면 안 된다.** 근거와 전체 표는 `14-BUILD-AND-DEPLOY.md` §6.0.
+> ⚠ `JAVA_HOME` 을 바꾸고도 같은 에러가 나면 `.\gradlew --stop` 으로 데몬을 죽인다.
+
 ### 6.1 코드 프리즈 + 아이콘 재생성
 
 ```powershell
@@ -480,15 +501,30 @@ npm run build:icons        # store/_raw/ 원본에서 33개 산출물 재생성 
 > 이 스크립트는 실패해야 할 때 실패한다 — iOS 아이콘에 알파가 남거나, Play 아이콘이
 > 32비트가 아니거나 1MB 를 넘으면 **예외를 던지고 멈춘다.** 조용히 잘못된 파일을 만들지 않는다.
 
-### 6.2 버전 확인
+### 6.2 버전 확인 — `versionCode` 는 **손대지 않는다** (T243)
 
-`FE/android/version.properties` 를 연다. §0.3 에서 정한 값인지 확인한다.
+`FE/android/version.properties` 를 연다. **`versionName` 이 §0.3 에서 정한 값인지만** 확인한다.
 
 ```properties
-versionCode=1
-versionName=1.0.0
+versionCode=1          # ← 손대지 마라. bundleRelease 가 자동으로 +1 한다
+versionName=1.0.0      # ← 이것만 확인. iOS MARKETING_VERSION 과 같아야 한다
 ```
-> ⚠ **재업로드할 때마다 `versionCode` 를 +1 한다.** 같은 값으로 올리면 Play 가 즉시 거부한다.
+
+**`versionCode` 는 §6.3 의 `bundleRelease` 가 알아서 올린다.** `app/build.gradle` 의 `[T243]` 블록이
+릴리스 태스크에서만 이 파일을 +1 하고 되쓴다. 빌드 로그에 이렇게 찍힌다:
+
+```
+[T243] versionCode 1 -> 2 (릴리스 태스크 자동 증가) — version.properties 가 갱신됐다. ★ 이 변경을 커밋하라.
+```
+
+- [ ] **AAB 를 Play 에 올린 뒤 `version.properties` 를 커밋한다** (§10.3 최종 커밋에 포함).
+      커밋을 빠뜨리면 다음 빌드가 같은 값에서 다시 시작해 "이미 사용된 버전 코드" 로 돌아온다.
+- 같은 번호로 빌드를 재현해야 하면 `.\gradlew bundleRelease -PskipVersionBump`.
+- `assembleDebug` 는 이 값을 건드리지 않는다. 개발 중 빌드로 번호가 튀는 일은 없다.
+- 상세 규칙(주입·하한 보정)은 `14-BUILD-AND-DEPLOY.md` §11.1.
+
+> ⚠ 자동 증가는 **`bundleRelease` / `assembleRelease` 계열 태스크 이름**에만 반응한다.
+> `gradlew build` 로는 올라가지 않는다. 업로드용 산출물은 반드시 §6.3 의 명령으로 만든다.
 
 ### 6.3 릴리스 AAB 생성
 
@@ -521,7 +557,7 @@ Get-Item $aab | Select-Object FullName, @{n='MB';e={"{0:N2}" -f ($_.Length/1MB)}
 ### 6.4 서명 확인 — 디버그 키로 서명된 걸 올리는 사고를 막는다
 
 ```powershell
-& "C:\Program Files\Android\Android Studio\jbr\bin\jarsigner.exe" -verify -verbose -certs `
+& "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.8-hotspot\bin\jarsigner.exe" -verify -verbose -certs `
   "app\build\outputs\bundle\release\app-release.aab" | Select-String -Pattern "jar verified|CN="
 ```
 - [ ] `jar verified.` 가 출력된다
@@ -960,7 +996,7 @@ git push origin main --tags
 | **G. 업로드 거부: 잘못된 아이콘** | iOS 아이콘에 알파 | `npm run build:icons` 가 검증한다. 통과했는데도 나면 `cap sync` 가 xcassets 를 덮었는지 확인 |
 | **H. "Missing Compliance"** | `ITSAppUsesNonExemptEncryption` 누락 | 해당 빌드의 plist 확인. 웹에서 1회 수동 응답 후 재빌드 |
 | **I. "이미 사용된 빌드 번호"** | 두 CI 카운터 불일치 | §7.4 |
-| **J. Play "버전 코드가 이미 사용됨"** | `versionCode` 미증가 | `FE/android/version.properties` +1 후 재빌드 |
+| **J. Play "버전 코드가 이미 사용됨"** | T243 자동 증가분을 **커밋하지 않아** 값이 되돌아갔다 | `FE/android/version.properties` 를 확인 → `bundleRelease` 재실행이면 자동으로 +1 된다(§6.2). 급하면 그 파일의 숫자를 직접 올려도 된다 |
 | **K. 소리가 안 남 (iOS)** | 하드웨어 무음 스위치 | **스위치 ON 에서 무음은 정상이다.** 여기서 시간 쓰지 마라 |
 | **L. 세이브가 사라짐 (iOS)** | `localStorage` 가 OS 에 의해 비워짐 | `@capacitor/preferences` write-through 가 동작하는지 (`FE/src/save/save.js`) |
 
