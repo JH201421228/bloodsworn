@@ -41,6 +41,12 @@ const UI_INIT = {
     confirm: null,
     pact: { open: false, cards: [], nocturneLine: null, canSkip: true },
     awakeningBanner: null, // { name, tag } — 표시 중에만 non-null
+    /**
+     * M-1 부활 제안. pact 와 같은 모양으로 둔다 — 둘 다 "씬이 멈춘 채 답을 기다리는" 오버레이다.
+     * ★ Phaser 가 8초 타임아웃을 갖고 있으므로 UI 가 죽어도 런은 반드시 끝난다.
+     *   여기서 하는 일은 "8초를 사람이 쓸 수 있게 만드는 것"이지 진행을 책임지는 것이 아니다.
+     */
+    revive: { open: false, humanityCost: 0, humanity: 0, hpPct: 0.5, timeoutMs: 8000 },
     loadProgress: 0, // 0..1
 
     // ── 스테이지 선택 (S-1) ──
@@ -77,6 +83,10 @@ export const createUiSlice = (set, get) => ({
         }),
     closePact: () => set({ pact: { ...UI_INIT.pact } }),
 
+
+    openRevive: (p) => set({ revive: { open: true, humanityCost: p?.humanityCost ?? 0,
+        humanity: p?.humanity ?? 0, hpPct: p?.hpPct ?? 0.5, timeoutMs: p?.timeoutMs ?? 8000 } }),
+    closeRevive: () => set({ revive: { ...UI_INIT.revive } }),
     showAwakening: (banner) => set({ awakeningBanner: banner }),
     hideAwakening: () => set({ awakeningBanner: null }),
 

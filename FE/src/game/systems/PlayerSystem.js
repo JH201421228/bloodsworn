@@ -28,6 +28,13 @@ export class PlayerSystem {
         this.facing = "down";
         this.moveSpeed = BASE_MOVE_SPEED;
         this.dashReadyAt = 0;
+        /**
+         * 외부 힘 (StageSystem 환경 기믹 등).
+         * ★ 좌표를 직접 옮기면(pl.x += ...) 물리를 우회해 대시 경로 검사·넉백 감쇠·충돌이
+         *   전부 어긋난다. 속도로 받아 입력에 더한다.
+         */
+        this.externalVx = 0;
+        this.externalVy = 0;
         this.invulnUntil = 0;
         this.currentAnim = null;
     }
@@ -52,8 +59,8 @@ export class PlayerSystem {
 
         const v = input.vector;
         const speed = this.stats ? this.stats.get("moveSpeed") : this.moveSpeed;
-        this.player.setVelocity(v.x * speed, v.y * speed);
-
+        // 외부 힘은 입력 속도에 더한다(기믹의 미는 힘 등)
+        this.player.setVelocity(v.x * speed + this.externalVx, v.y * speed + this.externalVy);
         const moving = v.x !== 0 || v.y !== 0;
         if (moving) this.facing = this.dirFromVector(v.x, v.y);
         this.playAnim(moving ? "run" : "idle");

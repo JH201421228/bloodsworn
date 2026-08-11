@@ -66,6 +66,14 @@ export function installBridge() {
     }, "bridge:run-started");
 
     sub(EVENTS.RUN_LEVELUP, (p) => {
+
+    // M-1 부활 제안. Phaser 가 씬을 멈추고 답을 기다린다(8초 타임아웃 있음).
+
+    sub(EVENTS.REVIVE_OFFER, (p) => s().openRevive(p ?? {}), "bridge:revive-offer");
+
+    // 결정이 나면 오버레이를 닫는다. 수락이면 RUN_RESUMED, 거절이면 RUN_ENDED 가 뒤따른다.
+
+    sub(EVENTS.RUN_RESUMED, () => s().closeRevive(), "bridge:revive-close");
         // 리롤 응답도 같은 이벤트로 온다(GameScene 패치). 카드를 새로 열고 남은 횟수를 맞춘다.
         if (typeof p?.rerollLeft === "number") s().setRerollLeft(p.rerollLeft);
         if (typeof p?.humanity === "number") s().setHumanity(p.humanity);
@@ -94,6 +102,8 @@ export function installBridge() {
     sub(EVENTS.BOSS_HP, (hp) => s().setBossHp(hp), "bridge:boss-hp");
 
     sub(EVENTS.RUN_ENDED, (result) => {
+
+        s().closeRevive();
         // T232 텔레메트리 — 밸런스를 "느낌"이 아니라 숫자로 조정하기 위한 유일한 수단
         console.log("[텔레메트리] 런 종료", JSON.stringify(result));
         const win = isWin(result?.reason);

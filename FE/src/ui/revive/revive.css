@@ -1,0 +1,93 @@
+/*
+ * 부활 오버레이. 치수는 전부 논리 px(--u) 기준이다.
+ * ★ .ui-stage 안에서 % 로 배치한다 — Phaser 가 Scale.FIT 으로 640x360 을 중앙에 놓으므로
+ *   같은 비율 박스 안에 있어야 두 좌표계가 맞는다.
+ */
+.revive-stage { pointer-events: auto; }
+
+.revive-veil {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(20, 6, 10, 0.72), rgba(6, 4, 8, 0.92));
+    animation: revive-in 180ms ease-out both;
+}
+
+.revive-card {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: calc(4 * var(--u));
+    padding: calc(10 * var(--u));
+    text-align: center;
+    /* ★ 경로는 ../img/ 다. public/ 을 직접 가리키면 Vite 가 에셋으로 처리해
+       같은 PNG 가 번들에 한 벌 더 복제된다(실제로 58KB 가 중복됐다).
+       빌드 후 CSS 는 dist/assets/ 로 가고 그림은 dist/img/ 에 남으므로 ../img/ 가 맞다. */
+    border: calc(12 * var(--u)) solid transparent;
+    border-image: url("../img/ui/panel.png") 12 fill stretch;
+    animation: revive-card-in 220ms cubic-bezier(0.2, 1.1, 0.4, 1) both;
+}
+
+.revive-kicker {
+    margin: 0;
+    font-size: calc(9 * var(--u));
+    letter-spacing: calc(2 * var(--u));
+    color: #8c1f18;
+}
+.revive-title {
+    margin: 0;
+    font-size: calc(17 * var(--u));
+    color: #241a12;
+}
+.revive-body {
+    margin: 0;
+    font-size: calc(10 * var(--u));
+    color: #4a3524;
+}
+.revive-cost {
+    margin: 0;
+    font-size: calc(11 * var(--u));
+    color: #8c1f18;
+}
+/* 인간성이 모자라면 색만이 아니라 취소선으로도 갈린다(색맹 대응 10-UIUX 9.1) */
+.revive-cost.is-short {
+    color: #7b7488;
+    text-decoration: line-through;
+}
+.revive-have {
+    font-size: calc(9 * var(--u));
+    color: #5c4a35;
+}
+
+.revive-timer {
+    width: 70%;
+    height: calc(4 * var(--u));
+    background: rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+.revive-timer__fill {
+    height: 100%;
+    background: #8c1f18;
+    transform-origin: left center;
+    animation-name: revive-drain;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+.revive-actions {
+    display: flex;
+    align-items: center;
+    gap: calc(10 * var(--u));
+    margin-top: calc(2 * var(--u));
+}
+/* 기본 동작이 거절이므로 [부활] 쪽에 시선이 가야 한다 */
+.revive-no { opacity: 0.75; }
+
+@keyframes revive-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes revive-card-in {
+    from { opacity: 0; transform: translateX(-50%) translateY(calc(8 * var(--u))) scale(0.96); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@keyframes revive-drain { from { transform: scaleX(1); } to { transform: scaleX(0); } }

@@ -13,6 +13,7 @@ import { SCREENS, MODALS } from "@/state/uiSlice";
 import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
 import PactOverlay from "@/ui/pact/PactOverlay";
+import ReviveOverlay from "@/ui/revive/ReviveOverlay";
 import AwakeningBanner from "@/ui/awakening/AwakeningBanner";
 import HumanityHearts from "@/ui/hud/HumanityHearts";
 import EquipSlots from "@/ui/inventory/EquipSlots";
@@ -129,6 +130,8 @@ export default function UiLayer() {
         <div className="ui-layer">
             {/* PACT 는 항상 최우선. 게임이 멈춰 있으므로 다른 오버레이와 겹칠 일이 없다. */}
             <PactOverlay />
+
+            <ReviveOverlay />
             {/* 각성 배너는 자체적으로 표시/해제를 관리한다. 여기서는 마운트만 해 준다(T422). */}
             <AwakeningBanner />
 

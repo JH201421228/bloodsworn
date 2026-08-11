@@ -10,6 +10,11 @@
  *   적 하나를 추가할 때마다 5곳을 고쳐야 한다. 계열(undead/holy/demon…) 비율만 적고
  *   실제 ID 분배는 여기서 계산한다. 적을 추가하면 자동으로 해당 계열에 섞인다.
  *
+ * ★ 기믹 파라미터는 stages.json 이 정본이다.
+ *   코드가 자기 기본값으로 굴러가면 "밸런싱은 JSON 만 고쳐서 한다"는 규칙이 거짓말이 된다.
+ *   데이터에 적힌 키는 전부 여기서 읽고, 읽을 수 없는 키는 데이터에서 지운다.
+ *   docs/26 §8 이 실측한 12건 중 8-3 ~ 8-8 이 이 파일의 몫이다.
+ *
  * ── 통합 계약 ──
  *   new StageSystem(scene, { spawn, boss })
  *   .load(stageId)   : 적 풀·페이즈·보스·배경 적용
@@ -20,13 +25,44 @@
  */
 import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
-import { dist2 } from "../utils/math";
+import { clamp, dist2 } from "../utils/math";
 import stagesData from "@/data/stages.json";
 import enemiesData from "@/data/enemies.json";
 import phasesData from "@/data/phases.json";
 
 /** 기믹 오브젝트 상한. 넘치면 화면이 읽히지 않고 프레임도 흔들린다 */
 const MAX_GIMMICK = 8;
+
+/**
+ * ★ 예고가 있는 기믹의 절대 하한. BossSystem 의 MIN_TELEGRAPH 와 같은 값·같은 근거다
+ *   (T525 / 03-GDD 7.3). 0.6초는 임의의 숫자가 아니라 인지 → 판단 → 엄지 이동 →
+ *   캐릭터 반응이라는 4단 체인의 합이고, 그보다 짧은 예고는 "어려운 패턴"이 아니라
+ *   "입력 장치로 대응할 수 없는 패턴"이다. 밸런싱 중 가장 먼저 깎이는 값이라
+ *   JSON 이 넘을 수 없는 곳에 둔다. 다만 데이터가 하한보다 **길게** 적으면 그 값을 존중한다.
+ */
+const MIN_TELEGRAPH = 0.6;
+
+/** 수렁 배치 시드 소금. GroundSystem 의 소품과 같은 좌표에서 같은 난수가 나오면 안 된다 */
+const MIRE_SALT = 0x9e3779b1;
+
+/** 3x3 청크 x 청크당 최대 2개 — 후보 스크래치 크기. 런 중 배열을 늘리지 않는다 */
+const MIRE_CAND = 18;
+
+/**
+ * 청크 좌표를 시드로 — 같은 청크는 언제 와도 같은 배치가 나온다.
+ * ★ GroundSystem.chunkRng 와 **같은 규약·같은 해시**다. 소품과 수렁이 다른 규칙으로
+ *   배치되면 "이 지형은 외울 수 있다"는 약속이 반쪽이 된다. 구현을 복사한 이유는
+ *   GroundSystem 이 이 함수를 export 하지 않기 때문이고, 바꿀 때는 두 곳을 같이 바꾼다.
+ */
+function chunkRng(cx, cy, salt) {
+    let a = (cx * 374761393 + cy * 668265263 + salt * 2246822519) >>> 0;
+    return () => {
+        a = (a + 0x6d2b79f5) | 0;
+        let t = Math.imul(a ^ (a >>> 15), 1 | a);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
 
 export class StageSystem {
     constructor(scene, ctx = {}) {
@@ -46,9 +82,20 @@ export class StageSystem {
         }
         this.affinityOf = (e, id) => !e.stageAffinity?.length || e.stageAffinity.includes(id);
 
-        /** 기믹 상태 — 타입마다 쓰는 필드가 다르지만 객체는 하나만 쓴다(런 중 할당 0) */
-        this.g = { t: 0, phase: 0, until: 0, next: 0, visionMul: 1, active: [] };
-        this.gfx = null;
+        /**
+         * 기믹 상태 — 타입마다 쓰는 필드가 다르지만 객체는 하나만 쓴다(런 중 할당 0).
+         * mod : 지금 걸어 둔 "stage:gimmick" 모디파이어 값 캐시. 값이 변할 때만 갈아끼운다.
+         *       (예전 이름은 visionMul 이었는데 mire 에서는 이동속도 감소량을 담고 있어
+         *        읽는 사람을 반드시 한 번 속인다 — docs/26 §4.4-3)
+         */
+        this.g = {
+            t: 0, next: 0, mod: 0, windup: MIN_TELEGRAPH,
+            active: [], free: [],
+            mirePool: null, mireCand: null, mireN: 0, mireCx: NaN, mireCy: NaN,
+            band: null,
+        };
+        this.gfx = null;    // 화면 고정(HUD 좌표계) — haze 비네트
+        this.gfxW = null;   // 월드 좌표계 — emberwind 띠. 카메라가 움직여도 땅에 붙어 있어야 한다
     }
 
     // ── 해금 ────────────────────────────────────────────────
@@ -211,16 +258,90 @@ export class StageSystem {
      *   시야가 좁아지면 안전거리를 다시 잡아야 하고, 늪이 느리게 하면 대시를 아껴야 한다.
      * ★ duringBoss 를 반드시 존중한다. 보스전에서 시야를 조이면 0.6s 텔레그래프가
      *   안 보여 T525 위반이 된다 — 난이도가 아니라 불공정이 되는 지점이다.
+     *
+     * ★ 오브젝트는 전부 여기서 미리 만든다(06-TECH 5.1 "런 중 new 금지").
+     *   기믹은 초당 여러 개가 뜨고 사라지는 물건이라 매번 add.circle 을 하면
+     *   GC 가 전투 중에 튄다. 상한(MAX_GIMMICK)만큼만 만들고 돌려 쓴다.
      */
     resetGimmick() {
         const g = this.g;
-        g.t = 0; g.phase = 0; g.until = 0; g.visionMul = 1;
+        g.t = 0; g.mod = 0; g.mireN = 0; g.mireCx = NaN; g.mireCy = NaN;
         for (const o of g.active) o.destroy();
         g.active.length = 0;
-        g.next = this.current?.gimmick?.params?.firstAt ?? 0;
+        for (const o of g.free) o.destroy();
+        g.free.length = 0;
+        if (g.mirePool) { for (const o of g.mirePool) o.destroy(); g.mirePool = null; }
+        g.band = null;
+
+        const gm = this.current?.gimmick;
+        const p = gm?.params ?? {};
+        g.next = p.firstAt ?? 0;
+
         if (!this.gfx) this.gfx = this.scene.add.graphics().setScrollFactor(0).setDepth(DEPTH.FX + 5);
         this.gfx.clear();
+        this.gfxW?.clear();
         this.scene.stats?.removeBySrc?.("stage:gimmick");
+        this.clearPush();
+
+        // ★ 예고가 있는 기믹은 적재 시점에 한 번 검사한다. 매 발생마다 검사하면
+        //   같은 오류 로그가 런 내내 수백 줄 쌓여 아무도 안 읽는다(BossSystem 생성자와 같은 규약).
+        if (gm?.type === "rockfall" || gm?.type === "emberwind") {
+            const raw = p.windup ?? p.telegraph ?? 0.8;
+            g.windup = Math.max(MIN_TELEGRAPH, raw);
+            if (g.windup !== raw) {
+                console.error(`[StageSystem] T525 위반 — ${this.current.id} ${gm.type} windup ${raw}s → ${MIN_TELEGRAPH}s로 강제`);
+            }
+        }
+
+        switch (gm?.type) {
+            case "sanctuary":
+            case "rockfall":
+                this.buildCirclePool(Math.min(MAX_GIMMICK, p.maxActive ?? MAX_GIMMICK));
+                break;
+            case "mire":
+                g.mirePool = new Array(MAX_GIMMICK);
+                for (let i = 0; i < MAX_GIMMICK; i++) {
+                    g.mirePool[i] = this.scene.add
+                        .circle(-9999, -9999, 8, p.color ?? 0x2f4a2a, p.alpha ?? 0.42)
+                        .setDepth(DEPTH.GROUND + 1).setVisible(false);
+                }
+                g.mireCand = new Array(MIRE_CAND);
+                for (let i = 0; i < MIRE_CAND; i++) g.mireCand[i] = { x: 0, y: 0, r: 0, d: 0 };
+                break;
+            case "emberwind":
+                g.band = {
+                    on: false, t: 0, windup: g.windup, ox: 0, oy: 0, dx: 1, dy: 0,
+                    half: 28, burn: 56, reach: 0, speed: 240, dmg: 0, tick: 0.5, cd: 0, head: 0, push: 0,
+                };
+                if (!this.gfxW) this.gfxW = this.scene.add.graphics().setDepth(DEPTH.FX);
+                this.gfxW.clear();
+                break;
+        }
+    }
+
+    buildCirclePool(n) {
+        for (let i = 0; i < n; i++) {
+            this.g.free.push(this.scene.add.circle(-9999, -9999, 8, 0xffffff, 0.2)
+                .setDepth(DEPTH.GROUND + 1).setVisible(false).setActive(false));
+        }
+    }
+
+    /** 풀에서 원 하나. 없으면 null — 상한을 넘겨서라도 그리는 일은 없어야 한다 */
+    obtainCircle(x, y, r, color, alpha) {
+        const c = this.g.free.pop();
+        if (!c) return null;
+        c.setPosition(x, y).setRadius(r).setFillStyle(color, alpha)
+            .setStrokeStyle().setVisible(true).setActive(true);
+        this.g.active.push(c);
+        return c;
+    }
+
+    releaseCircle(i) {
+        const g = this.g;
+        const c = g.active[i];
+        c.setVisible(false).setActive(false).setPosition(-9999, -9999);
+        g.active.splice(i, 1);
+        g.free.push(c);
     }
 
     /** 보스전 중 강도. off = 완전 정지, reduced = 절반, 그 외 = 그대로 */
@@ -234,7 +355,7 @@ export class StageSystem {
 
     update(dt) {
         const gm = this.current?.gimmick;
-        if (!gm) return;
+        if (!gm || !this.scene.player) return;
         const scale = this.gimmickScale();
         this.g.t += dt;
         switch (gm.type) {
@@ -249,21 +370,25 @@ export class StageSystem {
     /** 성수 웅덩이 — 밟으면 회복. 유일하게 플레이어에게 이로운 기믹이다 */
     gimSanctuary(dt, p, scale) {
         const g = this.g;
-        if (scale > 0) {
-            g.next -= dt;
-            if (g.next <= 0 && g.active.length < (p.maxActive ?? 2)) {
-                g.next = (p.every ?? 60) / scale;
-                const a = Math.random() * Math.PI * 2;
-                const d = (p.ringMin ?? 120) + Math.random() * ((p.ringMax ?? 220) - (p.ringMin ?? 120));
-                const c = this.scene.add.circle(
-                    this.scene.player.x + Math.cos(a) * d,
-                    this.scene.player.y + Math.sin(a) * d,
-                    p.radius ?? 30, 0x9fe8d8, 0.22,
-                ).setDepth(DEPTH.GROUND + 1);
-                c.__life = p.duration ?? 12;
-                c.__tick = 0;
-                g.active.push(c);
-            }
+        // ★ duringBoss:"off" 는 연출이 아니라 **밸런스 계약**이다.
+        //   05-COMBAT 6 의 BOSS HP 11,000 역산은 "보스전에 회복이 없다"를 전제로 세운 값이다.
+        //   생성만 멈추고 남은 웅덩이를 놔두면 전제가 깨지므로 즉시 걷는다.
+        if (scale <= 0) {
+            for (let i = g.active.length - 1; i >= 0; i--) this.releaseCircle(i);
+            return;
+        }
+        g.next -= dt;
+        if (g.next <= 0 && g.active.length < Math.min(MAX_GIMMICK, p.maxActive ?? 2)) {
+            g.next = (p.every ?? 60) / scale;
+            const a = Math.random() * Math.PI * 2;
+            const rmin = p.ringMin ?? 120;
+            const d = rmin + Math.random() * ((p.ringMax ?? 220) - rmin);
+            const c = this.obtainCircle(
+                this.scene.player.x + Math.cos(a) * d,
+                this.scene.player.y + Math.sin(a) * d,
+                p.radius ?? 30, p.color ?? 0x9fe8d8, p.alpha ?? 0.22,
+            );
+            if (c) { c.__life = p.duration ?? 12; c.__tick = 0; }
         }
         const pl = this.scene.player;
         for (let i = g.active.length - 1; i >= 0; i--) {
@@ -275,7 +400,7 @@ export class StageSystem {
                 const cb = this.scene.combatSystem;
                 if (cb) cb.hp = Math.min(cb.maxHp, cb.hp + (p.heal ?? 6));
             }
-            if (c.__life <= 0) { c.destroy(); g.active.splice(i, 1); }
+            if (c.__life <= 0) this.releaseCircle(i);
         }
     }
 
@@ -297,8 +422,8 @@ export class StageSystem {
 
         const from = p.visionFrom ?? 320, to = p.visionTo ?? 150;
         const mul = lerp(from, to, k) / from;
-        if (Math.abs(mul - g.visionMul) > 0.01) {
-            g.visionMul = mul;
+        if (Math.abs(mul - g.mod) > 0.01) {
+            g.mod = mul;
             this.scene.stats?.removeBySrc?.("stage:gimmick");
             if (mul < 0.999) this.scene.stats?.add?.("vision", "toll", 1 - mul, "stage:gimmick");
         }
@@ -306,103 +431,282 @@ export class StageSystem {
         gfx.clear();
         if (k <= 0.01) return;
         const w = this.scene.scale.width, h = this.scene.scale.height;
-        const band = (p.bandWidth ?? 18) * k * 2;
-        gfx.fillStyle(p.color ?? 0x0b0710, 0.55 * k);
-        gfx.fillRect(0, 0, w, band);
-        gfx.fillRect(0, h - band, w, band);
-        gfx.fillRect(0, 0, band, h);
-        gfx.fillRect(w - band, 0, band, h);
+        const total = (p.bandWidth ?? 18) * k * 2;
+        // ★ bands 는 "가장자리 어둠을 몇 겹으로 나눌 것인가"다. 한 겹으로 칠하면 경계가
+        //   직선으로 서서 "시야가 좁아졌다"가 아니라 "화면에 검은 테두리가 생겼다"로 읽힌다.
+        //   겹을 안쪽으로 짧게 쌓으면 알파가 누적돼 가장자리만 짙은 비네트가 된다.
+        //   16 겹에서 자르는 이유는 겹당 fillRect 4회라 그 이상은 눈에 안 보이는 드로콜이다.
+        const n = clamp(Math.round(p.bands ?? 14), 1, 16);
+        gfx.fillStyle(p.color ?? 0x0b0710, (0.55 * k) / n);
+        for (let i = 0; i < n; i++) {
+            const b = total * (1 - i / n);
+            if (b <= 0.5) continue;
+            gfx.fillRect(0, 0, w, b);
+            gfx.fillRect(0, h - b, w, b);
+            gfx.fillRect(0, 0, b, h);
+            gfx.fillRect(w - b, 0, b, h);
+        }
     }
 
-    /** 역병 늪 — 웅덩이를 밟으면 느려진다. 대시를 아껴 쓰게 만든다 */
+    /**
+     * 역병 늪 — 웅덩이를 밟으면 느려진다. 대시를 아껴 쓰게 만든다.
+     *
+     * ★ 배치가 무작위면 이 기믹은 그냥 사고다.
+     *   "이동속도 -35%"는 플레이어가 **피할 수 있을 때만** 난이도이고,
+     *   피할 수 없으면 그냥 랜덤하게 얻어맞는 것이다. 그래서 웅덩이는 청크 좌표를
+     *   시드로 고정 배치한다 — 같은 자리에 가면 언제나 같은 수렁이 있어서 외울 수 있다.
+     *   (docs/26 §4.4-2 가 지적한 "공정성 근거 미성립"이 여기서 해소된다)
+     */
     gimMire(dt, p, scale) {
         const g = this.g;
-        if (scale > 0) {
-            g.next -= dt;
-            if (g.next <= 0 && g.active.length < Math.min(MAX_GIMMICK, p.maxActive ?? 5)) {
-                g.next = (p.every ?? 8) / scale;
-                const a = Math.random() * Math.PI * 2;
-                const d = (p.ringMin ?? 80) + Math.random() * ((p.ringMax ?? 260) - (p.ringMin ?? 80));
-                const c = this.scene.add.circle(
-                    this.scene.player.x + Math.cos(a) * d,
-                    this.scene.player.y + Math.sin(a) * d,
-                    p.radius ?? 44, p.color ?? 0x4a5a2a, 0.3,
-                ).setDepth(DEPTH.GROUND + 1);
-                c.__life = p.duration ?? 14;
-                g.active.push(c);
+        const pl = this.scene.player;
+        const chunk = p.chunk ?? 256;
+        const cx = Math.floor(pl.x / chunk), cy = Math.floor(pl.y / chunk);
+        // 청크를 넘어갈 때만 다시 고른다. 배치는 좌표의 함수라 매 프레임 계산할 이유가 없다.
+        if (cx !== g.mireCx || cy !== g.mireCy) {
+            g.mireCx = cx; g.mireCy = cy;
+            this.buildMire(p, chunk, cx, cy, pl);
+        }
+        let inside = false;
+        for (let i = 0; i < g.mireN; i++) {
+            const c = g.mirePool[i];
+            if (dist2(pl.x, pl.y, c.x, c.y) < c.radius * c.radius) { inside = true; break; }
+        }
+        // slow 는 배율이 아니라 **깎는 비율**이다(0.35 = -35%). toll 경로로 넣어야
+        // SLOW 대가와 같은 축에서 계산되고 하한 32px/s 가 한 번만 걸린다.
+        const want = inside ? (p.slow ?? 0.35) * scale : 0;
+        if (Math.abs(want - g.mod) > 0.005) {
+            g.mod = want;
+            this.scene.stats?.removeBySrc?.("stage:gimmick");
+            if (want > 0.001) this.scene.stats?.add?.("moveSpeed", "toll", want, "stage:gimmick");
+        }
+    }
+
+    /**
+     * 플레이어가 선 청크와 8이웃의 수렁을 시드로 만들어 가까운 순 MAX_GIMMICK 개만 켠다.
+     * ★ 상한을 "가장 먼 것부터" 버리는 이유: 3x3 청크(768x768)에 평균 12.6개가 나오는데
+     *   가까운 8개면 반경 약 345px 를 덮는다. 화면 반대각선(367px)과 거의 같아서
+     *   실제로 보이는 것은 전부 남고, 버려지는 것은 화면 밖 모서리뿐이다.
+     *   판정에 쓰이는 것은 언제나 발밑이므로 "같은 자리 = 같은 결과"가 깨지지 않는다.
+     */
+    buildMire(p, chunk, cx, cy, pl) {
+        const g = this.g;
+        const per = p.perChunk ?? 1.4;
+        const minR = p.minR ?? 34, maxR = p.maxR ?? 62;
+        const cand = g.mireCand;
+        let n = 0;
+        for (let ox = -1; ox <= 1; ox++) {
+            for (let oy = -1; oy <= 1; oy++) {
+                const rng = chunkRng(cx + ox, cy + oy, MIRE_SALT);
+                // 소수 밀도는 확률로 — 1.4 는 "1개 + 40% 확률로 1개 더"다(GroundSystem 과 같은 규약)
+                const k = Math.floor(per) + (rng() < per % 1 ? 1 : 0);
+                for (let i = 0; i < k && n < cand.length; i++) {
+                    const c = cand[n++];
+                    c.x = (cx + ox) * chunk + rng() * chunk;
+                    c.y = (cy + oy) * chunk + rng() * chunk;
+                    c.r = minR + rng() * (maxR - minR);
+                    c.d = dist2(pl.x, pl.y, c.x, c.y);
+                }
             }
         }
-        const pl = this.scene.player;
-        let inside = false;
-        for (let i = g.active.length - 1; i >= 0; i--) {
-            const c = g.active[i];
-            c.__life -= dt;
-            if (dist2(pl.x, pl.y, c.x, c.y) < c.radius * c.radius) inside = true;
-            if (c.__life <= 0) { c.destroy(); g.active.splice(i, 1); }
+        // 가까운 것 keep 개만 앞으로 끌어온다(부분 선택 정렬). n<=18 이고 청크 전환에만 돈다.
+        const keep = Math.min(MAX_GIMMICK, n);
+        for (let a = 0; a < keep; a++) {
+            let m = a;
+            for (let b = a + 1; b < n; b++) if (cand[b].d < cand[m].d) m = b;
+            if (m !== a) { const tmp = cand[a]; cand[a] = cand[m]; cand[m] = tmp; }
         }
-        const want = inside ? (p.slowMult ?? 0.6) : 1;
-        if (Math.abs(want - g.visionMul) > 0.01) {
-            g.visionMul = want;
-            this.scene.stats?.removeBySrc?.("stage:gimmick");
-            if (want < 0.999) this.scene.stats?.add?.("moveSpeed", "toll", 1 - want, "stage:gimmick");
+        for (let i = 0; i < g.mirePool.length; i++) {
+            const c = g.mirePool[i];
+            if (i < keep) c.setPosition(cand[i].x, cand[i].y).setRadius(cand[i].r).setVisible(true);
+            else c.setVisible(false);
         }
+        g.mireN = keep;
     }
 
     /** 낙석 — 예고 후 낙하. 예고 시간은 반드시 0.6s 이상이다(T525 와 같은 근거) */
     gimRockfall(dt, p, scale) {
         const g = this.g;
+        const cap = Math.min(MAX_GIMMICK, p.maxActive ?? 6);
         if (scale > 0) {
             g.next -= dt;
-            if (g.next <= 0 && g.active.length < MAX_GIMMICK) {
-                g.next = (p.every ?? 4) / scale;
-                const a = Math.random() * Math.PI * 2;
-                const d = Math.random() * (p.spread ?? 200);
-                const x = this.scene.player.x + Math.cos(a) * d;
-                const y = this.scene.player.y + Math.sin(a) * d;
-                const warn = this.scene.add.circle(x, y, p.radius ?? 34, 0xff5533, 0.18)
-                    .setStrokeStyle(1, 0xff8866, 0.8).setDepth(DEPTH.GROUND + 1);
-                // ★ 0.6 미만으로 내려갈 수 없다. 데이터가 더 짧게 적어도 여기서 끌어올린다.
-                warn.__warn = Math.max(0.6, p.telegraph ?? 0.8);
-                warn.__dmg = p.damage ?? 18;
-                g.active.push(warn);
+            if (g.next <= 0 && g.active.length < cap) {
+                g.next = (p.every ?? 7.5) / scale;
+                // ★ countFrom→countTo 를 런 진행도로 보간한다. 끝까지 1개씩만 떨어지면
+                //   "낙석이 바닥을 계속 뺏는다"는 stage4 의 정체성이 성립하지 않는다.
+                const prog = clamp(g.t / (this.current?.runSec ?? 330), 0, 1);
+                const want = Math.round(lerp(p.countFrom ?? 1, p.countTo ?? 1, prog));
+                const n = Math.min(want, cap - g.active.length);
+                for (let i = 0; i < n; i++) this.dropRock(p, scale);
             }
         }
         const pl = this.scene.player;
         for (let i = g.active.length - 1; i >= 0; i--) {
             const c = g.active[i];
             c.__warn -= dt;
-            if (c.__warn > 0) { c.setAlpha(0.12 + 0.3 * (1 - c.__warn)); continue; }
+            if (c.__warn > 0) {
+                // 윤곽은 처음부터 최종 반경 = 어디가 위험한가 / 채움만 점증 = 언제 떨어지는가.
+                // 원이 커지는 연출은 t=0.3 시점에 최종 범위를 알 수 없어 예고 시간을 갉아먹는다.
+                c.setFillStyle(0xff5533, 0.10 + 0.30 * (1 - c.__warn / c.__warn0));
+                continue;
+            }
             if (dist2(pl.x, pl.y, c.x, c.y) < c.radius * c.radius) {
                 const cb = this.scene.combatSystem;
                 if (cb && !cb.invulnerable) cb.hurt(c.__dmg);
             }
             this.scene.fxSystem?.shake?.("rockfall");
-            c.destroy();
-            g.active.splice(i, 1);
+            this.releaseCircle(i);
         }
     }
 
-    /** 불티 바람 — 한 방향으로 미는 힘. 이동과 조준을 같이 흔든다 */
+    dropRock(p, scale) {
+        const pl = this.scene.player;
+        const a = Math.random() * Math.PI * 2;
+        const d = Math.random() * (p.spread ?? 180);
+        const c = this.obtainCircle(pl.x + Math.cos(a) * d, pl.y + Math.sin(a) * d,
+            p.radius ?? 34, 0xff5533, 0.10);
+        if (!c) return;
+        c.setStrokeStyle(1, 0xff8866, 0.8);
+        c.__warn = this.g.windup;
+        c.__warn0 = this.g.windup;
+        c.__dmg = (p.damage ?? 14) * scale;
+    }
+
+    /**
+     * 불티 바람 — 예고선 뒤에 불길 띠가 지나간다.
+     *
+     * ★ 데이터가 말하는 기믹은 "밀어내기"가 아니라 "피해야 하는 띠"다.
+     *   windup 1.1s 동안 띠(폭 2*halfWidth = 56px)의 윤곽 전체를 먼저 보여주고,
+     *   그 다음 불길 머리가 speed 로 띠를 따라 달린다.
+     * ★ 56px 이라는 폭에는 근거가 있다 — 이동속도 70px/s 로 절반(28px)을 빠져나오는 데
+     *   0.4s 다. 예고 1.1s 안에 **걸어서** 벗어날 수 있다는 뜻이고, 그래서 이 패턴은
+     *   쿨 3.0s 짜리 대시를 전제하지 않는다. 대시를 전제하면 대시가 없는 순간의
+     *   패턴은 대응 불가능해진다 — T525 정신을 공간 축으로 옮긴 것이다.
+     * ★ 띠는 플레이어가 서 있던 자리를 지나간다. "서 있으면 죽는다"가 stage5 의 규칙이다.
+     */
     gimEmberwind(dt, p, scale) {
         const g = this.g;
-        const period = p.period ?? 18;
-        const blowing = (g.t % period) < (p.blowSec ?? 8);
-        const push = blowing ? (p.push ?? 26) * scale : 0;
-        if (push > 0) {
-            const a = (p.angleDeg ?? 0) * Math.PI / 180 + Math.sin(g.t * 0.2) * 0.3;
-            const pl = this.scene.player;
-            pl.x += Math.cos(a) * push * dt;
-            pl.y += Math.sin(a) * push * dt;
+        const b = g.band;
+        if (!b) return;
+        const gfx = this.gfxW;
+        if (scale <= 0) {
+            // 보스전 off — 진행 중인 띠까지 즉시 걷는다. 보스 텔레그래프 위에 겹치면 안 된다.
+            if (b.on) { b.on = false; this.clearPush(); }
+            gfx.clear();
+            return;
         }
-        const gfx = this.gfx;
+        // ★ every 는 "띠와 띠 사이의 쉬는 시간"이 아니라 **점화 주기**다.
+        //   띠가 지나가는 동안 타이머를 멈추면 실제 주기가 11s + 통과시간(약 3.8s)이 되어
+        //   데이터가 적은 11s 와 어긋난다. 항상 돌리고 점화만 비어 있을 때 한다.
+        g.next -= dt;
+        if (g.next <= 0 && !b.on) { g.next = (p.every ?? 11) / scale; this.igniteLane(p, scale); }
         gfx.clear();
-        if (!blowing) return;
-        gfx.fillStyle(p.color ?? 0xff7a3c, 0.10);
+        if (!b.on) { this.clearPush(); return; }
+
+        b.t += dt;
+        if (b.t < b.windup) { this.drawLane(p, b, b.t / b.windup, false); this.clearPush(); return; }
+
+        b.head = -b.reach + (b.t - b.windup) * b.speed;
+        if (b.head - b.burn > b.reach) { b.on = false; this.clearPush(); return; }
+        b.cd -= dt;
+        this.drawLane(p, b, 1, true);
+        this.burnPlayer(b);
+    }
+
+    igniteLane(p, scale) {
+        const b = this.g.band;
+        const pl = this.scene.player;
+        const a = Math.random() * Math.PI * 2;
+        b.dx = Math.cos(a); b.dy = Math.sin(a);
+        b.ox = pl.x; b.oy = pl.y;
+        b.half = p.halfWidth ?? 28;
+        // 불길 머리 길이 = 띠 두께. 240px/s 로 지나가면 노출 56/240 = 0.23s → 정확히 1틱이다.
+        // 지나간 자리까지 계속 아프면 되돌아갈 길이 막혀 "피하는 패턴"이 "가두는 패턴"이 된다.
+        b.burn = b.half * 2;
         const w = this.scene.scale.width, h = this.scene.scale.height;
-        for (let i = 0; i < 6; i++) {
-            const y = ((g.t * 60 + i * 47) % (h + 40)) - 20;
-            gfx.fillRect(0, y, w, 2);
+        // 화면을 확실히 관통하는 길이. 각도에 따라 필요한 사거리가 달라진다.
+        b.reach = (w * Math.abs(b.dx) + h * Math.abs(b.dy)) / 2 + b.burn;
+        b.speed = p.speed ?? 240;
+        b.windup = this.g.windup;
+        b.dmg = (p.damage ?? 16) * scale;
+        b.tick = p.tickInterval ?? 0.5;
+        // push 는 데이터가 요구할 때만 산다(현재 stage5 는 선언하지 않는다 = 0).
+        // 좌표를 직접 쓰지 않고 PlayerSystem 의 속도 채널로 넘긴다 — 아래 clearPush 주석 참조.
+        b.push = (p.push ?? 0) * scale;
+        b.cd = 0; b.t = 0; b.head = -b.reach; b.on = true;
+    }
+
+    burnPlayer(b) {
+        const pl = this.scene.player;
+        const rx = pl.x - b.ox, ry = pl.y - b.oy;
+        const along = rx * b.dx + ry * b.dy;          // 진행축 투영
+        const perp = -rx * b.dy + ry * b.dx;          // 띠 폭 방향 투영
+        const hit = Math.abs(perp) < b.half && along <= b.head && along >= b.head - b.burn;
+        this.setPush(hit ? b.dx * b.push : 0, hit ? b.dy * b.push : 0);
+        if (!hit || b.cd > 0) return;
+        b.cd = b.tick;
+        const cb = this.scene.combatSystem;
+        if (cb && !cb.invulnerable) cb.hurt(b.dmg);
+    }
+
+    /**
+     * ★ 미는 힘을 pl.x += 로 주면 안 된다.
+     *   PlayerSystem 이 매 프레임 setVelocity 로 속도를 덮어쓰므로 좌표를 직접 쓰는 것은
+     *   물리를 통째로 우회하는 것이고, 대시(순간이동 경로 검사)·넉백 감쇠·충돌 어느 것도
+     *   적용되지 않는다. 외부 힘은 속도 채널로 넘겨 PlayerSystem 이 합산하게 한다.
+     *   (PlayerSystem 은 다른 작업자 소유다. 필드가 없으면 이 대입은 조용히 무시된다)
+     */
+    setPush(vx, vy) {
+        const ps = this.scene.playerSystem;
+        if (!ps) return;
+        ps.externalVx = vx;
+        ps.externalVy = vy;
+    }
+
+    clearPush() { this.setPush(0, 0); }
+
+    /**
+     * 띠 그리기. BossSystem.drawTelegraph 와 같은 규약 —
+     * 윤곽은 즉시 최종 범위 전체(= 어디가 위험한가), 채움만 시간에 따라 짙어진다(= 언제 터지는가).
+     * 범위가 자라는 연출은 t=0.3 에 최종 범위를 알 수 없어 실질 반응 시간을 깎는다.
+     */
+    drawLane(p, b, t, burning) {
+        const g = this.gfxW;
+        const color = p.color ?? 0xff6a2a;
+        if (!burning) {
+            g.fillStyle(color, 0.06 + 0.16 * t);
+            this.laneQuad(g, b, -b.reach, b.reach, true);
+            g.lineStyle(1, color, 0.45 + 0.40 * t);
+            this.laneQuad(g, b, -b.reach, b.reach, false);
+            // 시작 변을 굵게 — "불이 어느 쪽에서 오는가"까지 알려줘야 도망칠 방향이 정해진다
+            const hx = -b.dy * b.half, hy = b.dx * b.half;
+            const sx = b.ox - b.dx * b.reach, sy = b.oy - b.dy * b.reach;
+            g.lineStyle(3, color, 0.85);
+            g.lineBetween(sx + hx, sy + hy, sx - hx, sy - hy);
+            return;
         }
+        // 지나간 자리는 옅게 남긴다 — "여기는 이미 지나갔다"가 다음 판단의 정보가 된다
+        g.fillStyle(color, 0.07);
+        this.laneQuad(g, b, -b.reach, b.head - b.burn, true);
+        g.fillStyle(color, 0.42);
+        this.laneQuad(g, b, b.head - b.burn, b.head, true);
+        g.lineStyle(1, color, 0.9);
+        this.laneQuad(g, b, b.head - b.burn, b.head, false);
+    }
+
+    /** 진행축 s0~s1 구간의 회전 사각형. fillRect 로는 각도를 못 주므로 4점을 직접 찍는다 */
+    laneQuad(g, b, s0, s1, fill) {
+        if (s1 <= s0) return;
+        const hx = -b.dy * b.half, hy = b.dx * b.half;
+        const ax = b.ox + b.dx * s0, ay = b.oy + b.dy * s0;
+        const bx = b.ox + b.dx * s1, by = b.oy + b.dy * s1;
+        g.beginPath();
+        g.moveTo(ax + hx, ay + hy);
+        g.lineTo(bx + hx, by + hy);
+        g.lineTo(bx - hx, by - hy);
+        g.lineTo(ax - hx, ay - hy);
+        g.closePath();
+        if (fill) g.fillPath(); else g.strokePath();
     }
 }
 
