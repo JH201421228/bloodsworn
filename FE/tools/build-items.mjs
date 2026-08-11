@@ -65,6 +65,25 @@ function cropOf(spec) {
     return { file: SRC.rv, x: (idx % 16) * CELL, y: ((idx / 16) | 0) * CELL };
 }
 
+
+// ── ★ 덮어쓰기 방지 ────────────────────────────────────────────
+//   지금 실려 있는 public/assets/items/items.png 는 이 스크립트의 산출물이 아니다.
+//   (둘 다 돌려 픽셀 비교로 확인했다 — 완전히 다른 그림이 나온다.)
+//   그런데 npm run build:all-assets 는 build:items 를 부르므로, 아무 생각 없이
+//   전체 에셋을 다시 구우면 손으로 큐레이션한 아이콘 71종이 조용히 사라진다.
+//   그래서 아틀라스의 meta.app 이 이 스크립트가 아니면 멈춘다. 정말 갈아엎을 때만 --force.
+{
+    const guardOut = resolve(FE, "public/assets/items/items.json");
+    if (existsSync(guardOut) && !process.argv.includes("--force")) {
+        const cur = JSON.parse(readFileSync(guardOut, "utf8"))?.meta?.app ?? "(불명)";
+        if (cur !== "tools/build-items.mjs") {
+            console.warn("⚠ 건너뛴다 — 지금 실린 아이템 아틀라스는 \"" + cur + "\" 가 만든 것이다.");
+            console.warn("  이 스크립트로 덮으면 손으로 큐레이션한 아이콘 71종이 사라진다.");
+            console.warn("  정말 다시 구우려면 --force 를 붙여라. (build:all-assets 를 막지 않으려고 0 으로 끝낸다)");
+            process.exit(0);
+        }
+    }
+}
 mkdirSync(OUT_DIR, { recursive: true });
 rmSync(TMP, { recursive: true, force: true });
 mkdirSync(TMP, { recursive: true });
