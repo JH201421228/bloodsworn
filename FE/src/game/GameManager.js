@@ -47,9 +47,15 @@ class GameManagerImpl {
         // T531 재시작 3초 규칙 — location.reload() 는 에셋 재파싱만 3~5초라 규칙을 못 지킨다.
         // ★ GameScene 안이 아니라 여기에 거는 이유: scene.restart() 가 shutdown 을 발화시켜
         //   자기 자신의 구독을 해제하는 도중에 핸들러가 도는 경합이 생긴다.
-        EventBus.on(EVENTS.CMD_START_RUN, () => {
+        EventBus.on(EVENTS.CMD_START_RUN, (p) => {
             const g = this.game;
             if (!g) return;
+            // ★ GameScene.create() 가 registry 의 stageId 로 스테이지를 고른다.
+            //   registry 는 씬 재시작을 넘어 살아남으므로, stageId 없이 온 재시작
+            //   (결과 화면 [다시], 성소 [출정])은 직전 스테이지를 그대로 잇는다 —
+            //   "방금 진 그 스테이지를 다시"라는 기대와 맞다.
+            if (p?.stageId) g.registry.set("stageId", p.stageId);
+            else if (!g.registry.has("stageId")) g.registry.set("stageId", "stage1");
             const gs = g.scene.getScene(SCENES.GAME);
             if (!gs || !gs.scene.isActive()) { g.scene.start(SCENES.GAME); return; }
             // 승리/카드 대기 중에는 씬이 pause 상태다. 풀지 않으면 restart 가 먹지 않는다.

@@ -4,7 +4,7 @@
  * 규격 출처: 06-TECH-DESIGN.md 3.4 / 세이브 스키마는 08-DATA-SCHEMA.md 4
  */
 import sanctumData from "@/data/sanctum.json";
-import { defaultSave } from "@/save/save";
+import { defaultSave, emptyStageClears } from "@/save/save";
 
 /** 성소 6종. 데이터가 정본이고 UI는 이 배열을 그대로 그린다(수치를 화면에 하드코딩하지 않는다). */
 export const SANCTUM_UPGRADES = sanctumData.upgrades;
@@ -16,6 +16,22 @@ const META_INIT = {
     codex: [], // 발동 경험한 각성 id 목록
     stats: defaultSave().stats, // 누적 통계 (08-DATA-SCHEMA 4.3)
 };
+
+/**
+ * 스토어의 stats → StageSystem.isUnlocked(id, save) 가 먹는 진행도 객체.
+ *
+ * ★ 계약은 `{ clears: { stage1: 횟수 }, awakenCount: n }` 하나뿐이다. 해금 판정 로직은
+ *   StageSystem.evalUnlock 에만 있고 여기서 다시 구현하지 않는다 — 두 벌이 되면
+ *   화면에는 열렸는데 게임은 안 열리는(또는 그 반대) 사고가 난다.
+ * ★ awakenCount 를 위해 필드를 새로 만들지 않는다. 이미 누적 중인 stats.totalAwakenings 가
+ *   "각성을 몇 번 발동했는가" 와 정확히 같은 값이라, 새 필드를 만들면 두 숫자가 갈라진다.
+ */
+export function unlockProgress(stats) {
+    return {
+        clears: { ...(stats?.stageClears ?? {}) },
+        awakenCount: stats?.totalAwakenings ?? 0,
+    };
+}
 
 /** 다음 단계 비용. 만렙이면 null — UI가 "MAX"로 그린다. */
 export function nextCost(def, level) {
@@ -58,6 +74,23 @@ export const createMetaSlice = (set) => ({
             return { stats };
         }),
 
+    /**
+     * 스테이지 클리어 1회 기록. 해금의 유일한 입력이다.
+     * ★ bumpStats 를 쓰지 않는 이유: bumpStats 는 값을 숫자로 더하는데 stageClears 는 맵이다.
+     *   patch 로 넘기면 객체 + 객체 = "[object Object][object Object]" 가 되어 조용히 망가진다.
+     */
+    recordStageClear: (stageId) =>
+        set((s) => {
+            if (!stageId) return s;
+            const prev = s.stats.stageClears ?? {};
+            return {
+                stats: {
+                    ...s.stats,
+                    stageClears: { ...prev, [stageId]: (prev[stageId] ?? 0) + 1 },
+                },
+            };
+        }),
+
     setStatMax: (key, value) =>
         set((s) => ((s.stats[key] ?? 0) >= value ? s : { stats: { ...s.stats, [key]: value } })),
 
@@ -70,6 +103,13 @@ export const createMetaSlice = (set) => ({
                 ? Object.keys(save.unlocks).filter((k) => save.unlocks[k] === true)
                 : [],
             codex: save?.unlocks?.awakenCodex ? [...save.unlocks.awakenCodex] : [],
-            stats: { ...META_INIT.stats, ...(save?.stats ?? {}) },
+            // ★ 얕은 병합이라 stageClears 는 세이브 쪽 객체가 통째로 들어온다.
+            //   save.js 의 normalize 가 이미 기본 키(전 스테이지 0)를 채워 두었고
+            //   구버전 세이브의 스테이지1 클리어도 거기서 접어 준다. 여기서는 방어만 한다.
+            stats: {
+                ...META_INIT.stats,
+                ...(save?.stats ?? {}),
+                stageClears: { ...emptyStageClears(), ...(save?.stats?.stageClears ?? {}) },
+            },
         }),
 });

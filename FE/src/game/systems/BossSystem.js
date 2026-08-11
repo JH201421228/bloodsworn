@@ -806,6 +806,7 @@ export class BossSystem {
             gold: Math.floor(c.gold),
             awakenings: c.awakening ? [...c.awakening.list] : [],
             humanity: c.pact?.humanity ?? 100,
+            stageId: this.scene.stages?.current?.id ?? null,
         });
         // 결과 화면 뒤에서 스폰·AI가 계속 돌면 안 된다. CombatSystem.die()는 dead 플래그로
         // GameScene을 조기 반환시키지만 승리는 "플레이어가 죽었다"가 아니므로 그 플래그를 빌리지 않는다.

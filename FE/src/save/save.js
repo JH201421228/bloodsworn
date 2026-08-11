@@ -11,9 +11,25 @@
  *   saveNow(state)        : Promise<void>
  *   resetSave()           : Promise<void>
  *   SAVE_KEY / SAVE_VERSION
+ *   STAGE_IDS / emptyStageClears()  : 스테이지 클리어 맵의 고정 키(S-1)
  *
  * 스키마 정본: 08-DATA-SCHEMA.md 4.2 / 4.3 / 4.4
  */
+import stagesData from "@/data/stages.json";
+
+/**
+ * ★ 스테이지 클리어 기록을 "빈 객체 {}" 로 두면 안 된다.
+ *   deepMergeDefaults 는 **기본값에 있는 키만** 순회한다(아래 함수 참조). 기본값이 {} 면
+ *   저장본에 있던 clears 가 매 로드마다 통째로 버려진다. 그래서 stages.json 의 id 를 읽어
+ *   0 으로 채운 고정 키 맵을 기본값으로 쓴다. 스테이지가 늘어나면 이 파일을 고치지 않아도
+ *   새 키가 자동으로 생기고, 기존 저장본의 값은 그대로 살아남는다.
+ */
+export const STAGE_IDS = (stagesData.stages ?? []).map((s) => s.id);
+
+export function emptyStageClears() {
+    return Object.fromEntries(STAGE_IDS.map((id) => [id, 0]));
+}
+
 export const SAVE_KEY = "bloodsworn.save.v1";
 export const SAVE_VERSION = 1;
 
@@ -34,6 +50,13 @@ export function defaultSave() {
             sumFinalLevel: 0, sumFinalHumanity: 0, sumLevelUpCount: 0,
             sumFirstAwakenAt: 0, awakenOverflowCount: 0,
             rerollUses: 0, skipUses: 0, sumGoldEarned: 0, bossEncounters: 0,
+            // ── 스테이지 진행도 (S-1 스테이지 선택) ──
+            // ★ stats 안에 두는 이유: store.collectSave() 가 stats 를 통째로 실어 나르므로
+            //   최상위 키를 새로 만들면 collectSave() 도 함께 고쳐야 한다. 그 파일은 이 작업의
+            //   소유가 아니고, 여기 두면 기존 저장 경로를 한 줄도 바꾸지 않고 영속된다.
+            // ★ StageSystem.isUnlocked 가 먹는 모양은 { clears, awakenCount } 다.
+            //   awakenCount 는 이미 있는 totalAwakenings 를 그대로 쓴다(필드를 늘리지 않는다).
+            stageClears: emptyStageClears(),
         },
         options: {
             bgm: 0.6, sfx: 0.8, screenShake: true, damageNumbers: true,
@@ -68,6 +91,25 @@ function deepMergeDefaults(defaults, src) {
 }
 
 /**
+ * 구버전 호환. S-1 이전 세이브에는 stageClears 가 없고, 스테이지1 클리어 사실이
+ * `unlocks.stage2 = true`(정본 03-GDD 9.2 의 옛 경로)와 `stats.clears` 에만 남아 있다.
+ * 그대로 두면 이미 보스를 잡은 플레이어가 스테이지2 앞에서 다시 잠긴 자물쇠를 본다 —
+ * 진행도를 빼앗은 것으로 읽힌다. 흔적이 있으면 stage1 클리어 1회로 접어 준다.
+ * ★ 값을 내리는 일은 절대 없다(항상 max). 절대 throw 하지 않는다.
+ */
+function foldLegacyProgress(save) {
+    try {
+        const st = save.stats;
+        const clears = st.stageClears;
+        const hadBossKill = save.unlocks?.stage2 === true || (st.clears ?? 0) > 0;
+        if (hadBossKill && (clears.stage1 ?? 0) < 1) clears.stage1 = 1;
+    } catch (e) {
+        console.warn("[save] 구버전 진행도 변환 실패 — 기본값을 유지한다", e);
+    }
+    return save;
+}
+
+/**
  * 원본 JSON → 정상 세이브. 어떤 입력이 와도 절대 throw 하지 않는다.
  * @returns {{ save: object, readonly: boolean, recovered: boolean }}
  */
@@ -96,7 +138,7 @@ function normalize(raw) {
         return { save: deepMergeDefaults(defaults, save), readonly: true, recovered: false };
     }
 
-    return { save: deepMergeDefaults(defaults, save), readonly: false, recovered: false };
+    return { save: foldLegacyProgress(deepMergeDefaults(defaults, save)), readonly: false, recovered: false };
 }
 
 function readLocal() {

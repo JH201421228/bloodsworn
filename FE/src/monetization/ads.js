@@ -14,7 +14,7 @@
 import { loadJson, saveJson, readLocalJson } from "./kv";
 import { hasEntitlement } from "./entitlements";
 import { cfg } from "./remoteConfig";
-import { ensureConsent, PERSONALIZED_ADS } from "./consent";
+import { ensureConsent, getConsentState, PERSONALIZED_ADS } from "./consent";
 
 const ADMOB_MODULE = "@capacitor-community/admob";
 const CAP_KEY = "bloodsworn.adcap.v1";
@@ -123,6 +123,18 @@ function countImpression(placement) {
     persistCaps();
 }
 
+/**
+ * UMP 가 광고 요청을 허용하는가. (27-COMPLIANCE §7)
+ *
+ * ★ 순서가 전부다: 매 실행 requestConsentInfoUpdate() → canRequestAds() 확인 → **그 다음에야** 로드.
+ *   initAds() 가 ensureConsent() 를 먼저 await 하는 이유이고, 이 순서를 뒤집으면
+ *   canRequestAds 가 항상 false 라 **광고가 하나도 안 나간다.**
+ * ★ 「영원한 서약」 보유자는 광고를 보지 않으므로 이 검사와 무관하다. 호출부에서 분기한다.
+ */
+function consentAllowsAds() {
+    return getConsentState().canRequestAds !== false;
+}
+
 /** 런 시작 시 호출. 런 스코프 카운터만 초기화한다. */
 export function resetRunAdCounters() {
     runCounts = {};
@@ -157,7 +169,9 @@ function addListeners(handles, names, fn) {
  *   그 시간에 유저는 앱을 나간다.
  */
 export function preloadRewarded() {
-    if (provider !== "admob" || loadedFlag || loadingPromise) return loadingPromise ?? Promise.resolve(loadedFlag);
+    // ★ 동의 확인 전/거부 상태에서 로드를 시도하면 정책 위반이자 낭비다.
+    if (provider !== "admob" || !consentAllowsAds()) return Promise.resolve(false);
+    if (loadedFlag || loadingPromise) return loadingPromise ?? Promise.resolve(loadedFlag);
     loadingPromise = withTimeout(
         AdMob.prepareRewardVideoAd({ adId: units.rewarded, isTesting, npa: !PERSONALIZED_ADS }),
         cfg("ads.loadTimeoutMs") ?? 10000,
@@ -231,6 +245,7 @@ export function isAdReady(placement) {
     if (capBlockReason(placement) !== "") return false;
     if (provider === "dev") return true;
     if (provider !== "admob") return false;
+    if (!consentAllowsAds()) return false;
     if (!loadedFlag) preloadRewarded(); // 눌리기 전에 다시 채워 둔다
     return loadedFlag;
 }
@@ -239,7 +254,7 @@ export function isAdReady(placement) {
  * 보상형 광고를 띄우고 보상 여부를 돌려준다.
  * @returns {Promise<{rewarded:boolean, reason?:string}>}
  *   reason: entitlement | disabled | capped_run | capped_day | capped_global |
- *           unavailable | no_fill | busy | dismissed | show_failed | timeout
+ *           unavailable | no_consent | no_fill | busy | dismissed | show_failed | timeout
  * ★ 어떤 경우에도 reject 하지 않는다. 호출부는 try/catch 없이 써도 된다.
  */
 export async function showRewarded(placement) {
@@ -258,6 +273,8 @@ export async function showRewarded(placement) {
         return { rewarded: true, reason: "dev_fake" };
     }
     if (provider !== "admob") return { rewarded: false, reason: "unavailable" };
+    // EEA/UK/CH 에서 UMP 가 거부한 상태. 광고를 띄우면 정책 위반이다.
+    if (!consentAllowsAds()) return { rewarded: false, reason: "no_consent" };
     if (showing) return { rewarded: false, reason: "busy" }; // 연타 방지. 두 번 띄우면 SDK 가 예외를 던진다
     showing = true;
 
@@ -306,5 +323,13 @@ export async function showRewarded(placement) {
 
 /** 디버그 HUD 용. 상한이 왜 막혔는지 화면에 그릴 때 쓴다. */
 export function adDebugState() {
-    return { provider, isTesting, loaded: loadedFlag, showing, caps: { ...caps }, runCounts: { ...runCounts } };
+    return {
+        provider,
+        isTesting,
+        loaded: loadedFlag,
+        showing,
+        consent: getConsentState(),
+        caps: { ...caps },
+        runCounts: { ...runCounts },
+    };
 }

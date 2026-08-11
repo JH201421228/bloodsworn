@@ -108,6 +108,10 @@ export function installBridge() {
         });
         s().setStatMax("bestTimeSec", result?.time ?? 0);
         if (win) s().unlock("stage2"); // 정본 03-GDD-CORE 9.2 — 보스 처치로 스테이지2 해금
+        // 스테이지 클리어 기록 — 해금 판정(StageSystem.isUnlocked)이 이 값을 읽는다.
+        // ★ 구독은 여기 한 곳에만 둔다. 화면 컴포넌트에도 걸면 클리어가 2회씩 쌓여
+        //   해금은 멀쩡한데(>0 판정) 통계만 조용히 거짓이 된다.
+        if (win) s().recordStageClear(result?.stageId ?? s().selectedStageId);
 
         s().setScreen(SCREENS.RESULT);
         // 저장 시점 3곳 중 하나(08-DATA-SCHEMA 4.1). 런 중에는 절대 쓰지 않는다.

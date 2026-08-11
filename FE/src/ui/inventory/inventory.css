@@ -1,0 +1,359 @@
+/**
+ * inventory.css — 아이템 UI 전용. (ui/inventory 소유)
+ * index.css / art.css / screens.css 는 건드리지 않는다.
+ *
+ * ★ 좌표 규약 (10-UIUX 2.4 / index.css "좌표계")
+ *   모든 치수는 calc(N * var(--u)) 다. N 은 논리 640x360 좌표의 픽셀 수다.
+ *   .ui-stage 안에 들어가므로 % 와 --u 가 같은 눈금을 가리킨다.
+ *
+ * ★ 자리를 여기로 정한 근거 — 10-UIUX 2.4 표에서 이미 쓰이고 있는 칸을 전부 뺀 결과다
+ *   - 상단 밴드 y<44  : HP바(16,8) · Lv(172,7) · 타이머(556,7) · 킬수(624,7)
+ *                       인간성 심장(16,24) · 각성(96,24) · EXP바(0,40,640x4)
+ *   - 일시정지 버튼   : 596,24 / 28x28 (우상단 정렬) → y 24~52, x 568~596
+ *   - 중앙 시야 금지  : (200,96)~(440,264)  ← 여기엔 아무것도 그리지 않는다
+ *   - 조이스틱 활성존 : x 0~320 전 높이 (플로팅이라 좌측 절반은 통째로 손가락 자리)
+ *   - 대시 버튼       : 556,292 / 히트박스 x 520~640, y 268~360
+ *   남는 곳은 **우측 밴드 x 440~640, y 56~264** 뿐이다. 전부 여기에 넣는다.
+ *     장비 3슬롯 : 우측 상단 y 56~78   (x 564~636)
+ *     유물 줄    : 그 아래  y 82~96    (x 542~636)
+ *     토스트     : 그 아래  y 106~     (x 460~636, 최대 높이 ~106 → y 212 에서 끝난다)
+ *   대시 버튼(y268)과 최소 56px, 중앙 금지 구역(x440)과 최소 20px 여유가 남는다.
+ *
+ * ★ 색맹 대응 (10-UIUX 9.1)
+ *   등급을 색으로만 구분하지 않는다. 세 겹으로 전달한다.
+ *     1) 기호  ○ ◇ ◈ ◆ ★  (채움이 단조 증가한다)
+ *     2) 좌측 띠 두께 1→3px 과 테두리 밝기
+ *     3) 큰 토스트에서는 한글 등급명("전설")을 글자로 적는다
+ */
+
+/* 등급 색. 여기서만 갈린다 — JSX 에 hex 를 쓰지 않는다 */
+.inv-rarity { --inv-rc: var(--stone-4); --inv-bar: 1; }
+.inv-rarity.is-common { --inv-rc: var(--stone-4); --inv-bar: 1; }
+.inv-rarity.is-uncommon { --inv-rc: var(--bone); --inv-bar: 1; }
+.inv-rarity.is-rare { --inv-rc: var(--candle-light); --inv-bar: 2; }
+.inv-rarity.is-epic { --inv-rc: var(--blood-light); --inv-bar: 2; }
+.inv-rarity.is-legendary { --inv-rc: var(--gold); --inv-bar: 3; }
+
+/* ── 아틀라스 아이콘 ────────────────────────────────────────
+   경로는 이 CSS 파일 기준 상대경로다. 빌드 후 CSS 는 dist/assets/index-*.css,
+   그림은 dist/assets/items/items.png 이므로 ../assets/items/ 가 정확히 맞는다.
+   절대경로 /assets/... 는 Capacitor 의 file:// WebView 에서 루트가 달라 깨진다. */
+.inv-icon {
+    display: block;
+    flex: none;
+    background-image: url(../assets/items/items.png);
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+/* 후광은 아이콘 뒤 같은 자리에 깐다. Phaser 쪽 DEPTH.ORB / ORB+1 과 같은 순서다 */
+.inv-ico {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+}
+.inv-ico > .inv-icon {
+    grid-area: 1 / 1;
+}
+.inv-ico > .inv-icon.is-halo {
+    opacity: 0.85;
+}
+
+/* ── 1. 장비 슬롯 + 유물 (상시 표시) ─────────────────────────
+   ★ 탭해서 여는 인벤토리를 만들지 않는다. 이 게임의 조작 예산은 조이스틱 + 대시가 전부고
+     (23 문서 3 "0탭"), 아이템은 자동 장착이라 열어 봐야 누를 것이 없다.
+     항상 작게 켜 두는 쪽이 조작을 0개 늘리면서 "지금 뭘 입고 있나"에 답한다. */
+.inv-rail {
+    position: absolute;
+    right: calc(4 * var(--u));
+    top: calc(56 * var(--u));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(4 * var(--u));
+    pointer-events: none; /* 손가락이 지나가도 게임 입력을 먹지 않는다 */
+}
+
+.inv-slots {
+    display: flex;
+    gap: calc(3 * var(--u));
+}
+
+/* 22x22. 빈 칸도 그린다 — 칸이 사라지면 "무엇이 비었는지"가 안 보이고 위치도 흔들린다 */
+.inv-slot {
+    position: relative;
+    width: calc(22 * var(--u));
+    height: calc(22 * var(--u));
+    display: grid;
+    place-items: center;
+    background: rgba(11, 7, 16, 0.55);
+    border: calc(1 * var(--u)) solid var(--stone-3);
+    opacity: 0.9;
+}
+.inv-slot.is-filled {
+    border-color: var(--inv-rc);
+}
+/* 등급 띠 — 색맹 대응 2차 수단. 두께가 등급을 말한다(1 / 2 / 3px) */
+.inv-slot.is-filled::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: calc(var(--inv-bar) * var(--u));
+    background: var(--inv-rc);
+}
+/* 빈 칸에는 슬롯 기호(⚔ ⛨ ☾)만 흐리게. 아이콘이 들어오면 가려진다 */
+.inv-slot__mark {
+    font-size: calc(11 * var(--u));
+    line-height: 1;
+    color: var(--stone-4);
+    opacity: 0.7;
+}
+
+/* 갓 갈아입은 칸을 1회 번쩍인다. "조용히 스탯만 바뀌는" 문제의 직접적 해결이다 */
+.inv-slot.is-fresh {
+    animation: inv-slot-flash 620ms ease-out 1;
+}
+@keyframes inv-slot-flash {
+    0% { box-shadow: 0 0 0 calc(3 * var(--u)) var(--inv-rc); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0); }
+}
+
+/* 유물 줄. 14x14 를 최대 6개 = 94px. 장비 칸보다 작게 두어 위계를 만든다 */
+.inv-relics {
+    display: flex;
+    justify-content: flex-end;
+    gap: calc(2 * var(--u));
+    min-height: calc(14 * var(--u));
+}
+.inv-relic {
+    position: relative;
+    display: grid;
+    place-items: center;
+    filter: drop-shadow(0 0 calc(2 * var(--u)) var(--inv-rc));
+}
+/* 유물 개수 표시 ✦n — 아이콘만 있으면 "몇 개인가"를 세야 한다 */
+.inv-relics__count {
+    align-self: center;
+    margin-right: calc(2 * var(--u));
+    font-size: calc(9 * var(--u));
+    line-height: 1;
+    color: var(--gold);
+    letter-spacing: calc(0.5 * var(--u));
+}
+
+/* ── 2. 획득 토스트 ──────────────────────────────────────────
+   y=106 에서 시작해 아래로 자란다. 새 것이 **맨 위**라 시선이 갈 곳이 항상 같은 좌표다.
+   (아래로 쌓으면 새 항목의 y 가 매번 달라져 눈이 목록을 다시 훑어야 한다.) */
+.inv-toasts {
+    position: absolute;
+    right: calc(4 * var(--u));
+    top: calc(106 * var(--u));
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: calc(3 * var(--u));
+    pointer-events: none;
+}
+
+.inv-toast {
+    display: flex;
+    align-items: center;
+    gap: calc(5 * var(--u));
+    padding: calc(2 * var(--u)) calc(5 * var(--u)) calc(2 * var(--u)) calc(3 * var(--u));
+    background: rgba(11, 7, 16, 0.72);
+    border-left: calc(var(--inv-bar) * var(--u)) solid var(--inv-rc);
+    color: var(--parchment);
+    /* 들어올 때 140ms, 나갈 때 240ms. 나가는 애니메이션은 --out 만큼 기다렸다 시작한다 —
+       그래서 자바스크립트에 '퇴장 상태'를 따로 두지 않아도 된다. DOM 제거 시점과 딱 맞는다. */
+    animation: inv-in 140ms ease-out both, inv-out 240ms ease-in var(--out) both;
+}
+
+@keyframes inv-in {
+    from { opacity: 0; transform: translateX(calc(10 * var(--u))); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes inv-out {
+    to { opacity: 0; transform: translateX(calc(6 * var(--u))); }
+}
+
+.inv-toast__body {
+    display: flex;
+    flex-direction: column;
+    gap: calc(1 * var(--u));
+    min-width: 0;
+}
+.inv-toast__top {
+    display: flex;
+    align-items: baseline;
+    gap: calc(3 * var(--u));
+    line-height: 1.1;
+}
+.inv-toast__mark {
+    color: var(--inv-rc);
+    font-size: calc(9 * var(--u));
+}
+.inv-toast__name {
+    color: var(--parchment);
+    white-space: nowrap;
+}
+.inv-toast__sub {
+    font-size: calc(8 * var(--u));
+    line-height: 1.1;
+    color: var(--ash);
+    white-space: nowrap;
+}
+/* 합쳐진 개수 x3. bump 마다 key 가 바뀌어 애니메이션이 다시 돈다 */
+.inv-toast__x {
+    font-size: calc(9 * var(--u));
+    color: var(--gold);
+    animation: inv-bump 260ms ease-out 1;
+}
+@keyframes inv-bump {
+    0% { transform: scale(1.9); }
+    100% { transform: scale(1); }
+}
+
+/* 무게 차등 — 물약과 전설 유물이 같은 크기로 뜨면 유물의 순간이 죽는다 */
+.inv-toast.is-minor { font-size: calc(9 * var(--u)); opacity: 0.92; }
+.inv-toast.is-equip { font-size: calc(10 * var(--u)); }
+.inv-toast.is-relic {
+    font-size: calc(11 * var(--u));
+    padding: calc(4 * var(--u)) calc(7 * var(--u)) calc(4 * var(--u)) calc(4 * var(--u));
+    background: rgba(11, 7, 16, 0.88);
+    box-shadow: 0 0 calc(6 * var(--u)) rgba(201, 162, 39, 0.28);
+}
+/* 전설 유물만 테두리가 맥동한다. 색맹이어도 '움직임'으로 읽힌다(10-UIUX 9.1) */
+.inv-toast.is-relic.is-legendary {
+    animation:
+        inv-in 140ms ease-out both,
+        inv-out 240ms ease-in var(--out) both,
+        inv-pulse 900ms ease-in-out 3;
+}
+@keyframes inv-pulse {
+    0%, 100% { box-shadow: 0 0 calc(4 * var(--u)) rgba(201, 162, 39, 0.25); }
+    50% { box-shadow: 0 0 calc(12 * var(--u)) rgba(201, 162, 39, 0.75); }
+}
+
+/* 흔들림/모션 최소화 설정(10-UIUX 9.2). 사라지는 것 자체는 유지해야 목록이 안 쌓인다 */
+@media (prefers-reduced-motion: reduce) {
+    .inv-toast,
+    .inv-toast.is-relic.is-legendary {
+        animation: inv-fade-in 100ms linear both, inv-out 200ms linear var(--out) both;
+    }
+    .inv-slot.is-fresh { animation: none; }
+    .inv-toast__x { animation: none; }
+}
+@keyframes inv-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* ── 3. 결과 화면 요약 ───────────────────────────────────────
+   ResultScreen 의 .result__panels 안에 <section> 하나로 들어간다.
+   ★ 여기서는 등급 색 + 기호 + **한글 등급명**까지 전부 쓴다. 게임이 멈춰 있어
+     읽을 시간이 있고, "이번 판에 뭘 얻었나"가 이 화면의 질문이기 때문이다. */
+.loot {
+    display: flex;
+    flex-direction: column;
+    gap: calc(4 * var(--u));
+    min-width: 0;
+}
+.loot__head {
+    font-size: calc(10 * var(--u));
+    color: var(--ash);
+    letter-spacing: calc(1 * var(--u));
+}
+
+.loot__row {
+    display: flex;
+    align-items: center;
+    gap: calc(5 * var(--u));
+    padding: calc(2 * var(--u)) calc(4 * var(--u));
+    background: rgba(22, 18, 28, 0.6);
+    border-left: calc(var(--inv-bar) * var(--u)) solid var(--inv-rc);
+    font-size: calc(10 * var(--u));
+    line-height: 1.2;
+}
+.loot__row.is-empty {
+    border-left-color: var(--stone-3);
+    color: var(--stone-4);
+}
+.loot__slot {
+    flex: none;
+    width: calc(30 * var(--u));
+    color: var(--ash);
+    font-size: calc(9 * var(--u));
+}
+.loot__name {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--parchment);
+}
+.loot__grade {
+    flex: none;
+    color: var(--inv-rc);
+    font-size: calc(9 * var(--u));
+}
+
+/* 유물은 격자로. 6개가 한눈에 들어와야 "규칙을 몇 개 쥐고 끝냈나"가 읽힌다 */
+.loot__relics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(3 * var(--u));
+}
+.loot__relic {
+    display: flex;
+    align-items: center;
+    gap: calc(3 * var(--u));
+    padding: calc(1 * var(--u)) calc(4 * var(--u)) calc(1 * var(--u)) calc(2 * var(--u));
+    background: rgba(22, 18, 28, 0.6);
+    border: calc(1 * var(--u)) solid var(--inv-rc);
+    font-size: calc(9 * var(--u));
+    color: var(--parchment);
+}
+.loot__none {
+    font-size: calc(9 * var(--u));
+    color: var(--stone-4);
+}
+
+/* 소모품·골드는 개수만. 이름을 나열하면 20줄이 되고 아무도 안 읽는다 */
+.loot__tally {
+    display: flex;
+    gap: calc(10 * var(--u));
+    font-size: calc(9 * var(--u));
+    color: var(--ash);
+}
+.loot__tally b {
+    color: var(--parchment);
+    font-weight: 400;
+}
+
+/* 토스트 최대 폭 184 → 우측 정렬이라 좌측 끝이 x=452 다. 중앙 시야 금지 구역(x<440)을
+   절대 침범하지 않는다. 넘치는 글자는 잘라 낸다 — 줄바꿈으로 높이가 늘면 대시 버튼까지 내려간다. */
+.inv-toast { max-width: calc(184 * var(--u)); }
+.inv-toast__name,
+.inv-toast__sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ResultScreen 의 .result__panels 는 `grid-template-columns: 1fr 1fr` 이다(screens.css 403행).
+   세 번째 칸으로 그냥 넣으면 2행이 되어 360px 높이를 넘긴다. screens.css 는 다른 소유라
+   고칠 수 없으므로, 마운트 패치에서 컨테이너에 has-loot 를 얹고 여기서 3열로 바꾼다.
+   ★ :has() 를 쓰지 않은 이유 — 빌드 타깃이 chrome87 / safari14 라 구형 WebView 에서
+     선택자 자체가 무시되고, 그러면 결과 화면이 조용히 잘린다. 클래스 한 개가 확실하다. */
+.result__panels.has-loot {
+    grid-template-columns: 1fr 1fr 1.15fr;
+    gap: calc(12 * var(--u));
+}
+/* 줄 수가 예상을 넘어도 화면 밖으로 밀지 않는다. 잘릴지언정 버튼을 가리면 안 된다(T531) */
+.loot {
+    max-height: calc(210 * var(--u));
+    overflow: hidden;
+}

@@ -422,6 +422,7 @@ export class CombatSystem {
             gold: Math.floor(this.gold),
             awakenings: this.awakening ? [...this.awakening.list] : [],
             humanity: this.pact?.humanity ?? 100,
+            stageId: this.scene.stages?.current?.id ?? null,
         });
     }
 
@@ -540,6 +541,7 @@ export class CombatSystem {
             level: this.level, gold: Math.floor(this.gold),
             awakenings: this.awakening ? [...this.awakening.list] : [],
             humanity: this.pact?.humanity ?? 100,
+            stageId: this.scene.stages?.current?.id ?? null,
         });
         this.scene.scene.resume(); // 카드가 떠 있는 상태에서 포기하면 pause 가 남는다
     }

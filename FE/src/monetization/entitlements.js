@@ -22,6 +22,9 @@ function emptyState() {
     return {
         version: ENT_VERSION,
         firstLaunchAt: 0,
+        // 결제 횟수. 21-LIVEOPS §3.2 의 iap_purchase.first_purchase 를 계산하는 유일한 근거다.
+        // ★ 최초 결제 전환은 소프트런치에서 가장 중요한 단일 수익화 지표라 반드시 구분돼야 한다.
+        purchaseCount: 0,
         owned: {}, // { removeAds: { sku, at, src } }
         pending: [], // [{ id, type, amount?, key?, sku, at }]
     };
@@ -56,6 +59,11 @@ function normalize(raw) {
         }
     }
     s.firstLaunchAt = Number.isFinite(raw.firstLaunchAt) ? raw.firstLaunchAt : 0;
+    // 구버전 원장에는 이 필드가 없다. 소유 상품 수로 보수적으로 추정한다
+    // (0 으로 두면 두 번째 결제가 "최초 결제"로 잘못 집계된다).
+    s.purchaseCount = Number.isFinite(raw.purchaseCount)
+        ? Math.max(0, Math.round(raw.purchaseCount))
+        : Object.keys(s.owned).length;
     return s;
 }
 
@@ -96,6 +104,22 @@ export function listEntitlements() {
 
 export function firstLaunchAt() {
     return state.firstLaunchAt || Date.now();
+}
+
+/** 이 기기에서 결제가 한 번도 성공하지 않았는가. 지급 **전에** 읽어야 의미가 있다. */
+export function isFirstPurchase() {
+    return state.purchaseCount === 0;
+}
+
+export function purchaseCount() {
+    return state.purchaseCount;
+}
+
+/** 결제 성공 직후 1회. 소모성/비소모성을 가리지 않는다. */
+export function notePurchase() {
+    state.purchaseCount += 1;
+    persist();
+    return state.purchaseCount;
 }
 
 /** @returns {boolean} 이번 호출로 새로 생겼으면 true (UI 토스트 판단용) */

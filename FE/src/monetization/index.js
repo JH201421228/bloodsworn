@@ -37,6 +37,63 @@ export function getAdPlacement(id) {
     return AD_PLACEMENTS.find((p) => p.id === id) ?? null;
 }
 
+/**
+ * 배치 정의에 **원격 설정의 현재 값**을 덮어 돌려준다. UI 와 게임 훅은 반드시 이걸 쓴다.
+ *
+ * ★ shop.json 의 수치는 기본값이고 remote-defaults.json 의 `ads.*` 가 최종값이다.
+ *   화면에 "골드 120" 을 하드코딩하거나 shop.json 을 직접 읽으면,
+ *   원격으로 amount 를 바꿨을 때 **문구와 실제 지급액이 어긋난다.** 그건 허위 표기다.
+ * ★ ready/reason 을 함께 준다 — 버튼을 그릴지 말지를 호출부가 한 번의 호출로 결정하게 하기 위해서다.
+ *
+ * @param {"revive"|"gold_double"|"sanctum_offering"} id
+ * @returns {null|{id, name, desc, where, reward, cost, requires, ready, entitled}}
+ */
+export function resolveAdPlacement(id) {
+    const def = getAdPlacement(id);
+    if (!def) return null;
+
+    const reward = { ...def.reward };
+    const cost = { ...(def.cost ?? {}) };
+    const requires = { ...(def.requires ?? {}) };
+
+    switch (id) {
+        case "revive": {
+            // 인간성 비용과 최소 요구치는 항상 같은 값이어야 한다 — 다르면
+            // "인간성 20 인데 버튼이 보이고, 누르면 −25 라 음수가 된다" 가 난다.
+            const h = cfg("ads.revive.humanityCost");
+            if (Number.isFinite(h)) {
+                cost.humanity = h;
+                requires.minHumanity = h;
+            }
+            break;
+        }
+        case "gold_double": {
+            const m = cfg("ads.goldDouble.mult");
+            if (Number.isFinite(m)) reward.mult = m;
+            break;
+        }
+        case "sanctum_offering": {
+            const a = cfg("ads.sanctumOffering.amount");
+            if (Number.isFinite(a)) reward.amount = a;
+            break;
+        }
+        default:
+            break;
+    }
+
+    return {
+        id: def.id,
+        name: def.name,
+        desc: def.desc ?? "",
+        where: def.where,
+        reward,
+        cost,
+        requires,
+        ready: isAdReady(id),
+        entitled: hasEntitlement("removeAds"),
+    };
+}
+
 let onGrant = null;
 let ready = false;
 
@@ -107,9 +164,16 @@ export function isAdReady(placement) {
  * ★ 호출부는 rewarded===true 일 때만 보상을 준다. false 는 그냥 "아무 일도 없었다"로 처리한다.
  */
 export async function showRewarded(placement) {
-    track(ANALYTICS_EVENTS.AD_REQUEST, { placement });
+    // 21-LIVEOPS §3.2: ad_request 는 placement + ready. ready=false 비율이 곧 fill 문제의 유일한 단서다.
+    // ★ isAdReady 를 **호출 전에** 읽는다 — 광고를 소진한 뒤에 읽으면 항상 false 로 기록된다.
+    track(ANALYTICS_EVENTS.AD_REQUEST, { placement, ready: adsReady(placement) });
     const res = await adsShow(placement);
-    track(ANALYTICS_EVENTS.AD_REWARDED, { placement, rewarded: res.rewarded, reason: res.reason ?? "ok" });
+    track(ANALYTICS_EVENTS.AD_REWARDED, {
+        placement,
+        rewarded: res.rewarded,
+        reason: res.reason ?? "ok",
+        reward_type: getAdPlacement(placement)?.reward?.type ?? "",
+    });
     return res;
 }
 
@@ -119,7 +183,17 @@ export async function getProducts() {
 
 export async function purchase(sku) {
     const res = await iapPurchase(sku);
-    track(ANALYTICS_EVENTS.IAP_PURCHASE, { sku, ok: res.ok, reason: res.reason ?? "ok", provider: iapProvider() });
+    // 21-LIVEOPS §3.2: sku / price_local / currency / first_purchase.
+    // ★ 취소(cancelled)도 기록한다. 취소율은 가격 저항을 읽는 유일한 신호다.
+    track(ANALYTICS_EVENTS.IAP_PURCHASE, {
+        sku,
+        ok: res.ok,
+        reason: res.reason ?? "ok",
+        provider: iapProvider(),
+        price_local: res.price ?? 0,
+        currency: res.currency ?? "",
+        first_purchase: Boolean(res.firstPurchase),
+    });
     if (res.ok) await drainGrants();
     return res;
 }

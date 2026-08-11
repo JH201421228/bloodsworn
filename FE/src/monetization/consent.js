@@ -27,6 +27,23 @@ export function getConsentState() {
 }
 
 /**
+ * UMP 가 준 canRequestAds 를 읽는다.
+ *
+ * ★ 기본값이 **true** 인 이유가 중요하다. `canRequestAds` 는 비교적 최근 UMP API 이고
+ *   구버전 Capacitor AdMob 래퍼는 이 필드를 아예 노출하지 않는다. 없을 때 false 로 가정하면
+ *   **그 기기에서는 광고가 하나도 안 나간다** — 침묵하는 매출 0 사고다.
+ *   그래서 "명시적으로 boolean false 일 때만" 광고를 막는다.
+ * ★ 반대로 명시적 false 를 무시하면 EEA 정책 위반이다. 둘 다 피하는 유일한 지점이 여기다.
+ * @returns {boolean}
+ */
+function readCanRequestAds(...sources) {
+    for (const src of sources) {
+        if (typeof src?.canRequestAds === "boolean") return src.canRequestAds;
+    }
+    return true;
+}
+
+/**
  * UMP 동의 흐름. EEA/UK 밖에서는 status 가 NOT_REQUIRED 로 즉시 끝난다.
  * @param {object} AdMob capacitor-community/admob 핸들 (없으면 호출하지 않는다)
  * @param {{debugGeography?:string, testDeviceIdentifiers?:string[]}} opts
@@ -52,14 +69,20 @@ export async function ensureConsent(AdMob, opts = {}) {
                 status: s2.toLowerCase(),
                 // ★ 거부해도 광고를 아예 끄지는 않는다. 비개인화 광고는 동의 없이도 허용된다.
                 //   대신 이 게임은 어차피 항상 비개인화이므로 실질 차이가 없다.
-                canRequestAds: true,
+                //   단 UMP 가 명시적으로 false 를 주면 그건 따른다(§27 §7).
+                canRequestAds: readCanRequestAds(after, info),
                 npa: true,
                 formShown: true,
             };
             return consentState;
         }
 
-        consentState = { status: status.toLowerCase(), canRequestAds: true, npa: true, formShown: false };
+        consentState = {
+            status: status.toLowerCase(),
+            canRequestAds: readCanRequestAds(info),
+            npa: true,
+            formShown: false,
+        };
         return consentState;
     } catch (e) {
         // 폼 로드 실패·네트워크 없음 등. 비개인화 광고로 계속 간다.

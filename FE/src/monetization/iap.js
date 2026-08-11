@@ -19,12 +19,29 @@
  *   restore  -> string[] (보유 entitlement 키 목록)
  */
 import shop from "@/data/shop.json";
-import { addPendingGrant, grantEntitlement, mergeRestored, hasEntitlement, firstLaunchAt } from "./entitlements";
+import {
+    addPendingGrant,
+    grantEntitlement,
+    mergeRestored,
+    hasEntitlement,
+    firstLaunchAt,
+    isFirstPurchase,
+    notePurchase,
+} from "./entitlements";
 import { cfg } from "./remoteConfig";
 
 const RC_MODULE = "@revenuecat/purchases-capacitor";
 
 const CATALOG = new Map(shop.products.map((p) => [p.sku, p]));
+
+/**
+ * 이 지급 항목을 이미 보유하고 있는가.
+ * ★ cosmetic 도 entitlement 원장에 들어간다 — 외형은 소모품이 아니고, 복원 대상이며,
+ *   중복 구매를 막아야 한다. type 만 다를 뿐 소유권의 성질은 같다.
+ */
+function ownsGrant(g) {
+    return (g.type === "entitlement" || g.type === "cosmetic") && hasEntitlement(g.key);
+}
 
 let adapter = null;
 let productCache = [];
@@ -178,13 +195,7 @@ function visibleSkus() {
     return shop.products
         .filter((p) => !hidden.has(p.sku))
         // 이미 산 비소모성 상품은 숨긴다. 안 숨기면 중복 구매 시도 → 스토어 에러 → 문의가 온다.
-        .filter(
-            (p) =>
-                !(
-                    p.kind === "nonconsumable" &&
-                    p.grants.some((g) => g.type === "entitlement" && hasEntitlement(g.key))
-                )
-        )
+        .filter((p) => !(p.kind === "nonconsumable" && p.grants.some(ownsGrant)))
         // 한정 상품의 카운트다운은 반드시 사실이어야 한다. 지나면 정말로 사라진다.
         .filter((p) => !p.window?.afterFirstLaunchHours || elapsedH <= windowHours)
         .map((p) => p.sku);
@@ -213,6 +224,11 @@ export async function refreshProducts() {
             badge: def.badge ?? null,
             grants: def.grants,
             priceString: live?.priceString ?? "", // 빈 문자열이면 UI 가 "가격 불러오는 중"을 그린다
+            // ★ 숫자 가격과 통화는 **화면에 그리지 않는다.** 21-LIVEOPS §3.2 의
+            //   iap_purchase.price_local / currency 를 채우기 위해서만 보관한다.
+            //   표시는 스토어가 준 priceString 만 쓴다(20-MONETIZATION §3.3).
+            price: Number.isFinite(live?.price) ? live.price : 0,
+            currency: live?.currency ?? "",
             available: Boolean(live) || adapter?.name === "dev",
         };
     });
@@ -229,7 +245,7 @@ export async function getProducts() {
 }
 
 /**
- * 구매. @returns {{ok:boolean, receipt?:object, reason?:string}}
+ * 구매. @returns {{ok:boolean, receipt?:object, reason?:string, firstPurchase?:boolean, price?:number, currency?:string}}
  * reason: unavailable | unknown_sku | already_owned | cancelled | store_error | product_not_found
  * ★ 성공 시 지급을 여기서 끝내지 않는다. pending 원장에 넣고 index.js 가 게임에 흘린다.
  */
@@ -237,8 +253,7 @@ export async function purchase(sku) {
     const def = CATALOG.get(sku);
     if (!def) return { ok: false, reason: "unknown_sku" };
     if (!adapter) return { ok: false, reason: "unavailable" };
-    if (def.kind === "nonconsumable" && def.grants.some((g) => g.type === "entitlement" && hasEntitlement(g.key)))
-        return { ok: false, reason: "already_owned" };
+    if (def.kind === "nonconsumable" && def.grants.some(ownsGrant)) return { ok: false, reason: "already_owned" };
 
     let res;
     try {
@@ -251,13 +266,25 @@ export async function purchase(sku) {
     }
     if (!res?.ok) return { ok: false, reason: res?.reason ?? "store_error" };
 
+    // ★ 순서 주의: notePurchase() 보다 **먼저** 읽어야 최초 결제가 최초로 집계된다.
+    const firstPurchase = isFirstPurchase();
+    const live = productCache.find((p) => p.sku === sku);
+
     // ★ 먼저 디스크에 적는다. 이 줄 다음에 앱이 죽어도 보상은 살아남는다.
     for (const g of def.grants) {
-        if (g.type === "entitlement") grantEntitlement(g.key, { sku, src: "iap" });
+        // 소유권은 여기서 확정한다(동기·디스크). pending 은 "게임에 아직 반영 안 됨"을 뜻할 뿐이다.
+        if (g.type === "entitlement" || g.type === "cosmetic") grantEntitlement(g.key, { sku, src: "iap" });
         addPendingGrant({ ...g, sku });
     }
+    notePurchase();
     refreshProducts().catch(() => {});
-    return { ok: true, receipt: res.receipt };
+    return {
+        ok: true,
+        receipt: res.receipt,
+        firstPurchase,
+        price: live?.price ?? 0,
+        currency: live?.currency ?? "",
+    };
 }
 
 /** 기기 변경·재설치 복구. 스토어가 정본이므로 결과를 원장에 병합한다(삭제는 하지 않는다). */
