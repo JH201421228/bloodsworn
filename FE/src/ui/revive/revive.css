@@ -36,18 +36,25 @@
     justify-content: center;
     gap: calc(4 * var(--u));
     /* ★ 패딩이 border 폭(12u)보다 훨씬 큰 이유
-       panel.png 의 장식 테두리는 원본 240x160 에서 상하 약 32px, 좌우 약 22px 을 먹는다.
+       테두리 실측값은 art.css 의 .panel 과 같다 — 한쪽만 고치면 화면마다 두께가 달라진다.
        9-slice 를 12 로 자르면 나머지 20px/10px 은 "늘어나는 가운데"에 남아 카드가 커질수록
        두꺼워진다. 그 위에 글자를 올리면 검은 쇠테에 검은 글씨가 된다(실제로 제목 윗줄이 묻혔다).
        슬라이스를 키우면 이 카드만 다른 패널과 테두리 두께가 달라지므로, 대신 안쪽 여백으로
        양피지 영역까지 글자를 밀어 넣는다. */
-    padding: calc(32 * var(--u)) calc(24 * var(--u)) calc(34 * var(--u));
+    padding: calc(8 * var(--u)) calc(10 * var(--u));
     text-align: center;
     /* ★ 경로는 ../img/ 다. public/ 을 직접 가리키면 Vite 가 에셋으로 처리해
        같은 PNG 가 번들에 한 벌 더 복제된다(실제로 58KB 가 중복됐다).
        빌드 후 CSS 는 dist/assets/ 로 가고 그림은 dist/img/ 에 남으므로 ../img/ 가 맞다. */
-    border: calc(12 * var(--u)) solid transparent;
-    border-image: url("../img/ui/panel.png") 12 fill stretch;
+    border-style: solid;
+    border-color: transparent;
+    border-width: calc(11 * var(--u)) calc(8 * var(--u)) calc(11 * var(--u));
+    /* ★ 슬라이스 12 는 눈대중이었다. 원본을 픽셀 단위로 재면 금속 테가 상31/우22/하33/좌21 이다.
+       12 로 자르면 남은 금속이 가운데 fill 에 섞여 안쪽으로 늘어나고 그 위에 글자가 얹힌다.
+       네 변에 같은 배율을 걸어 두께만 낮춘다 — 변마다 다른 배율을 쓰면 모서리 장식이 찌그러진다. */
+    border-image-source: url("../img/ui/panel.png");
+    border-image-slice: 31 22 33 21 fill;
+    border-image-repeat: stretch;
     animation: revive-card-in 220ms cubic-bezier(0.2, 1.1, 0.4, 1) both;
 }
 
