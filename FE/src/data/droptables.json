@@ -1,0 +1,63 @@
+{
+    "_comment": [
+        "드롭 테이블. 설계 정본 docs/23-ITEM-SYSTEM.md 6장.",
+        "",
+        "★ 페이즈가 오를수록 확률이 '내려간다'. 직관과 반대지만 이게 맞다(23 문서 6.1).",
+        "  P4 는 초당 처치가 P1 의 10배다. 확률을 고정하면 초당 1.2개가 쏟아져 바닥이 아이콘으로 덮이고",
+        "  풀 64칸이 3초면 포화한다. 후반의 보상은 '많이'가 아니라 '좋게' — 그래서 확률을 낮추고",
+        "  rarity 분포를 위로 민다.",
+        "",
+        "★ luck 은 PACT 와 '같은 방식으로' 쓴다(PactSystem.rollRarity): common 가중치를 상위로 옮긴다.",
+        "  더하지 않고 옮기는 이유는 총합이 커지면 luck 의 체감이 수확체감하기 때문이다.",
+        "  새 스탯을 만들지 않고 기존 luck 을 재사용해야 성소·축복·아이템이 한 지표로 모인다.",
+        "",
+        "★ itemFind 는 드롭 '확률'만 곱한다. 등급에는 개입하지 않는다 —",
+        "  둘 다 밀면 유물 상대가 luck 과 itemFind 두 축으로 곱해져 후반이 통제 불능이 된다.",
+        "",
+        "★ relicChance 를 카테고리 가중치에서 분리한 이유: 유물은 '수치가 아니라 규칙'을 바꾼다.",
+        "  카테고리 추첨에 섞으면 페이즈별 소모품/장비 비율을 조정할 때마다 유물 빈도가 딸려 움직인다."
+    ],
+    "schemaVersion": 1,
+    "normal": [
+        { "phase": 1, "chance": 0.080, "relicChance": 0.000, "rarityWeights": { "common": 74, "uncommon": 22, "rare": 3.6, "epic": 0.4, "legendary": 0 } },
+        { "phase": 2, "chance": 0.060, "relicChance": 0.004, "rarityWeights": { "common": 60, "uncommon": 30, "rare": 8.5, "epic": 1.5, "legendary": 0 } },
+        { "phase": 3, "chance": 0.045, "relicChance": 0.008, "rarityWeights": { "common": 44, "uncommon": 36, "rare": 16, "epic": 4, "legendary": 0 } },
+        { "phase": 4, "chance": 0.035, "relicChance": 0.014, "rarityWeights": { "common": 30, "uncommon": 38, "rare": 24, "epic": 8, "legendary": 0 } }
+    ],
+    "categoryWeights": {
+        "use": 46,
+        "gold": 28,
+        "equip": 26
+    },
+    "elite": {
+        "count": 3,
+        "relicChance": 0.22,
+        "rarityWeights": { "common": 10, "uncommon": 40, "rare": 34, "epic": 16, "legendary": 0 },
+        "categoryWeights": { "use": 30, "gold": 26, "equip": 44 }
+    },
+    "boss": {
+        "count": 6,
+        "guaranteedLegendaryRelics": 1,
+        "relicChance": 0.30,
+        "rarityWeights": { "common": 0, "uncommon": 24, "rare": 44, "epic": 32, "legendary": 0 },
+        "categoryWeights": { "use": 24, "gold": 20, "equip": 56 }
+    },
+    "tuning": {
+        "_note": [
+            "luckShift: common 가중치 중 이 비율만큼을 상위 등급으로 옮긴다. luck 은 0.5 에서 잘린다.",
+            "  분배 비율은 PACT(rare 0.7 / epic 0.3)와 결이 같되 5등급이라 uncommon 을 끼워 넣었다.",
+            "lifetime: 25초. 마지막 blinkFor 초 동안 점멸한다. EXP 오브와 달리 아이템이 영원히 남으면",
+            "  플레이어가 지나가지 않은 구역에 무한히 쌓인다 — 병합할 수 없는 물건이라 수명으로 막는다.",
+            "magnetRadius: EXP 오브(48)보다 좁다. 아이템이 오브보다 멀리서 끌려오면 오브가 안 보인다.",
+            "pickupRadius: 오브와 같은 6px. '밟으면 먹는다'가 유일한 조작이다."
+        ],
+        "luckShiftTo": { "uncommon": 0.4, "rare": 0.4, "epic": 0.18, "legendary": 0.02 },
+        "lifetime": 25,
+        "blinkFor": 4,
+        "magnetRadius": 40,
+        "pickupRadius": 6,
+        "magnetSpeed": 190,
+        "scatterRadius": 14,
+        "relicScatterRadius": 6
+    }
+}

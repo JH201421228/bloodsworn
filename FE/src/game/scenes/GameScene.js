@@ -28,6 +28,7 @@ import { BossSystem } from "../systems/BossSystem";
 import { AudioSystem } from "../systems/AudioSystem";
 import { FxSystem } from "../systems/FxSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
+import { ItemSystem } from "../systems/ItemSystem";
 import { QualitySystem } from "../systems/QualitySystem";
 import { EventBus } from "../EventBus";
 import { EVENTS } from "../constants";
@@ -74,6 +75,12 @@ export default class GameScene extends Phaser.Scene {
                 player: this.player, combat: this.combatSystem, stats: this.stats,
             });
             this.combatSystem.projectiles = this.projectiles;
+
+            // 아이템 드롭. CombatSystem 이 적 사망 시 rollDrop 을 부른다.
+            this.items = new ItemSystem(this, {
+                player: this.player, combat: this.combatSystem, stats: this.stats, spawn: this.spawnSystem,
+            });
+            this.combatSystem.items = this.items;
             this.fxSystem = new FxSystem(this, { player: this.player });
             this.combatSystem.fx = this.fxSystem;
             this.quality = new QualitySystem(this, { fx: this.fxSystem });
@@ -134,6 +141,7 @@ export default class GameScene extends Phaser.Scene {
         if (bs && !bs.active && !bs.defeated && this.spawnSystem.elapsed >= bs.def.spawnAt) bs.spawn();
         this.combatSystem?.update(dt);
         this.projectiles?.update(dt); // 해시 재구축 뒤에 충돌을 본다
+        this.items?.update(dt);      // 드롭 자석·획득·유물 규칙
         this.bossSystem?.update(dt);
         this.fxSystem?.update(dt);
         this.quality?.update(dt);

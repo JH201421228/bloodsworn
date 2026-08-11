@@ -18,6 +18,7 @@ export const EVENTS = {
     HUMANITY_ZERO: "humanity:zero",
     ELITE_SPAWNED: "elite:spawned",
     CHEST_OPENED: "chest:opened",
+    ITEM_PICKED: "item:picked",
     BOSS_SPAWNED: "boss:spawned",
     BOSS_HP: "boss:hp",
     RUN_PAUSED: "run:paused",

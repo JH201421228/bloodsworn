@@ -54,6 +54,8 @@ export class CombatSystem {
         this.fx = null;
         /** @type {import("./ProjectileSystem").ProjectileSystem|null} 스프라이트 투사체. GameScene 이 주입한다 */
         this.projectiles = null;
+        /** @type {import("./ItemSystem").ItemSystem|null} 아이템. GameScene 이 주입한다 */
+        this.items = null;
 
         /**
          * 무기 레지스트리. id -> { def, level, s(=현재 레벨 수치), timer }
@@ -330,6 +332,7 @@ export class CombatSystem {
                 if (src && src.pendingReset && Math.random() < (src.s.resetChance ?? 0)) src.timer = 0;
                 this.orbitHit.delete(e);
                 this.awakening?.onKill(e);
+                this.items?.rollDrop(e);
                 this.fx?.killBurst(e.x, e.y);
                 this.gold += e.goldValue ?? 1;
                 const leech = this.stats.get("lifeOnKill");
