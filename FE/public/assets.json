@@ -346,7 +346,13 @@
             "frameHeight": 58
         }
     ],
-    "atlases": [],
+    "atlases": [
+        {
+            "key": "items",
+            "texture": "assets/items/items.png",
+            "data": "assets/items/items.json"
+        }
+    ],
     "tilemaps": [],
     "bitmapFonts": [],
     "audio": [
