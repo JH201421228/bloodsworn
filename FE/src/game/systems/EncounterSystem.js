@@ -241,6 +241,14 @@ export class EncounterSystem {
             if (cap !== undefined && (st.used[id] ?? 0) >= cap) continue;
             // 규칙 3 — 마녀는 제시할 룬이 1개 이상일 때만. 없으면 그 창에서 재추첨한다
             if (def.kind === "witch" && st.runeOffers < 1) continue;
+            // 규칙 5 — 제단은 **줄 대가가 남아 있을 때만** 나온다(마녀와 같은 형태다).
+            // ★ 이 규칙이 없으면 제단이 후반에 「공짜 epic 축복」이 된다. PactSystem.pickToll 은
+            //   각성 상한 도달 후 남은 태그가 전부 3중첩에 닿으면 후보가 0이 되어 null 을
+            //   돌려주고(그 자체는 의도된 설계다 — "녹턴이 더 가져갈 게 없다"), 제단은 대가가
+            //   null 이면 인간성도 0 을 받는다. 실측: 후반 런의 42.9~49.1% 에서 제단이 대가
+            //   없이 지나갔다(800런 x2 시뮬). 그러면 2026-08-11 의 제단 밸런스 수정이
+            //   후반에 절반쯤 되돌아간다 — 제단은 PACT 를 찾아가는 곳이지 공짜 상자가 아니다.
+            if (def.kind === "altar" && !st.tollAvail) continue;
             cand.push(def);
         }
         // 규칙이 전부를 걷어냈으면 직전 제외만 풀고 다시 본다. 창을 빈손으로 넘기지 않는다 —
@@ -252,6 +260,7 @@ export class EncounterSystem {
                 const cap = rules.maxPerRun?.[id];
                 if (cap !== undefined && (st.used[id] ?? 0) >= cap) continue;
                 if (def.kind === "witch" && st.runeOffers < 1) continue;
+                if (def.kind === "altar" && !st.tollAvail) continue;
                 cand.push(def);
             }
         }
@@ -260,11 +269,11 @@ export class EncounterSystem {
     }
 
     /** 치트/검증용 순수 시뮬레이션. 씬도 난수 시드도 건드리지 않는다(E-6) */
-    simulate(runs = 100, runeOffers = 6) {
+    simulate(runs = 100, runeOffers = 6, tollAvail = true) {
         let repeats = 0;
         const hist = Object.create(null);
         for (let r = 0; r < runs; r++) {
-            const st = { prev: null, used: Object.create(null), runeOffers };
+            const st = { prev: null, used: Object.create(null), runeOffers, tollAvail };
             for (const w of this.cfg.windows) {
                 const def = this.drawKind(w.pool, st);
                 if (!def) continue;
@@ -603,6 +612,7 @@ export class EncounterSystem {
                 prev: this.prevKind,
                 used: this.usedCount,
                 runeOffers: this.runes?.offerable?.().length ?? 0,
+                tollAvail: this.hasToll(),
             };
             const def = this.drawKind(w.pool, st);
             if (!def) continue;
@@ -818,6 +828,17 @@ export class EncounterSystem {
      *   04-PACT §6 이 "마지막 장에만" 허용한 것이고, 조우에는 마지막 장이 없다.
      *   그래서 제단이 아무리 여러 번 발동해도 상한이 깨지지 않는다.
      */
+    /**
+     * 지금 줄 수 있는 대가가 하나라도 있는가 (규칙 5 / 30 §3.5).
+     * ★ 게임의 난수 흐름을 건드리지 않으려고 상수 rng 를 넘긴다 — pickToll 은 후보가 비면
+     *   rng 를 쓰기 전에 null 을 돌려주므로, 여기서 중요한 "비었는가"는 rng 와 무관하다.
+     */
+    hasToll(rarityId = "rare") {
+        const pact = this.pact;
+        if (!pact?.pickToll) return false;
+        return pact.pickToll(() => 0, EMPTY_SET, rarityId, false) != null;
+    }
+
     rollToll(rarityId) {
         const pact = this.pact;
         if (!pact) return null;
