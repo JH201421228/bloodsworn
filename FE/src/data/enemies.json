@@ -191,155 +191,4235 @@
         }
     },
     "enemies": [
-        {"id":"UD01","name":"결박된 송장","baseHp":27,"contactDamage":8,"moveSpeed":38,"hitbox":13,"expValue":4,"unlockAt":90,"ai":"stagger","anim":"enemy.ud01","knockbackResist":0.25,"tier":"normal","family":"undead","behavior":"stagger","stageAffinity":["stage1"],"frameStart":0,"params":{"moveDuration":0.8,"pauseDuration":0.22}},
-        {"id":"E6","name":"부서진 궁수","baseHp":14,"contactDamage":3,"moveSpeed":48,"hitbox":14,"expValue":3,"unlockAt":180,"ai":"ranged","knockbackResist":0,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.2,"windup":0.45,"projSpeed":130,"projDamage":9,"maxRange":260},"anim":"enemy.e6","tier":"normal","family":"undead","behavior":"ranged","stageAffinity":["stage1"],"frameStart":4},
-        {"id":"EL1","name":"시체 포식자","baseHp":360,"contactDamage":14,"moveSpeed":44,"hitbox":28,"expValue":40,"goldValue":26,"unlockAt":90,"ai":"chase","knockbackResist":1,"tier":"elite","scale":1.75,"dropsChest":true,"anim":"enemy.el1","family":"undead","behavior":"chase","stageAffinity":["stage1"],"frameStart":8},
-        {"id":"E4","name":"낡은 해골","baseHp":18,"contactDamage":6,"moveSpeed":62,"hitbox":14,"expValue":2,"unlockAt":90,"ai":"chase","knockbackResist":0,"params":{"separation":14},"anim":"enemy.e4","tier":"normal","family":"undead","behavior":"chase","stageAffinity":["stage1"],"frameStart":12},
-        {"id":"UD02","name":"찢긴 기는 것","baseHp":24,"contactDamage":7,"moveSpeed":40,"hitbox":12,"expValue":3,"unlockAt":90,"ai":"stagger","anim":"enemy.ud02","knockbackResist":0.25,"tier":"normal","family":"undead","behavior":"stagger","stageAffinity":["stage1"],"frameStart":16,"params":{"moveDuration":0.81,"pauseDuration":0.21}},
-        {"id":"UD03","name":"섬뜩한 눈알","baseHp":504,"contactDamage":16,"moveSpeed":43,"hitbox":29,"expValue":60,"goldValue":36,"unlockAt":270,"ai":"zigzag","anim":"enemy.ud03","knockbackResist":1,"tier":"miniboss","family":"undead","behavior":"zigzag","stageAffinity":["stage1"],"frameStart":20,"scale":2.1,"params":{"amplitude":42,"period":1.14}},
-        {"id":"UD04","name":"거대 왕실 풍뎅이","baseHp":11,"contactDamage":5,"moveSpeed":59,"hitbox":13,"expValue":2,"unlockAt":0,"ai":"zigzag","anim":"enemy.ud04","knockbackResist":0.25,"tier":"normal","family":"undead","behavior":"swarm","stageAffinity":["stage1"],"frameStart":24,"swarmOnly":true,"params":{"amplitude":27,"period":0.75}},
-        {"id":"E5","name":"무덤 망령","baseHp":22,"contactDamage":7,"moveSpeed":70,"hitbox":14,"expValue":3,"unlockAt":90,"ai":"zigzag","knockbackResist":0,"params":{"amplitude":40,"period":1.2},"anim":"enemy.e5","tier":"normal","family":"undead","behavior":"zigzag","stageAffinity":["stage1"],"frameStart":28},
-        {"id":"E2","name":"썩은 비틀거림","baseHp":26,"contactDamage":8,"moveSpeed":38,"hitbox":14,"expValue":2,"unlockAt":0,"ai":"stagger","knockbackResist":0.3,"params":{"moveDuration":0.8,"pauseDuration":0.2},"anim":"enemy.e2","tier":"normal","family":"undead","behavior":"stagger","stageAffinity":["stage1"],"frameStart":32},
-        {"id":"UD05","name":"왕실 풍뎅이","baseHp":9,"contactDamage":5,"moveSpeed":62,"hitbox":12,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.ud05","knockbackResist":0.25,"tier":"normal","family":"undead","behavior":"swarm","stageAffinity":["stage1"],"frameStart":36,"swarmOnly":true,"params":{"amplitude":27,"period":0.75}},
-        {"id":"UD06","name":"모래 구울","baseHp":24,"contactDamage":7,"moveSpeed":40,"hitbox":12,"expValue":3,"unlockAt":90,"ai":"stagger","anim":"enemy.ud06","knockbackResist":0.25,"tier":"normal","family":"undead","behavior":"stagger","stageAffinity":["stage1"],"frameStart":40,"params":{"moveDuration":0.8,"pauseDuration":0.22}},
-        {"id":"E3","name":"기어오는 손","baseHp":4,"contactDamage":5,"moveSpeed":135,"hitbox":10,"expValue":1,"unlockAt":30,"ai":"overshoot","knockbackResist":0,"params":{"retarget":0.5},"anim":"enemy.e3","tier":"normal","family":"undead","behavior":"overshoot","stageAffinity":["stage1"],"frameStart":44},
-        {"id":"UD07","name":"맹독 사냥개","baseHp":272,"contactDamage":16,"moveSpeed":40,"hitbox":23,"expValue":30,"goldValue":19,"unlockAt":180,"ai":"charge","anim":"enemy.ud07","knockbackResist":1,"tier":"elite","family":"undead","behavior":"charge","stageAffinity":["stage1"],"frameStart":48,"scale":1.75,"dropsChest":true,"params":{"detect":200,"windup":0.63,"dashSpeed":188,"dashDuration":0.7,"cooldown":3.45,"dashDamage":16,"recover":0.4}},
-        {"id":"UD08","name":"풀려나는 기는 것","baseHp":27,"contactDamage":8,"moveSpeed":36,"hitbox":12,"expValue":4,"unlockAt":90,"ai":"stagger","anim":"enemy.ud08","knockbackResist":0.25,"tier":"normal","family":"undead","behavior":"stagger","stageAffinity":["stage1"],"frameStart":52,"params":{"moveDuration":0.81,"pauseDuration":0.21}},
-        {"id":"E1","name":"흡혈박쥐","baseHp":8,"contactDamage":4,"moveSpeed":95,"hitbox":12,"expValue":1,"unlockAt":0,"ai":"chase","knockbackResist":0,"anim":"enemy.e1","tier":"normal","family":"undead","behavior":"chase","stageAffinity":["stage1"],"frameStart":56},
-        {"id":"VM01","name":"산성 개미","baseHp":68,"contactDamage":8,"moveSpeed":90,"hitbox":25,"expValue":25,"goldValue":5,"unlockAt":180,"ai":"zigzag","anim":"enemy.vm01","knockbackResist":1,"tier":"elite","family":"vermin","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":60,"scale":1.75,"dropsChest":true,"params":{"amplitude":41,"period":1.17}},
-        {"id":"VM02","name":"부푼 빈대","baseHp":3,"contactDamage":3,"moveSpeed":127,"hitbox":14,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.vm02","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"swarm","stageAffinity":["stage2"],"frameStart":64,"swarmOnly":true,"params":{"amplitude":26,"period":0.77}},
-        {"id":"VM03","name":"똥 딱정벌레","baseHp":4,"contactDamage":4,"moveSpeed":124,"hitbox":13,"expValue":1,"unlockAt":0,"ai":"overshoot","anim":"enemy.vm03","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"overshoot","stageAffinity":["stage1"],"frameStart":68,"params":{"retarget":0.56}},
-        {"id":"VM04","name":"포식한 진드기","baseHp":3,"contactDamage":3,"moveSpeed":132,"hitbox":12,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.vm04","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"swarm","stageAffinity":["stage1"],"frameStart":72,"swarmOnly":true,"params":{"amplitude":26,"period":0.77}},
-        {"id":"VM05","name":"굶주린 진드기","baseHp":3,"contactDamage":2,"moveSpeed":140,"hitbox":9,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.vm05","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"swarm","stageAffinity":["stage1"],"frameStart":76,"swarmOnly":true,"params":{"amplitude":24,"period":0.83}},
-        {"id":"VM06","name":"먹이 찾는 구더기","baseHp":3,"contactDamage":3,"moveSpeed":135,"hitbox":13,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.vm06","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"swarm","stageAffinity":["stage2"],"frameStart":80,"swarmOnly":true,"params":{"amplitude":25,"period":0.8}},
-        {"id":"VM07","name":"감염된 생쥐","baseHp":3,"contactDamage":4,"moveSpeed":140,"hitbox":10,"expValue":1,"unlockAt":0,"ai":"overshoot","anim":"enemy.vm07","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"overshoot","stageAffinity":["stage1"],"frameStart":84,"params":{"retarget":0.5}},
-        {"id":"VM08","name":"용암 개미","baseHp":62,"contactDamage":8,"moveSpeed":90,"hitbox":25,"expValue":25,"goldValue":4,"unlockAt":180,"ai":"zigzag","anim":"enemy.vm08","knockbackResist":1,"tier":"elite","family":"vermin","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":88,"scale":1.75,"dropsChest":true,"params":{"amplitude":38,"period":1.27}},
-        {"id":"VM09","name":"아귀 비버","baseHp":10,"contactDamage":5,"moveSpeed":73,"hitbox":14,"expValue":1,"unlockAt":0,"ai":"stagger","anim":"enemy.vm09","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"stagger","stageAffinity":["stage2"],"frameStart":92,"params":{"moveDuration":0.79,"pauseDuration":0.23}},
-        {"id":"E7","name":"역병 박쥐 떼","baseHp":5,"contactDamage":3,"moveSpeed":110,"hitbox":10,"expValue":1,"unlockAt":180,"ai":"zigzag","knockbackResist":0,"swarmOnly":true,"params":{"amplitude":25,"period":0.8},"anim":"enemy.e7","tier":"normal","family":"vermin","behavior":"swarm","stageAffinity":["stage1"],"frameStart":96},
-        {"id":"VM10","name":"코뿔소 딱정벌레","baseHp":400,"contactDamage":14,"moveSpeed":80,"hitbox":28,"expValue":60,"goldValue":29,"unlockAt":270,"ai":"charge","anim":"enemy.vm10","knockbackResist":1,"tier":"miniboss","family":"vermin","behavior":"charge","stageAffinity":["stage2"],"frameStart":100,"scale":2.1,"params":{"detect":200,"windup":0.63,"dashSpeed":376,"dashDuration":0.7,"cooldown":3.46,"dashDamage":14,"recover":0.4}},
-        {"id":"VM11","name":"병사 개미","baseHp":6,"contactDamage":5,"moveSpeed":109,"hitbox":12,"expValue":1,"unlockAt":0,"ai":"charge","anim":"enemy.vm11","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"charge","stageAffinity":["stage1"],"frameStart":104,"params":{"detect":200,"windup":0.61,"dashSpeed":512,"dashDuration":0.7,"cooldown":3.59,"dashDamage":5,"recover":0.4}},
-        {"id":"VM12","name":"급강하 박쥐","baseHp":4,"contactDamage":3,"moveSpeed":140,"hitbox":11,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.vm12","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"zigzag","stageAffinity":["stage1"],"frameStart":108,"params":{"amplitude":38,"period":1.26}},
-        {"id":"VM13","name":"오염된 바퀴벌레","baseHp":3,"contactDamage":3,"moveSpeed":137,"hitbox":14,"expValue":1,"unlockAt":0,"ai":"zigzag","anim":"enemy.vm13","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"swarm","stageAffinity":["stage2"],"frameStart":112,"swarmOnly":true,"params":{"amplitude":24,"period":0.84}},
-        {"id":"VM14","name":"굴 파는 두더지","baseHp":8,"contactDamage":4,"moveSpeed":84,"hitbox":13,"expValue":1,"unlockAt":0,"ai":"stagger","anim":"enemy.vm14","knockbackResist":0,"tier":"normal","family":"vermin","behavior":"stagger","stageAffinity":["stage1"],"frameStart":116,"params":{"moveDuration":0.8,"pauseDuration":0.22}},
-        {"id":"AN01","name":"꼬꼬 닭","baseHp":12,"contactDamage":6,"moveSpeed":103,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"zigzag","anim":"enemy.an01","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":120,"params":{"amplitude":38,"period":1.26}},
-        {"id":"AN02","name":"산호 게","baseHp":15,"contactDamage":6,"moveSpeed":96,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"chase","anim":"enemy.an02","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"chase","stageAffinity":["stage2"],"frameStart":124,"params":{"separation":14}},
-        {"id":"AN03","name":"개굴 두꺼비","baseHp":11,"contactDamage":5,"moveSpeed":108,"hitbox":13,"expValue":2,"unlockAt":0,"ai":"zigzag","anim":"enemy.an03","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":128,"params":{"amplitude":37,"period":1.28}},
-        {"id":"AN04","name":"앙증맞은 돼지","baseHp":20,"contactDamage":7,"moveSpeed":64,"hitbox":14,"expValue":3,"unlockAt":30,"ai":"stagger","anim":"enemy.an04","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"stagger","stageAffinity":["stage2"],"frameStart":132,"params":{"moveDuration":0.79,"pauseDuration":0.23}},
-        {"id":"AN05","name":"꽥꽥 거위","baseHp":12,"contactDamage":6,"moveSpeed":102,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"zigzag","anim":"enemy.an05","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":136,"params":{"amplitude":39,"period":1.24}},
-        {"id":"AN06","name":"도약하는 개구리","baseHp":13,"contactDamage":6,"moveSpeed":96,"hitbox":13,"expValue":2,"unlockAt":30,"ai":"zigzag","anim":"enemy.an06","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":140,"params":{"amplitude":42,"period":1.13}},
-        {"id":"AN07","name":"미친 멧돼지","baseHp":438,"contactDamage":18,"moveSpeed":64,"hitbox":29,"expValue":60,"goldValue":31,"unlockAt":270,"ai":"charge","anim":"enemy.an07","knockbackResist":1,"tier":"miniboss","family":"animal","behavior":"charge","stageAffinity":["stage2"],"frameStart":144,"scale":2.1,"params":{"detect":200,"windup":0.64,"dashSpeed":301,"dashDuration":0.7,"cooldown":3.5,"dashDamage":18,"recover":0.4}},
-        {"id":"AN08","name":"야옹 고양이","baseHp":16,"contactDamage":7,"moveSpeed":90,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"chase","anim":"enemy.an08","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"chase","stageAffinity":["stage2"],"frameStart":148,"params":{"separation":14}},
-        {"id":"AN09","name":"풀 뜯는 양","baseHp":264,"contactDamage":12,"moveSpeed":54,"hitbox":25,"expValue":29,"goldValue":19,"unlockAt":180,"ai":"stagger","anim":"enemy.an09","knockbackResist":1,"tier":"elite","family":"animal","behavior":"stagger","stageAffinity":["stage2"],"frameStart":152,"scale":1.75,"dropsChest":true,"params":{"moveDuration":0.78,"pauseDuration":0.24}},
-        {"id":"AN10","name":"느린 거북","baseHp":17,"contactDamage":6,"moveSpeed":68,"hitbox":12,"expValue":2,"unlockAt":30,"ai":"stagger","anim":"enemy.an10","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"stagger","stageAffinity":["stage2"],"frameStart":156,"params":{"moveDuration":0.81,"pauseDuration":0.21}},
-        {"id":"AN11","name":"설원 여우","baseHp":15,"contactDamage":6,"moveSpeed":96,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"chase","anim":"enemy.an11","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"chase","stageAffinity":["stage2"],"frameStart":160,"params":{"separation":14}},
-        {"id":"AN12","name":"가시 호저","baseHp":16,"contactDamage":8,"moveSpeed":86,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"charge","anim":"enemy.an12","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"charge","stageAffinity":["stage2"],"frameStart":164,"params":{"detect":200,"windup":0.64,"dashSpeed":404,"dashDuration":0.7,"cooldown":3.72,"dashDamage":8,"recover":0.4}},
-        {"id":"AN13","name":"악취 스컹크","baseHp":188,"contactDamage":10,"moveSpeed":83,"hitbox":25,"expValue":25,"goldValue":13,"unlockAt":180,"ai":"chase","anim":"enemy.an13","knockbackResist":1,"tier":"elite","family":"animal","behavior":"chase","stageAffinity":["stage2"],"frameStart":168,"scale":1.75,"dropsChest":true,"params":{"separation":25}},
-        {"id":"AN14","name":"숲 늑대","baseHp":16,"contactDamage":7,"moveSpeed":86,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"charge","anim":"enemy.an14","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"charge","stageAffinity":["stage2"],"frameStart":172,"params":{"detect":200,"windup":0.64,"dashSpeed":404,"dashDuration":0.7,"cooldown":3.74,"dashDamage":7,"recover":0.4}},
-        {"id":"AN15","name":"작은 병아리","baseHp":11,"contactDamage":6,"moveSpeed":103,"hitbox":12,"expValue":2,"unlockAt":0,"ai":"zigzag","anim":"enemy.an15","knockbackResist":0.1,"tier":"normal","family":"animal","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":176,"params":{"amplitude":41,"period":1.16}},
-        {"id":"MN01","name":"눈먼 그림록","baseHp":50,"contactDamage":16,"moveSpeed":32,"hitbox":14,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.mn01","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage4"],"frameStart":180,"params":{"moveDuration":0.78,"pauseDuration":0.24}},
-        {"id":"MN02","name":"충혈된 눈알","baseHp":24,"contactDamage":11,"moveSpeed":48,"hitbox":9,"expValue":3,"unlockAt":90,"ai":"zigzag","anim":"enemy.mn02","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"zigzag","stageAffinity":["stage2"],"frameStart":184,"params":{"amplitude":43,"period":1.12}},
-        {"id":"MN03","name":"억센 오우거","baseHp":700,"contactDamage":24,"moveSpeed":30,"hitbox":25,"expValue":70,"goldValue":50,"unlockAt":180,"ai":"shockwave","anim":"enemy.mn03","knockbackResist":1,"tier":"elite","family":"monster","behavior":"shockwave","stageAffinity":["stage5"],"frameStart":188,"scale":1.75,"dropsChest":true,"params":{"radius":99,"damage":22,"windup":0.8,"cooldown":6.11,"knockback":80}},
-        {"id":"MN04","name":"진홍 슬라드","baseHp":50,"contactDamage":15,"moveSpeed":32,"hitbox":15,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.mn04","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage5"],"frameStart":192,"params":{"moveDuration":0.78,"pauseDuration":0.24}},
-        {"id":"MN05","name":"짓뭉개는 키클롭스","baseHp":700,"contactDamage":24,"moveSpeed":30,"hitbox":26,"expValue":70,"goldValue":50,"unlockAt":180,"ai":"shockwave","anim":"enemy.mn05","knockbackResist":1,"tier":"elite","family":"monster","behavior":"shockwave","stageAffinity":["stage5"],"frameStart":196,"scale":1.75,"dropsChest":true,"params":{"radius":100,"damage":22,"windup":0.8,"cooldown":6.3,"knockback":80}},
-        {"id":"MN06","name":"죽음 슬라임","baseHp":50,"contactDamage":15,"moveSpeed":32,"hitbox":12,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.mn06","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage3"],"frameStart":200,"params":{"moveDuration":0.8,"pauseDuration":0.22}},
-        {"id":"MN07","name":"균류 마이코니드","baseHp":50,"contactDamage":16,"moveSpeed":32,"hitbox":14,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.mn07","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage4"],"frameStart":204,"params":{"moveDuration":0.79,"pauseDuration":0.23}},
-        {"id":"MN08","name":"거대한 에틴","baseHp":1800,"contactDamage":40,"moveSpeed":24,"hitbox":33,"expValue":130,"goldValue":129,"unlockAt":270,"ai":"shockwave","anim":"enemy.mn08","knockbackResist":1,"tier":"miniboss","family":"monster","behavior":"shockwave","stageAffinity":["stage5"],"frameStart":208,"scale":2.1,"params":{"radius":111,"damage":36,"windup":0.8,"cooldown":5.62,"knockback":80}},
-        {"id":"MN09","name":"탁한 슬라드","baseHp":50,"contactDamage":14,"moveSpeed":32,"hitbox":13,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.mn09","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage3"],"frameStart":212,"params":{"moveDuration":0.79,"pauseDuration":0.23}},
-        {"id":"MN10","name":"황토 젤리","baseHp":43,"contactDamage":12,"moveSpeed":32,"hitbox":11,"expValue":6,"unlockAt":180,"ai":"stagger","anim":"enemy.mn10","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage2"],"frameStart":216,"params":{"moveDuration":0.82,"pauseDuration":0.2}},
-        {"id":"MN11","name":"안구 감시자","baseHp":33,"contactDamage":13,"moveSpeed":43,"hitbox":12,"expValue":5,"unlockAt":180,"ai":"zigzag","anim":"enemy.mn11","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"zigzag","stageAffinity":["stage3"],"frameStart":220,"params":{"amplitude":42,"period":1.13}},
-        {"id":"MN12","name":"붉은 모자","baseHp":50,"contactDamage":15,"moveSpeed":32,"hitbox":13,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.mn12","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"stagger","stageAffinity":["stage3"],"frameStart":224,"params":{"moveDuration":0.8,"pauseDuration":0.22}},
-        {"id":"MN13","name":"비명 버섯","baseHp":22,"contactDamage":5,"moveSpeed":33,"hitbox":10,"expValue":3,"unlockAt":90,"ai":"ranged","anim":"enemy.mn13","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"ranged","stageAffinity":["stage2"],"frameStart":228,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.12,"windup":0.45,"projSpeed":130,"projDamage":13,"maxRange":260}},
-        {"id":"MN14","name":"석재 트롤","baseHp":50,"contactDamage":16,"moveSpeed":34,"hitbox":14,"expValue":7,"unlockAt":270,"ai":"charge","anim":"enemy.mn14","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"charge","stageAffinity":["stage4"],"frameStart":232,"params":{"detect":200,"windup":0.64,"dashSpeed":160,"dashDuration":0.7,"cooldown":3.42,"dashDamage":16,"recover":0.4}},
-        {"id":"MN15","name":"늪 트롤","baseHp":49,"contactDamage":16,"moveSpeed":35,"hitbox":14,"expValue":7,"unlockAt":270,"ai":"charge","anim":"enemy.mn15","knockbackResist":0.5,"tier":"normal","family":"monster","behavior":"charge","stageAffinity":["stage5"],"frameStart":236,"params":{"detect":200,"windup":0.64,"dashSpeed":165,"dashDuration":0.7,"cooldown":3.44,"dashDamage":16,"recover":0.4}},
-        {"id":"HU01","name":"야성의 리자드맨","baseHp":23,"contactDamage":9,"moveSpeed":65,"hitbox":14,"expValue":3,"unlockAt":90,"ai":"chase","anim":"enemy.hu01","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"chase","stageAffinity":["stage3"],"frameStart":240,"params":{"separation":14}},
-        {"id":"HU02","name":"고블린 궁수","baseHp":15,"contactDamage":4,"moveSpeed":48,"hitbox":13,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.hu02","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"ranged","stageAffinity":["stage3"],"frameStart":244,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.16,"windup":0.45,"projSpeed":130,"projDamage":9,"maxRange":260}},
-        {"id":"HU03","name":"고블린 광신도","baseHp":23,"contactDamage":10,"moveSpeed":59,"hitbox":14,"expValue":3,"unlockAt":90,"ai":"charge","anim":"enemy.hu03","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"charge","stageAffinity":["stage3"],"frameStart":248,"params":{"detect":200,"windup":0.64,"dashSpeed":277,"dashDuration":0.7,"cooldown":3.57,"dashDamage":10,"recover":0.4}},
-        {"id":"HU04","name":"고블린 전사","baseHp":290,"contactDamage":15,"moveSpeed":56,"hitbox":26,"expValue":32,"goldValue":21,"unlockAt":180,"ai":"chase","anim":"enemy.hu04","knockbackResist":1,"tier":"elite","family":"humanoid","behavior":"chase","stageAffinity":["stage3"],"frameStart":252,"scale":1.75,"dropsChest":true,"params":{"separation":26}},
-        {"id":"HU05","name":"고블린 밀교도","baseHp":208,"contactDamage":8,"moveSpeed":40,"hitbox":26,"expValue":25,"goldValue":15,"unlockAt":180,"ai":"ranged","anim":"enemy.hu05","knockbackResist":1,"tier":"elite","family":"humanoid","behavior":"ranged","stageAffinity":["stage3"],"frameStart":256,"scale":1.75,"dropsChest":true,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.22,"windup":0.45,"projSpeed":130,"projDamage":17,"maxRange":260}},
-        {"id":"HU06","name":"고블린 늑대 기수","baseHp":730,"contactDamage":26,"moveSpeed":42,"hitbox":33,"expValue":81,"goldValue":52,"unlockAt":270,"ai":"charge","anim":"enemy.hu06","knockbackResist":1,"tier":"miniboss","family":"humanoid","behavior":"charge","stageAffinity":["stage3"],"frameStart":260,"scale":2.1,"params":{"detect":200,"windup":0.66,"dashSpeed":197,"dashDuration":0.7,"cooldown":3.38,"dashDamage":26,"recover":0.4}},
-        {"id":"HU07","name":"하플링 암살자","baseHp":22,"contactDamage":10,"moveSpeed":57,"hitbox":12,"expValue":3,"unlockAt":90,"ai":"charge","anim":"enemy.hu07","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"charge","stageAffinity":["stage3"],"frameStart":264,"params":{"detect":200,"windup":0.62,"dashSpeed":268,"dashDuration":0.7,"cooldown":3.3,"dashDamage":10,"recover":0.4}},
-        {"id":"HU08","name":"하플링 음유시인","baseHp":18,"contactDamage":4,"moveSpeed":44,"hitbox":15,"expValue":3,"unlockAt":30,"ai":"ranged","anim":"enemy.hu08","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"ranged","stageAffinity":["stage3"],"frameStart":268,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.09,"windup":0.45,"projSpeed":130,"projDamage":10,"maxRange":260}},
-        {"id":"HU09","name":"하플링 레인저","baseHp":20,"contactDamage":8,"moveSpeed":68,"hitbox":13,"expValue":3,"unlockAt":30,"ai":"chase","anim":"enemy.hu09","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"chase","stageAffinity":["stage3"],"frameStart":272,"params":{"separation":13}},
-        {"id":"HU10","name":"하플링 도적","baseHp":23,"contactDamage":11,"moveSpeed":56,"hitbox":13,"expValue":3,"unlockAt":90,"ai":"charge","anim":"enemy.hu10","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"charge","stageAffinity":["stage3"],"frameStart":276,"params":{"detect":200,"windup":0.63,"dashSpeed":263,"dashDuration":0.7,"cooldown":3.37,"dashDamage":11,"recover":0.4}},
-        {"id":"HU11","name":"하플링 투석병","baseHp":17,"contactDamage":4,"moveSpeed":47,"hitbox":15,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.hu11","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"ranged","stageAffinity":["stage3"],"frameStart":280,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.2,"windup":0.45,"projSpeed":130,"projDamage":10,"maxRange":260}},
-        {"id":"HU12","name":"리자드맨 궁수","baseHp":16,"contactDamage":4,"moveSpeed":48,"hitbox":15,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.hu12","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"ranged","stageAffinity":["stage3"],"frameStart":284,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.25,"windup":0.45,"projSpeed":130,"projDamage":9,"maxRange":260}},
-        {"id":"HU13","name":"리자드맨 검투사","baseHp":26,"contactDamage":11,"moveSpeed":55,"hitbox":15,"expValue":4,"unlockAt":90,"ai":"charge","anim":"enemy.hu13","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"charge","stageAffinity":["stage3"],"frameStart":288,"params":{"detect":200,"windup":0.65,"dashSpeed":259,"dashDuration":0.7,"cooldown":3.49,"dashDamage":11,"recover":0.4}},
-        {"id":"HU14","name":"리자드맨 정찰병","baseHp":19,"contactDamage":8,"moveSpeed":68,"hitbox":15,"expValue":3,"unlockAt":30,"ai":"zigzag","anim":"enemy.hu14","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"zigzag","stageAffinity":["stage3"],"frameStart":292,"params":{"amplitude":41,"period":1.18}},
-        {"id":"HU15","name":"리자드맨 창병","baseHp":24,"contactDamage":8,"moveSpeed":66,"hitbox":15,"expValue":3,"unlockAt":90,"ai":"chase","anim":"enemy.hu15","knockbackResist":0.15,"tier":"normal","family":"humanoid","behavior":"chase","stageAffinity":["stage3"],"frameStart":296,"params":{"separation":15}},
-        {"id":"HX01","name":"모험심 강한 청년","baseHp":20,"contactDamage":7,"moveSpeed":57,"hitbox":11,"expValue":3,"unlockAt":30,"ai":"stagger","anim":"enemy.hx01","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"stagger","stageAffinity":["stage3"],"frameStart":300,"params":{"moveDuration":0.81,"pauseDuration":0.21}},
-        {"id":"HX02","name":"떠들썩한 청년","baseHp":24,"contactDamage":8,"moveSpeed":49,"hitbox":12,"expValue":3,"unlockAt":90,"ai":"stagger","anim":"enemy.hx02","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"stagger","stageAffinity":["stage3"],"frameStart":304,"params":{"moveDuration":0.81,"pauseDuration":0.21}},
-        {"id":"HX03","name":"엘프 검무사","baseHp":24,"contactDamage":10,"moveSpeed":61,"hitbox":15,"expValue":3,"unlockAt":90,"ai":"charge","anim":"enemy.hx03","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"charge","stageAffinity":["stage4"],"frameStart":308,"params":{"detect":200,"windup":0.65,"dashSpeed":287,"dashDuration":0.7,"cooldown":3.44,"dashDamage":10,"recover":0.4}},
-        {"id":"HX04","name":"엘프 마도사","baseHp":16,"contactDamage":3,"moveSpeed":51,"hitbox":16,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.hx04","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"ranged","stageAffinity":["stage4"],"frameStart":312,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.19,"windup":0.45,"projSpeed":130,"projDamage":9,"maxRange":260}},
-        {"id":"HX05","name":"엘프 군주","baseHp":589,"contactDamage":17,"moveSpeed":56,"hitbox":32,"expValue":65,"goldValue":42,"unlockAt":270,"ai":"chase","anim":"enemy.hx05","knockbackResist":1,"tier":"miniboss","family":"humanoid2","behavior":"chase","stageAffinity":["stage4"],"frameStart":316,"scale":2.1,"params":{"separation":32}},
-        {"id":"HX06","name":"엘프 명사수","baseHp":16,"contactDamage":3,"moveSpeed":52,"hitbox":16,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.hx06","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"ranged","stageAffinity":["stage4"],"frameStart":320,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.24,"windup":0.45,"projSpeed":130,"projDamage":9,"maxRange":260}},
-        {"id":"HX07","name":"엘프 방랑자","baseHp":15,"contactDamage":7,"moveSpeed":79,"hitbox":13,"expValue":2,"unlockAt":30,"ai":"zigzag","anim":"enemy.hx07","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"zigzag","stageAffinity":["stage3"],"frameStart":324,"params":{"amplitude":42,"period":1.14}},
-        {"id":"HX08","name":"즐거운 꼬마","baseHp":20,"contactDamage":7,"moveSpeed":57,"hitbox":11,"expValue":3,"unlockAt":30,"ai":"stagger","anim":"enemy.hx08","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"stagger","stageAffinity":["stage3"],"frameStart":328,"params":{"moveDuration":0.82,"pauseDuration":0.2}},
-        {"id":"HX09","name":"인어 물술사","baseHp":214,"contactDamage":8,"moveSpeed":41,"hitbox":28,"expValue":25,"goldValue":15,"unlockAt":180,"ai":"ranged","anim":"enemy.hx09","knockbackResist":1,"tier":"elite","family":"humanoid2","behavior":"ranged","stageAffinity":["stage4"],"frameStart":332,"scale":1.75,"dropsChest":true,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.08,"windup":0.45,"projSpeed":130,"projDamage":16,"maxRange":260}},
-        {"id":"HX10","name":"인어 꿰뚫는 자","baseHp":24,"contactDamage":10,"moveSpeed":62,"hitbox":16,"expValue":3,"unlockAt":90,"ai":"charge","anim":"enemy.hx10","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"charge","stageAffinity":["stage4"],"frameStart":336,"params":{"detect":200,"windup":0.66,"dashSpeed":291,"dashDuration":0.7,"cooldown":3.58,"dashDamage":10,"recover":0.4}},
-        {"id":"HX11","name":"인어 투창병","baseHp":215,"contactDamage":8,"moveSpeed":41,"hitbox":28,"expValue":25,"goldValue":15,"unlockAt":180,"ai":"ranged","anim":"enemy.hx11","knockbackResist":1,"tier":"elite","family":"humanoid2","behavior":"ranged","stageAffinity":["stage4"],"frameStart":340,"scale":1.75,"dropsChest":true,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.07,"windup":0.45,"projSpeed":130,"projDamage":16,"maxRange":260}},
-        {"id":"HX12","name":"인어 신비가","baseHp":16,"contactDamage":3,"moveSpeed":53,"hitbox":16,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.hx12","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"ranged","stageAffinity":["stage4"],"frameStart":344,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.29,"windup":0.45,"projSpeed":130,"projDamage":9,"maxRange":260}},
-        {"id":"HX13","name":"인어 정찰병","baseHp":20,"contactDamage":8,"moveSpeed":72,"hitbox":16,"expValue":3,"unlockAt":30,"ai":"zigzag","anim":"enemy.hx13","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"zigzag","stageAffinity":["stage4"],"frameStart":348,"params":{"amplitude":41,"period":1.17}},
-        {"id":"HX14","name":"혹사당한 마을 사람","baseHp":29,"contactDamage":9,"moveSpeed":47,"hitbox":14,"expValue":4,"unlockAt":90,"ai":"stagger","anim":"enemy.hx14","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"stagger","stageAffinity":["stage4"],"frameStart":352,"params":{"moveDuration":0.79,"pauseDuration":0.23}},
-        {"id":"HX15","name":"장난치는 아이","baseHp":19,"contactDamage":7,"moveSpeed":54,"hitbox":10,"expValue":3,"unlockAt":30,"ai":"stagger","anim":"enemy.hx15","knockbackResist":0.1,"tier":"normal","family":"humanoid2","behavior":"stagger","stageAffinity":["stage3"],"frameStart":356,"params":{"moveDuration":0.82,"pauseDuration":0.2}},
-        {"id":"MG01","name":"숙련 강령술사","baseHp":164,"contactDamage":8,"moveSpeed":44,"hitbox":27,"expValue":25,"goldValue":12,"unlockAt":180,"ai":"ranged","anim":"enemy.mg01","knockbackResist":1,"tier":"elite","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":360,"scale":1.75,"dropsChest":true,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.74,"windup":0.55,"projSpeed":115,"projDamage":22,"maxRange":275}},
-        {"id":"MG02","name":"타락한 트렌트","baseHp":21,"contactDamage":13,"moveSpeed":56,"hitbox":15,"expValue":3,"unlockAt":30,"ai":"charge","anim":"enemy.mg02","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"charge","stageAffinity":["stage4"],"frameStart":364,"params":{"detect":200,"windup":0.65,"dashSpeed":263,"dashDuration":0.7,"cooldown":3.28,"dashDamage":13,"recover":0.4}},
-        {"id":"MG03","name":"능란한 마녀","baseHp":13,"contactDamage":4,"moveSpeed":49,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.mg03","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":368,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.48,"windup":0.55,"projSpeed":115,"projDamage":14,"maxRange":275}},
-        {"id":"MG04","name":"대지 정령","baseHp":20,"contactDamage":13,"moveSpeed":57,"hitbox":14,"expValue":3,"unlockAt":30,"ai":"charge","anim":"enemy.mg04","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"charge","stageAffinity":["stage4"],"frameStart":372,"params":{"detect":200,"windup":0.64,"dashSpeed":268,"dashDuration":0.7,"cooldown":3.34,"dashDamage":13,"recover":0.4}},
-        {"id":"MG05","name":"숙달된 드루이드","baseHp":172,"contactDamage":8,"moveSpeed":42,"hitbox":27,"expValue":25,"goldValue":12,"unlockAt":180,"ai":"ranged","anim":"enemy.mg05","knockbackResist":1,"tier":"elite","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":376,"scale":1.75,"dropsChest":true,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.64,"windup":0.55,"projSpeed":115,"projDamage":23,"maxRange":275}},
-        {"id":"MG06","name":"화염 정령","baseHp":20,"contactDamage":12,"moveSpeed":59,"hitbox":14,"expValue":3,"unlockAt":30,"ai":"charge","anim":"enemy.mg06","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"charge","stageAffinity":["stage4"],"frameStart":380,"params":{"detect":200,"windup":0.64,"dashSpeed":277,"dashDuration":0.7,"cooldown":3.43,"dashDamage":12,"recover":0.4}},
-        {"id":"MG07","name":"팔랑이는 픽시","baseHp":14,"contactDamage":4,"moveSpeed":47,"hitbox":15,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.mg07","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":384,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.44,"windup":0.55,"projSpeed":115,"projDamage":14,"maxRange":275}},
-        {"id":"MG08","name":"빛나는 도깨비불","baseHp":12,"contactDamage":4,"moveSpeed":53,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.mg08","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":388,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.71,"windup":0.55,"projSpeed":115,"projDamage":13,"maxRange":275}},
-        {"id":"MG09","name":"고목 트렌트","baseHp":21,"contactDamage":13,"moveSpeed":58,"hitbox":15,"expValue":3,"unlockAt":30,"ai":"charge","anim":"enemy.mg09","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"charge","stageAffinity":["stage4"],"frameStart":392,"params":{"detect":200,"windup":0.65,"dashSpeed":273,"dashDuration":0.7,"cooldown":3.42,"dashDamage":13,"recover":0.4}},
-        {"id":"MG10","name":"얼음 골렘","baseHp":22,"contactDamage":13,"moveSpeed":56,"hitbox":15,"expValue":3,"unlockAt":90,"ai":"charge","anim":"enemy.mg10","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"charge","stageAffinity":["stage4"],"frameStart":396,"params":{"detect":200,"windup":0.65,"dashSpeed":263,"dashDuration":0.7,"cooldown":3.28,"dashDamage":13,"recover":0.4}},
-        {"id":"MG11","name":"강철 골렘","baseHp":788,"contactDamage":27,"moveSpeed":39,"hitbox":30,"expValue":88,"goldValue":56,"unlockAt":270,"ai":"shockwave","anim":"enemy.mg11","knockbackResist":1,"tier":"miniboss","family":"magical","behavior":"shockwave","stageAffinity":["stage4"],"frameStart":400,"scale":2.1,"params":{"radius":107,"damage":24,"windup":0.8,"cooldown":5.7,"knockback":80}},
-        {"id":"MG12","name":"마법 요정","baseHp":13,"contactDamage":4,"moveSpeed":51,"hitbox":15,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.mg12","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":404,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.66,"windup":0.55,"projSpeed":115,"projDamage":13,"maxRange":275}},
-        {"id":"MG13","name":"초보 화염술사","baseHp":12,"contactDamage":4,"moveSpeed":54,"hitbox":14,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.mg13","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":408,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.74,"windup":0.55,"projSpeed":115,"projDamage":12,"maxRange":275}},
-        {"id":"MG14","name":"비열한 마녀","baseHp":14,"contactDamage":4,"moveSpeed":50,"hitbox":16,"expValue":2,"unlockAt":30,"ai":"ranged","anim":"enemy.mg14","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"ranged","stageAffinity":["stage4"],"frameStart":412,"params":{"keep":175,"tooClose":140,"tooFar":235,"cooldown":2.69,"windup":0.55,"projSpeed":115,"projDamage":13,"maxRange":275}},
-        {"id":"MG15","name":"물 정령","baseHp":19,"contactDamage":12,"moveSpeed":62,"hitbox":14,"expValue":3,"unlockAt":30,"ai":"charge","anim":"enemy.mg15","knockbackResist":0.05,"tier":"normal","family":"magical","behavior":"charge","stageAffinity":["stage4"],"frameStart":416,"params":{"detect":200,"windup":0.64,"dashSpeed":291,"dashDuration":0.7,"cooldown":3.63,"dashDamage":12,"recover":0.4}},
-        {"id":"DM01","name":"뿔 달린 말썽꾼","baseHp":25,"contactDamage":13,"moveSpeed":59,"hitbox":10,"expValue":4,"unlockAt":90,"ai":"charge","anim":"enemy.dm01","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":420,"params":{"detect":200,"windup":0.59,"dashSpeed":277,"dashDuration":0.7,"cooldown":3.52,"dashDamage":13,"recover":0.4}},
-        {"id":"DM02","name":"발톱의 혐오체","baseHp":484,"contactDamage":24,"moveSpeed":43,"hitbox":27,"expValue":54,"goldValue":35,"unlockAt":180,"ai":"charge","anim":"enemy.dm02","knockbackResist":1,"tier":"elite","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":424,"scale":1.75,"dropsChest":true,"params":{"detect":200,"windup":0.66,"dashSpeed":202,"dashDuration":0.7,"cooldown":3.54,"dashDamage":24,"recover":0.4}},
-        {"id":"E8","name":"진홍 임프","baseHp":30,"contactDamage":12,"moveSpeed":55,"hitbox":16,"expValue":5,"unlockAt":270,"ai":"charge","knockbackResist":0,"params":{"detect":200,"windup":0.6,"dashSpeed":260,"dashDuration":0.7,"cooldown":3.5,"dashDamage":12,"recover":0.4},"anim":"enemy.e8","tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage1","stage5"],"frameStart":428},
-        {"id":"EL2","name":"타락한 흑기사","baseHp":720,"contactDamage":20,"moveSpeed":50,"hitbox":32,"expValue":60,"goldValue":51,"unlockAt":270,"ai":"shockwave","knockbackResist":1,"tier":"elite","scale":2,"params":{"radius":110,"damage":18,"windup":0.8,"cooldown":6,"knockback":80},"anim":"enemy.el2","family":"demon","behavior":"shockwave","stageAffinity":["stage1","stage5"],"frameStart":432},
-        {"id":"DM03","name":"갓 태어난 악마","baseHp":31,"contactDamage":15,"moveSpeed":53,"hitbox":12,"expValue":4,"unlockAt":90,"ai":"charge","anim":"enemy.dm03","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":436,"params":{"detect":200,"windup":0.61,"dashSpeed":249,"dashDuration":0.7,"cooldown":3.3,"dashDamage":15,"recover":0.4}},
-        {"id":"DM04","name":"부유하는 눈알","baseHp":25,"contactDamage":12,"moveSpeed":67,"hitbox":13,"expValue":4,"unlockAt":90,"ai":"zigzag","anim":"enemy.dm04","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"zigzag","stageAffinity":["stage5"],"frameStart":440,"params":{"amplitude":39,"period":1.22}},
-        {"id":"DM05","name":"역겨운 후벼파는 놈","baseHp":32,"contactDamage":15,"moveSpeed":55,"hitbox":13,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.dm05","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":444,"params":{"detect":200,"windup":0.63,"dashSpeed":259,"dashDuration":0.7,"cooldown":3.62,"dashDamage":15,"recover":0.4}},
-        {"id":"DM06","name":"히죽이는 그렘린","baseHp":34,"contactDamage":16,"moveSpeed":52,"hitbox":13,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.dm06","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":448,"params":{"detect":200,"windup":0.63,"dashSpeed":244,"dashDuration":0.7,"cooldown":3.44,"dashDamage":16,"recover":0.4}},
-        {"id":"DM07","name":"사악한 장난꾸러기","baseHp":26,"contactDamage":14,"moveSpeed":57,"hitbox":10,"expValue":4,"unlockAt":90,"ai":"charge","anim":"enemy.dm07","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":452,"params":{"detect":200,"windup":0.59,"dashSpeed":268,"dashDuration":0.7,"cooldown":3.35,"dashDamage":14,"recover":0.4}},
-        {"id":"DM08","name":"심연 발로르","baseHp":918,"contactDamage":27,"moveSpeed":43,"hitbox":22,"expValue":102,"goldValue":66,"unlockAt":270,"ai":"shockwave","anim":"enemy.dm08","knockbackResist":1,"tier":"miniboss","family":"demon","behavior":"shockwave","stageAffinity":["stage5"],"frameStart":456,"scale":2.1,"params":{"radius":94,"damage":24,"windup":0.8,"cooldown":6.42,"knockback":80}},
-        {"id":"DM09","name":"뾰족한 악마 자손","baseHp":28,"contactDamage":14,"moveSpeed":59,"hitbox":12,"expValue":4,"unlockAt":90,"ai":"charge","anim":"enemy.dm09","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":460,"params":{"detect":200,"windup":0.61,"dashSpeed":277,"dashDuration":0.7,"cooldown":3.68,"dashDamage":14,"recover":0.4}},
-        {"id":"DM10","name":"짓궂은 꼬마 악마","baseHp":21,"contactDamage":12,"moveSpeed":66,"hitbox":9,"expValue":3,"unlockAt":30,"ai":"charge","anim":"enemy.dm10","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":464,"params":{"detect":200,"windup":0.58,"dashSpeed":310,"dashDuration":0.7,"cooldown":3.73,"dashDamage":12,"recover":0.4}},
-        {"id":"DM11","name":"꿰는 추적자","baseHp":32,"contactDamage":15,"moveSpeed":53,"hitbox":13,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.dm11","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":468,"params":{"detect":200,"windup":0.62,"dashSpeed":249,"dashDuration":0.7,"cooldown":3.4,"dashDamage":15,"recover":0.4}},
-        {"id":"DM12","name":"오염된 악당","baseHp":36,"contactDamage":16,"moveSpeed":53,"hitbox":15,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.dm12","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"charge","stageAffinity":["stage5"],"frameStart":472,"params":{"detect":200,"windup":0.65,"dashSpeed":249,"dashDuration":0.7,"cooldown":3.63,"dashDamage":16,"recover":0.4}},
-        {"id":"DM13","name":"뒤틀린 해골","baseHp":23,"contactDamage":5,"moveSpeed":43,"hitbox":13,"expValue":3,"unlockAt":90,"ai":"ranged","anim":"enemy.dm13","knockbackResist":0.2,"tier":"normal","family":"demon","behavior":"ranged","stageAffinity":["stage5"],"frameStart":476,"params":{"keep":160,"tooClose":130,"tooFar":220,"cooldown":2.06,"windup":0.45,"projSpeed":130,"projDamage":14,"maxRange":260}},
-        {"id":"DR01","name":"성체 녹색 드래곤","baseHp":700,"contactDamage":24,"moveSpeed":36,"hitbox":25,"expValue":70,"goldValue":50,"unlockAt":180,"ai":"shockwave","anim":"enemy.dr01","knockbackResist":1,"tier":"elite","family":"dragon","behavior":"shockwave","stageAffinity":["stage6"],"frameStart":480,"scale":1.75,"dropsChest":true,"params":{"radius":99,"damage":22,"windup":0.8,"cooldown":6.01,"knockback":80}},
-        {"id":"DR02","name":"성체 백색 드래곤","baseHp":1756,"contactDamage":33,"moveSpeed":33,"hitbox":32,"expValue":130,"goldValue":125,"unlockAt":270,"ai":"shockwave","anim":"enemy.dr02","knockbackResist":1,"tier":"miniboss","family":"dragon","behavior":"shockwave","stageAffinity":["stage6"],"frameStart":484,"scale":2.1,"params":{"radius":110,"damage":30,"windup":0.8,"cooldown":5.98,"knockback":80}},
-        {"id":"DR03","name":"물 드레이크","baseHp":33,"contactDamage":11,"moveSpeed":58,"hitbox":14,"expValue":5,"unlockAt":180,"ai":"zigzag","anim":"enemy.dr03","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"zigzag","stageAffinity":["stage6"],"frameStart":488,"params":{"amplitude":41,"period":1.16}},
-        {"id":"DR04","name":"새끼 황동 드래곤","baseHp":24,"contactDamage":4,"moveSpeed":45,"hitbox":13,"expValue":3,"unlockAt":90,"ai":"ranged","anim":"enemy.dr04","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage5"],"frameStart":492,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":3.17,"windup":0.7,"projSpeed":150,"projDamage":17,"maxRange":300}},
-        {"id":"DR05","name":"새끼 구리 드래곤","baseHp":25,"contactDamage":5,"moveSpeed":43,"hitbox":13,"expValue":4,"unlockAt":90,"ai":"ranged","anim":"enemy.dr05","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage6"],"frameStart":496,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":3.05,"windup":0.7,"projSpeed":150,"projDamage":17,"maxRange":300}},
-        {"id":"DR06","name":"새끼 녹색 드래곤","baseHp":24,"contactDamage":4,"moveSpeed":45,"hitbox":12,"expValue":3,"unlockAt":90,"ai":"ranged","anim":"enemy.dr06","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage5"],"frameStart":500,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":3.11,"windup":0.7,"projSpeed":150,"projDamage":17,"maxRange":300}},
-        {"id":"DR07","name":"새끼 백색 드래곤","baseHp":27,"contactDamage":5,"moveSpeed":43,"hitbox":14,"expValue":4,"unlockAt":90,"ai":"ranged","anim":"enemy.dr07","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage6"],"frameStart":504,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":3.12,"windup":0.7,"projSpeed":150,"projDamage":18,"maxRange":300}},
-        {"id":"DR08","name":"준성체 청동 드래곤","baseHp":29,"contactDamage":5,"moveSpeed":40,"hitbox":14,"expValue":4,"unlockAt":90,"ai":"ranged","anim":"enemy.dr08","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage6"],"frameStart":508,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":2.89,"windup":0.7,"projSpeed":150,"projDamage":19,"maxRange":300}},
-        {"id":"DR09","name":"완숙 청동 드래곤","baseHp":700,"contactDamage":24,"moveSpeed":36,"hitbox":25,"expValue":70,"goldValue":50,"unlockAt":180,"ai":"shockwave","anim":"enemy.dr09","knockbackResist":1,"tier":"elite","family":"dragon","behavior":"shockwave","stageAffinity":["stage6"],"frameStart":512,"scale":1.75,"dropsChest":true,"params":{"radius":99,"damage":22,"windup":0.8,"cooldown":6.11,"knockback":80}},
-        {"id":"DR10","name":"진흙 와이번","baseHp":28,"contactDamage":10,"moveSpeed":65,"hitbox":13,"expValue":4,"unlockAt":90,"ai":"zigzag","anim":"enemy.dr10","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"zigzag","stageAffinity":["stage5"],"frameStart":516,"params":{"amplitude":38,"period":1.25}},
-        {"id":"DR11","name":"맹독 드레이크","baseHp":31,"contactDamage":11,"moveSpeed":61,"hitbox":14,"expValue":4,"unlockAt":90,"ai":"zigzag","anim":"enemy.dr11","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"zigzag","stageAffinity":["stage6"],"frameStart":520,"params":{"amplitude":40,"period":1.21}},
-        {"id":"DR12","name":"왜소 와이번","baseHp":22,"contactDamage":9,"moveSpeed":70,"hitbox":10,"expValue":3,"unlockAt":90,"ai":"zigzag","anim":"enemy.dr12","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"zigzag","stageAffinity":["stage5"],"frameStart":524,"params":{"amplitude":39,"period":1.23}},
-        {"id":"DR13","name":"청록 드레이크","baseHp":32,"contactDamage":11,"moveSpeed":59,"hitbox":14,"expValue":5,"unlockAt":180,"ai":"zigzag","anim":"enemy.dr13","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"zigzag","stageAffinity":["stage6"],"frameStart":528,"params":{"amplitude":41,"period":1.18}},
-        {"id":"DR14","name":"어린 황동 드래곤","baseHp":29,"contactDamage":5,"moveSpeed":42,"hitbox":15,"expValue":4,"unlockAt":90,"ai":"ranged","anim":"enemy.dr14","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage6"],"frameStart":532,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":3.13,"windup":0.7,"projSpeed":150,"projDamage":18,"maxRange":300}},
-        {"id":"DR15","name":"어린 붉은 드래곤","baseHp":29,"contactDamage":5,"moveSpeed":42,"hitbox":15,"expValue":4,"unlockAt":90,"ai":"ranged","anim":"enemy.dr15","knockbackResist":0.4,"tier":"normal","family":"dragon","behavior":"ranged","stageAffinity":["stage6"],"frameStart":536,"params":{"keep":190,"tooClose":150,"tooFar":250,"cooldown":3.16,"windup":0.7,"projSpeed":150,"projDamage":18,"maxRange":300}},
-        {"id":"HL01","name":"축복받은 검투사","baseHp":39,"contactDamage":15,"moveSpeed":51,"hitbox":16,"expValue":6,"unlockAt":180,"ai":"charge","anim":"enemy.hl01","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"charge","stageAffinity":["stage6"],"frameStart":540,"params":{"detect":200,"windup":0.66,"dashSpeed":240,"dashDuration":0.7,"cooldown":3.38,"dashDamage":15,"recover":0.4}},
-        {"id":"HL02","name":"대담한 종사","baseHp":37,"contactDamage":11,"moveSpeed":60,"hitbox":16,"expValue":5,"unlockAt":180,"ai":"chase","anim":"enemy.hl02","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"chase","stageAffinity":["stage6"],"frameStart":544,"params":{"separation":16}},
-        {"id":"HL03","name":"결연한 병사","baseHp":37,"contactDamage":14,"moveSpeed":53,"hitbox":15,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.hl03","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"charge","stageAffinity":["stage6"],"frameStart":548,"params":{"detect":200,"windup":0.65,"dashSpeed":249,"dashDuration":0.7,"cooldown":3.44,"dashDamage":14,"recover":0.4}},
-        {"id":"HL04","name":"독실한 수련사제","baseHp":26,"contactDamage":5,"moveSpeed":43,"hitbox":16,"expValue":4,"unlockAt":90,"ai":"ranged","anim":"enemy.hl04","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"ranged","stageAffinity":["stage6"],"frameStart":552,"params":{"keep":165,"tooClose":135,"tooFar":225,"cooldown":2.3,"windup":0.5,"projSpeed":140,"projDamage":14,"maxRange":265}},
-        {"id":"HL05","name":"신성한 플라네타르","baseHp":1317,"contactDamage":28,"moveSpeed":39,"hitbox":33,"expValue":130,"goldValue":94,"unlockAt":270,"ai":"shockwave","anim":"enemy.hl05","knockbackResist":1,"tier":"miniboss","family":"holy","behavior":"shockwave","stageAffinity":["stage6"],"frameStart":556,"scale":2.1,"params":{"radius":111,"damage":25,"windup":0.8,"cooldown":6.41,"knockback":80}},
-        {"id":"HL06","name":"총애받는 성직자","baseHp":24,"contactDamage":4,"moveSpeed":48,"hitbox":16,"expValue":3,"unlockAt":90,"ai":"ranged","anim":"enemy.hl06","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"ranged","stageAffinity":["stage6"],"frameStart":560,"params":{"keep":165,"tooClose":135,"tooFar":225,"cooldown":2.56,"windup":0.5,"projSpeed":140,"projDamage":13,"maxRange":265}},
-        {"id":"HL07","name":"부유하는 케루빔","baseHp":25,"contactDamage":10,"moveSpeed":68,"hitbox":14,"expValue":4,"unlockAt":90,"ai":"zigzag","anim":"enemy.hl07","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"zigzag","stageAffinity":["stage6"],"frameStart":564,"params":{"amplitude":40,"period":1.19}},
-        {"id":"HL08","name":"온화한 목자","baseHp":586,"contactDamage":21,"moveSpeed":36,"hitbox":28,"expValue":65,"goldValue":42,"unlockAt":180,"ai":"stagger","anim":"enemy.hl08","knockbackResist":1,"tier":"elite","family":"holy","behavior":"stagger","stageAffinity":["stage6"],"frameStart":568,"scale":1.75,"dropsChest":true,"params":{"moveDuration":0.77,"pauseDuration":0.25}},
-        {"id":"HL09","name":"성스러운 성전사","baseHp":462,"contactDamage":24,"moveSpeed":46,"hitbox":28,"expValue":51,"goldValue":33,"unlockAt":180,"ai":"charge","anim":"enemy.hl09","knockbackResist":1,"tier":"elite","family":"holy","behavior":"charge","stageAffinity":["stage6"],"frameStart":572,"scale":1.75,"dropsChest":true,"params":{"detect":200,"windup":0.67,"dashSpeed":216,"dashDuration":0.7,"cooldown":3.59,"dashDamage":24,"recover":0.4}},
-        {"id":"HL10","name":"쾌활한 수사","baseHp":46,"contactDamage":12,"moveSpeed":43,"hitbox":16,"expValue":7,"unlockAt":270,"ai":"stagger","anim":"enemy.hl10","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"stagger","stageAffinity":["stage6"],"frameStart":576,"params":{"moveDuration":0.77,"pauseDuration":0.25}},
-        {"id":"HL11","name":"굳건한 천사","baseHp":36,"contactDamage":14,"moveSpeed":55,"hitbox":15,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.hl11","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"charge","stageAffinity":["stage6"],"frameStart":580,"params":{"detect":200,"windup":0.65,"dashSpeed":259,"dashDuration":0.7,"cooldown":3.59,"dashDamage":14,"recover":0.4}},
-        {"id":"HL12","name":"정의로운 데바","baseHp":39,"contactDamage":15,"moveSpeed":51,"hitbox":16,"expValue":6,"unlockAt":180,"ai":"charge","anim":"enemy.hl12","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"charge","stageAffinity":["stage6"],"frameStart":584,"params":{"detect":200,"windup":0.66,"dashSpeed":240,"dashDuration":0.7,"cooldown":3.39,"dashDamage":15,"recover":0.4}},
-        {"id":"HL13","name":"검 아콘","baseHp":36,"contactDamage":14,"moveSpeed":55,"hitbox":15,"expValue":5,"unlockAt":180,"ai":"charge","anim":"enemy.hl13","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"charge","stageAffinity":["stage6"],"frameStart":588,"params":{"detect":200,"windup":0.65,"dashSpeed":259,"dashDuration":0.7,"cooldown":3.61,"dashDamage":14,"recover":0.4}},
-        {"id":"HL14","name":"역전의 검사","baseHp":33,"contactDamage":11,"moveSpeed":64,"hitbox":15,"expValue":5,"unlockAt":180,"ai":"chase","anim":"enemy.hl14","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"chase","stageAffinity":["stage6"],"frameStart":592,"params":{"separation":15}},
-        {"id":"HL15","name":"열광적인 사제","baseHp":24,"contactDamage":4,"moveSpeed":47,"hitbox":16,"expValue":3,"unlockAt":90,"ai":"ranged","anim":"enemy.hl15","knockbackResist":0.35,"tier":"normal","family":"holy","behavior":"ranged","stageAffinity":["stage6"],"frameStart":596,"params":{"keep":165,"tooClose":135,"tooFar":225,"cooldown":2.55,"windup":0.5,"projSpeed":140,"projDamage":13,"maxRange":265}}
+        {
+            "id": "UD01",
+            "name": "결박된 송장",
+            "baseHp": 27,
+            "contactDamage": 8,
+            "moveSpeed": 38,
+            "hitbox": 13,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "stagger",
+            "anim": "enemy.ud01",
+            "knockbackResist": 0.25,
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 0,
+            "params": {
+                "moveDuration": 0.8,
+                "pauseDuration": 0.22
+            }
+        },
+        {
+            "id": "E6",
+            "name": "부서진 궁수",
+            "baseHp": 14,
+            "contactDamage": 3,
+            "moveSpeed": 48,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 180,
+            "ai": "ranged",
+            "knockbackResist": 0,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.2,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 9,
+                "maxRange": 260
+            },
+            "anim": "enemy.e6",
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 4
+        },
+        {
+            "id": "EL1",
+            "name": "시체 포식자",
+            "baseHp": 360,
+            "contactDamage": 14,
+            "moveSpeed": 44,
+            "hitbox": 28,
+            "expValue": 40,
+            "goldValue": 26,
+            "unlockAt": 90,
+            "ai": "chase",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "scale": 1.75,
+            "dropsChest": true,
+            "anim": "enemy.el1",
+            "family": "undead",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 8
+        },
+        {
+            "id": "E4",
+            "name": "낡은 해골",
+            "baseHp": 18,
+            "contactDamage": 6,
+            "moveSpeed": 62,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 90,
+            "ai": "chase",
+            "knockbackResist": 0,
+            "params": {
+                "separation": 14
+            },
+            "anim": "enemy.e4",
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 12
+        },
+        {
+            "id": "UD02",
+            "name": "찢긴 기는 것",
+            "baseHp": 24,
+            "contactDamage": 7,
+            "moveSpeed": 40,
+            "hitbox": 12,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "stagger",
+            "anim": "enemy.ud02",
+            "knockbackResist": 0.25,
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 16,
+            "params": {
+                "moveDuration": 0.81,
+                "pauseDuration": 0.21
+            }
+        },
+        {
+            "id": "UD03",
+            "name": "섬뜩한 눈알",
+            "baseHp": 504,
+            "contactDamage": 16,
+            "moveSpeed": 43,
+            "hitbox": 29,
+            "expValue": 60,
+            "goldValue": 36,
+            "unlockAt": 270,
+            "ai": "zigzag",
+            "anim": "enemy.ud03",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "undead",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 20,
+            "scale": 2.1,
+            "params": {
+                "amplitude": 42,
+                "period": 1.14
+            }
+        },
+        {
+            "id": "UD04",
+            "name": "거대 왕실 풍뎅이",
+            "baseHp": 11,
+            "contactDamage": 5,
+            "moveSpeed": 59,
+            "hitbox": 13,
+            "expValue": 2,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.ud04",
+            "knockbackResist": 0.25,
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 24,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 27,
+                "period": 0.75
+            }
+        },
+        {
+            "id": "E5",
+            "name": "무덤 망령",
+            "baseHp": 22,
+            "contactDamage": 7,
+            "moveSpeed": 70,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "knockbackResist": 0,
+            "params": {
+                "amplitude": 40,
+                "period": 1.2
+            },
+            "anim": "enemy.e5",
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 28
+        },
+        {
+            "id": "E2",
+            "name": "썩은 비틀거림",
+            "baseHp": 26,
+            "contactDamage": 8,
+            "moveSpeed": 38,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 0,
+            "ai": "stagger",
+            "knockbackResist": 0.3,
+            "params": {
+                "moveDuration": 0.8,
+                "pauseDuration": 0.2
+            },
+            "anim": "enemy.e2",
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 32
+        },
+        {
+            "id": "UD05",
+            "name": "왕실 풍뎅이",
+            "baseHp": 9,
+            "contactDamage": 5,
+            "moveSpeed": 62,
+            "hitbox": 12,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.ud05",
+            "knockbackResist": 0.25,
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 36,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 27,
+                "period": 0.75
+            }
+        },
+        {
+            "id": "UD06",
+            "name": "모래 구울",
+            "baseHp": 24,
+            "contactDamage": 7,
+            "moveSpeed": 40,
+            "hitbox": 12,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "stagger",
+            "anim": "enemy.ud06",
+            "knockbackResist": 0.25,
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 40,
+            "params": {
+                "moveDuration": 0.8,
+                "pauseDuration": 0.22
+            }
+        },
+        {
+            "id": "E3",
+            "name": "기어오는 손",
+            "baseHp": 4,
+            "contactDamage": 5,
+            "moveSpeed": 135,
+            "hitbox": 10,
+            "expValue": 1,
+            "unlockAt": 30,
+            "ai": "overshoot",
+            "knockbackResist": 0,
+            "params": {
+                "retarget": 0.5
+            },
+            "anim": "enemy.e3",
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "overshoot",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 44
+        },
+        {
+            "id": "UD07",
+            "name": "맹독 사냥개",
+            "baseHp": 272,
+            "contactDamage": 16,
+            "moveSpeed": 40,
+            "hitbox": 23,
+            "expValue": 30,
+            "goldValue": 19,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.ud07",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "undead",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 48,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "detect": 200,
+                "windup": 0.63,
+                "dashSpeed": 188,
+                "dashDuration": 0.7,
+                "cooldown": 3.45,
+                "dashDamage": 16,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "UD08",
+            "name": "풀려나는 기는 것",
+            "baseHp": 27,
+            "contactDamage": 8,
+            "moveSpeed": 36,
+            "hitbox": 12,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "stagger",
+            "anim": "enemy.ud08",
+            "knockbackResist": 0.25,
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 52,
+            "params": {
+                "moveDuration": 0.81,
+                "pauseDuration": 0.21
+            }
+        },
+        {
+            "id": "E1",
+            "name": "흡혈박쥐",
+            "baseHp": 8,
+            "contactDamage": 4,
+            "moveSpeed": 95,
+            "hitbox": 12,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "chase",
+            "knockbackResist": 0,
+            "anim": "enemy.e1",
+            "tier": "normal",
+            "family": "undead",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage1",
+                "stage2",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 56
+        },
+        {
+            "id": "VM01",
+            "name": "산성 개미",
+            "baseHp": 68,
+            "contactDamage": 8,
+            "moveSpeed": 90,
+            "hitbox": 25,
+            "expValue": 25,
+            "goldValue": 5,
+            "unlockAt": 180,
+            "ai": "zigzag",
+            "anim": "enemy.vm01",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "vermin",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 60,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "amplitude": 41,
+                "period": 1.17
+            }
+        },
+        {
+            "id": "VM02",
+            "name": "부푼 빈대",
+            "baseHp": 3,
+            "contactDamage": 3,
+            "moveSpeed": 127,
+            "hitbox": 14,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.vm02",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 64,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 26,
+                "period": 0.77
+            }
+        },
+        {
+            "id": "VM03",
+            "name": "똥 딱정벌레",
+            "baseHp": 4,
+            "contactDamage": 4,
+            "moveSpeed": 124,
+            "hitbox": 13,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "overshoot",
+            "anim": "enemy.vm03",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "overshoot",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 68,
+            "params": {
+                "retarget": 0.56
+            }
+        },
+        {
+            "id": "VM04",
+            "name": "포식한 진드기",
+            "baseHp": 3,
+            "contactDamage": 3,
+            "moveSpeed": 132,
+            "hitbox": 12,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.vm04",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 72,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 26,
+                "period": 0.77
+            }
+        },
+        {
+            "id": "VM05",
+            "name": "굶주린 진드기",
+            "baseHp": 3,
+            "contactDamage": 2,
+            "moveSpeed": 140,
+            "hitbox": 9,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.vm05",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 76,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 24,
+                "period": 0.83
+            }
+        },
+        {
+            "id": "VM06",
+            "name": "먹이 찾는 구더기",
+            "baseHp": 3,
+            "contactDamage": 3,
+            "moveSpeed": 135,
+            "hitbox": 13,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.vm06",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 80,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 25,
+                "period": 0.8
+            }
+        },
+        {
+            "id": "VM07",
+            "name": "감염된 생쥐",
+            "baseHp": 3,
+            "contactDamage": 4,
+            "moveSpeed": 140,
+            "hitbox": 10,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "overshoot",
+            "anim": "enemy.vm07",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "overshoot",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 84,
+            "params": {
+                "retarget": 0.5
+            }
+        },
+        {
+            "id": "VM08",
+            "name": "용암 개미",
+            "baseHp": 62,
+            "contactDamage": 8,
+            "moveSpeed": 90,
+            "hitbox": 25,
+            "expValue": 25,
+            "goldValue": 4,
+            "unlockAt": 180,
+            "ai": "zigzag",
+            "anim": "enemy.vm08",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "vermin",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 88,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "amplitude": 38,
+                "period": 1.27
+            }
+        },
+        {
+            "id": "VM09",
+            "name": "아귀 비버",
+            "baseHp": 10,
+            "contactDamage": 5,
+            "moveSpeed": 73,
+            "hitbox": 14,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "stagger",
+            "anim": "enemy.vm09",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 92,
+            "params": {
+                "moveDuration": 0.79,
+                "pauseDuration": 0.23
+            }
+        },
+        {
+            "id": "E7",
+            "name": "역병 박쥐 떼",
+            "baseHp": 5,
+            "contactDamage": 3,
+            "moveSpeed": 110,
+            "hitbox": 10,
+            "expValue": 1,
+            "unlockAt": 180,
+            "ai": "zigzag",
+            "knockbackResist": 0,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 25,
+                "period": 0.8
+            },
+            "anim": "enemy.e7",
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage1",
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 96
+        },
+        {
+            "id": "VM10",
+            "name": "코뿔소 딱정벌레",
+            "baseHp": 400,
+            "contactDamage": 14,
+            "moveSpeed": 80,
+            "hitbox": 28,
+            "expValue": 60,
+            "goldValue": 29,
+            "unlockAt": 270,
+            "ai": "charge",
+            "anim": "enemy.vm10",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "vermin",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 100,
+            "scale": 2.1,
+            "params": {
+                "detect": 200,
+                "windup": 0.63,
+                "dashSpeed": 376,
+                "dashDuration": 0.7,
+                "cooldown": 3.46,
+                "dashDamage": 14,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "VM11",
+            "name": "병사 개미",
+            "baseHp": 6,
+            "contactDamage": 5,
+            "moveSpeed": 109,
+            "hitbox": 12,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "charge",
+            "anim": "enemy.vm11",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 104,
+            "params": {
+                "detect": 200,
+                "windup": 0.61,
+                "dashSpeed": 512,
+                "dashDuration": 0.7,
+                "cooldown": 3.59,
+                "dashDamage": 5,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "VM12",
+            "name": "급강하 박쥐",
+            "baseHp": 4,
+            "contactDamage": 3,
+            "moveSpeed": 140,
+            "hitbox": 11,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.vm12",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 108,
+            "params": {
+                "amplitude": 38,
+                "period": 1.26
+            }
+        },
+        {
+            "id": "VM13",
+            "name": "오염된 바퀴벌레",
+            "baseHp": 3,
+            "contactDamage": 3,
+            "moveSpeed": 137,
+            "hitbox": 14,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.vm13",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "swarm",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 112,
+            "swarmOnly": true,
+            "params": {
+                "amplitude": 24,
+                "period": 0.84
+            }
+        },
+        {
+            "id": "VM14",
+            "name": "굴 파는 두더지",
+            "baseHp": 8,
+            "contactDamage": 4,
+            "moveSpeed": 84,
+            "hitbox": 13,
+            "expValue": 1,
+            "unlockAt": 0,
+            "ai": "stagger",
+            "anim": "enemy.vm14",
+            "knockbackResist": 0,
+            "tier": "normal",
+            "family": "vermin",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 116,
+            "params": {
+                "moveDuration": 0.8,
+                "pauseDuration": 0.22
+            }
+        },
+        {
+            "id": "AN01",
+            "name": "꼬꼬 닭",
+            "baseHp": 12,
+            "contactDamage": 6,
+            "moveSpeed": 103,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "zigzag",
+            "anim": "enemy.an01",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 120,
+            "params": {
+                "amplitude": 38,
+                "period": 1.26
+            }
+        },
+        {
+            "id": "AN02",
+            "name": "산호 게",
+            "baseHp": 15,
+            "contactDamage": 6,
+            "moveSpeed": 96,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "chase",
+            "anim": "enemy.an02",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 124,
+            "params": {
+                "separation": 14
+            }
+        },
+        {
+            "id": "AN03",
+            "name": "개굴 두꺼비",
+            "baseHp": 11,
+            "contactDamage": 5,
+            "moveSpeed": 108,
+            "hitbox": 13,
+            "expValue": 2,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.an03",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 128,
+            "params": {
+                "amplitude": 37,
+                "period": 1.28
+            }
+        },
+        {
+            "id": "AN04",
+            "name": "앙증맞은 돼지",
+            "baseHp": 20,
+            "contactDamage": 7,
+            "moveSpeed": 64,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "stagger",
+            "anim": "enemy.an04",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 132,
+            "params": {
+                "moveDuration": 0.79,
+                "pauseDuration": 0.23
+            }
+        },
+        {
+            "id": "AN05",
+            "name": "꽥꽥 거위",
+            "baseHp": 12,
+            "contactDamage": 6,
+            "moveSpeed": 102,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "zigzag",
+            "anim": "enemy.an05",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 136,
+            "params": {
+                "amplitude": 39,
+                "period": 1.24
+            }
+        },
+        {
+            "id": "AN06",
+            "name": "도약하는 개구리",
+            "baseHp": 13,
+            "contactDamage": 6,
+            "moveSpeed": 96,
+            "hitbox": 13,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "zigzag",
+            "anim": "enemy.an06",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 140,
+            "params": {
+                "amplitude": 42,
+                "period": 1.13
+            }
+        },
+        {
+            "id": "AN07",
+            "name": "미친 멧돼지",
+            "baseHp": 438,
+            "contactDamage": 18,
+            "moveSpeed": 64,
+            "hitbox": 29,
+            "expValue": 60,
+            "goldValue": 31,
+            "unlockAt": 270,
+            "ai": "charge",
+            "anim": "enemy.an07",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "animal",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 144,
+            "scale": 2.1,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 301,
+                "dashDuration": 0.7,
+                "cooldown": 3.5,
+                "dashDamage": 18,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "AN08",
+            "name": "야옹 고양이",
+            "baseHp": 16,
+            "contactDamage": 7,
+            "moveSpeed": 90,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "chase",
+            "anim": "enemy.an08",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 148,
+            "params": {
+                "separation": 14
+            }
+        },
+        {
+            "id": "AN09",
+            "name": "풀 뜯는 양",
+            "baseHp": 264,
+            "contactDamage": 12,
+            "moveSpeed": 54,
+            "hitbox": 25,
+            "expValue": 29,
+            "goldValue": 19,
+            "unlockAt": 180,
+            "ai": "stagger",
+            "anim": "enemy.an09",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "animal",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 152,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "moveDuration": 0.78,
+                "pauseDuration": 0.24
+            }
+        },
+        {
+            "id": "AN10",
+            "name": "느린 거북",
+            "baseHp": 17,
+            "contactDamage": 6,
+            "moveSpeed": 68,
+            "hitbox": 12,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "stagger",
+            "anim": "enemy.an10",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 156,
+            "params": {
+                "moveDuration": 0.81,
+                "pauseDuration": 0.21
+            }
+        },
+        {
+            "id": "AN11",
+            "name": "설원 여우",
+            "baseHp": 15,
+            "contactDamage": 6,
+            "moveSpeed": 96,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "chase",
+            "anim": "enemy.an11",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 160,
+            "params": {
+                "separation": 14
+            }
+        },
+        {
+            "id": "AN12",
+            "name": "가시 호저",
+            "baseHp": 16,
+            "contactDamage": 8,
+            "moveSpeed": 86,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.an12",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 164,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 404,
+                "dashDuration": 0.7,
+                "cooldown": 3.72,
+                "dashDamage": 8,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "AN13",
+            "name": "악취 스컹크",
+            "baseHp": 188,
+            "contactDamage": 10,
+            "moveSpeed": 83,
+            "hitbox": 25,
+            "expValue": 25,
+            "goldValue": 13,
+            "unlockAt": 180,
+            "ai": "chase",
+            "anim": "enemy.an13",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "animal",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 168,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "separation": 25
+            }
+        },
+        {
+            "id": "AN14",
+            "name": "숲 늑대",
+            "baseHp": 16,
+            "contactDamage": 7,
+            "moveSpeed": 86,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.an14",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 172,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 404,
+                "dashDuration": 0.7,
+                "cooldown": 3.74,
+                "dashDamage": 7,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "AN15",
+            "name": "작은 병아리",
+            "baseHp": 11,
+            "contactDamage": 6,
+            "moveSpeed": 103,
+            "hitbox": 12,
+            "expValue": 2,
+            "unlockAt": 0,
+            "ai": "zigzag",
+            "anim": "enemy.an15",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "animal",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3"
+            ],
+            "frameStart": 176,
+            "params": {
+                "amplitude": 41,
+                "period": 1.16
+            }
+        },
+        {
+            "id": "MN01",
+            "name": "눈먼 그림록",
+            "baseHp": 50,
+            "contactDamage": 16,
+            "moveSpeed": 32,
+            "hitbox": 14,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.mn01",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 180,
+            "params": {
+                "moveDuration": 0.78,
+                "pauseDuration": 0.24
+            }
+        },
+        {
+            "id": "MN02",
+            "name": "충혈된 눈알",
+            "baseHp": 24,
+            "contactDamage": 11,
+            "moveSpeed": 48,
+            "hitbox": 9,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "anim": "enemy.mn02",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 184,
+            "params": {
+                "amplitude": 43,
+                "period": 1.12
+            }
+        },
+        {
+            "id": "MN03",
+            "name": "억센 오우거",
+            "baseHp": 700,
+            "contactDamage": 24,
+            "moveSpeed": 30,
+            "hitbox": 25,
+            "expValue": 70,
+            "goldValue": 50,
+            "unlockAt": 180,
+            "ai": "shockwave",
+            "anim": "enemy.mn03",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "monster",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 188,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "radius": 99,
+                "damage": 22,
+                "windup": 0.8,
+                "cooldown": 6.11,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "MN04",
+            "name": "진홍 슬라드",
+            "baseHp": 50,
+            "contactDamage": 15,
+            "moveSpeed": 32,
+            "hitbox": 15,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.mn04",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 192,
+            "params": {
+                "moveDuration": 0.78,
+                "pauseDuration": 0.24
+            }
+        },
+        {
+            "id": "MN05",
+            "name": "짓뭉개는 키클롭스",
+            "baseHp": 700,
+            "contactDamage": 24,
+            "moveSpeed": 30,
+            "hitbox": 26,
+            "expValue": 70,
+            "goldValue": 50,
+            "unlockAt": 180,
+            "ai": "shockwave",
+            "anim": "enemy.mn05",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "monster",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 196,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "radius": 100,
+                "damage": 22,
+                "windup": 0.8,
+                "cooldown": 6.3,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "MN06",
+            "name": "죽음 슬라임",
+            "baseHp": 50,
+            "contactDamage": 15,
+            "moveSpeed": 32,
+            "hitbox": 12,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.mn06",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 200,
+            "params": {
+                "moveDuration": 0.8,
+                "pauseDuration": 0.22
+            }
+        },
+        {
+            "id": "MN07",
+            "name": "균류 마이코니드",
+            "baseHp": 50,
+            "contactDamage": 16,
+            "moveSpeed": 32,
+            "hitbox": 14,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.mn07",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 204,
+            "params": {
+                "moveDuration": 0.79,
+                "pauseDuration": 0.23
+            }
+        },
+        {
+            "id": "MN08",
+            "name": "거대한 에틴",
+            "baseHp": 1800,
+            "contactDamage": 40,
+            "moveSpeed": 24,
+            "hitbox": 33,
+            "expValue": 130,
+            "goldValue": 129,
+            "unlockAt": 270,
+            "ai": "shockwave",
+            "anim": "enemy.mn08",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "monster",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 208,
+            "scale": 2.1,
+            "params": {
+                "radius": 111,
+                "damage": 36,
+                "windup": 0.8,
+                "cooldown": 5.62,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "MN09",
+            "name": "탁한 슬라드",
+            "baseHp": 50,
+            "contactDamage": 14,
+            "moveSpeed": 32,
+            "hitbox": 13,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.mn09",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 212,
+            "params": {
+                "moveDuration": 0.79,
+                "pauseDuration": 0.23
+            }
+        },
+        {
+            "id": "MN10",
+            "name": "황토 젤리",
+            "baseHp": 43,
+            "contactDamage": 12,
+            "moveSpeed": 32,
+            "hitbox": 11,
+            "expValue": 6,
+            "unlockAt": 180,
+            "ai": "stagger",
+            "anim": "enemy.mn10",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 216,
+            "params": {
+                "moveDuration": 0.82,
+                "pauseDuration": 0.2
+            }
+        },
+        {
+            "id": "MN11",
+            "name": "안구 감시자",
+            "baseHp": 33,
+            "contactDamage": 13,
+            "moveSpeed": 43,
+            "hitbox": 12,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "zigzag",
+            "anim": "enemy.mn11",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 220,
+            "params": {
+                "amplitude": 42,
+                "period": 1.13
+            }
+        },
+        {
+            "id": "MN12",
+            "name": "붉은 모자",
+            "baseHp": 50,
+            "contactDamage": 15,
+            "moveSpeed": 32,
+            "hitbox": 13,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.mn12",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 224,
+            "params": {
+                "moveDuration": 0.8,
+                "pauseDuration": 0.22
+            }
+        },
+        {
+            "id": "MN13",
+            "name": "비명 버섯",
+            "baseHp": 22,
+            "contactDamage": 5,
+            "moveSpeed": 33,
+            "hitbox": 10,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.mn13",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 228,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.12,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 13,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "MN14",
+            "name": "석재 트롤",
+            "baseHp": 50,
+            "contactDamage": 16,
+            "moveSpeed": 34,
+            "hitbox": 14,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "charge",
+            "anim": "enemy.mn14",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 232,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 160,
+                "dashDuration": 0.7,
+                "cooldown": 3.42,
+                "dashDamage": 16,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "MN15",
+            "name": "늪 트롤",
+            "baseHp": 49,
+            "contactDamage": 16,
+            "moveSpeed": 35,
+            "hitbox": 14,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "charge",
+            "anim": "enemy.mn15",
+            "knockbackResist": 0.5,
+            "tier": "normal",
+            "family": "monster",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage5"
+            ],
+            "frameStart": 236,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 165,
+                "dashDuration": 0.7,
+                "cooldown": 3.44,
+                "dashDamage": 16,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HU01",
+            "name": "야성의 리자드맨",
+            "baseHp": 23,
+            "contactDamage": 9,
+            "moveSpeed": 65,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "chase",
+            "anim": "enemy.hu01",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 240,
+            "params": {
+                "separation": 14
+            }
+        },
+        {
+            "id": "HU02",
+            "name": "고블린 궁수",
+            "baseHp": 15,
+            "contactDamage": 4,
+            "moveSpeed": 48,
+            "hitbox": 13,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hu02",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 244,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.16,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 9,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HU03",
+            "name": "고블린 광신도",
+            "baseHp": 23,
+            "contactDamage": 10,
+            "moveSpeed": 59,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.hu03",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 248,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 277,
+                "dashDuration": 0.7,
+                "cooldown": 3.57,
+                "dashDamage": 10,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HU04",
+            "name": "고블린 전사",
+            "baseHp": 290,
+            "contactDamage": 15,
+            "moveSpeed": 56,
+            "hitbox": 26,
+            "expValue": 32,
+            "goldValue": 21,
+            "unlockAt": 180,
+            "ai": "chase",
+            "anim": "enemy.hu04",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "humanoid",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 252,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "separation": 26
+            }
+        },
+        {
+            "id": "HU05",
+            "name": "고블린 밀교도",
+            "baseHp": 208,
+            "contactDamage": 8,
+            "moveSpeed": 40,
+            "hitbox": 26,
+            "expValue": 25,
+            "goldValue": 15,
+            "unlockAt": 180,
+            "ai": "ranged",
+            "anim": "enemy.hu05",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "humanoid",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 256,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.22,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 17,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HU06",
+            "name": "고블린 늑대 기수",
+            "baseHp": 730,
+            "contactDamage": 26,
+            "moveSpeed": 42,
+            "hitbox": 33,
+            "expValue": 81,
+            "goldValue": 52,
+            "unlockAt": 270,
+            "ai": "charge",
+            "anim": "enemy.hu06",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "humanoid",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 260,
+            "scale": 2.1,
+            "params": {
+                "detect": 200,
+                "windup": 0.66,
+                "dashSpeed": 197,
+                "dashDuration": 0.7,
+                "cooldown": 3.38,
+                "dashDamage": 26,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HU07",
+            "name": "하플링 암살자",
+            "baseHp": 22,
+            "contactDamage": 10,
+            "moveSpeed": 57,
+            "hitbox": 12,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.hu07",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 264,
+            "params": {
+                "detect": 200,
+                "windup": 0.62,
+                "dashSpeed": 268,
+                "dashDuration": 0.7,
+                "cooldown": 3.3,
+                "dashDamage": 10,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HU08",
+            "name": "하플링 음유시인",
+            "baseHp": 18,
+            "contactDamage": 4,
+            "moveSpeed": 44,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hu08",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 268,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.09,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 10,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HU09",
+            "name": "하플링 레인저",
+            "baseHp": 20,
+            "contactDamage": 8,
+            "moveSpeed": 68,
+            "hitbox": 13,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "chase",
+            "anim": "enemy.hu09",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 272,
+            "params": {
+                "separation": 13
+            }
+        },
+        {
+            "id": "HU10",
+            "name": "하플링 도적",
+            "baseHp": 23,
+            "contactDamage": 11,
+            "moveSpeed": 56,
+            "hitbox": 13,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.hu10",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 276,
+            "params": {
+                "detect": 200,
+                "windup": 0.63,
+                "dashSpeed": 263,
+                "dashDuration": 0.7,
+                "cooldown": 3.37,
+                "dashDamage": 11,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HU11",
+            "name": "하플링 투석병",
+            "baseHp": 17,
+            "contactDamage": 4,
+            "moveSpeed": 47,
+            "hitbox": 15,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hu11",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 280,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.2,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 10,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HU12",
+            "name": "리자드맨 궁수",
+            "baseHp": 16,
+            "contactDamage": 4,
+            "moveSpeed": 48,
+            "hitbox": 15,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hu12",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 284,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.25,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 9,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HU13",
+            "name": "리자드맨 검투사",
+            "baseHp": 26,
+            "contactDamage": 11,
+            "moveSpeed": 55,
+            "hitbox": 15,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.hu13",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 288,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 259,
+                "dashDuration": 0.7,
+                "cooldown": 3.49,
+                "dashDamage": 11,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HU14",
+            "name": "리자드맨 정찰병",
+            "baseHp": 19,
+            "contactDamage": 8,
+            "moveSpeed": 68,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "zigzag",
+            "anim": "enemy.hu14",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 292,
+            "params": {
+                "amplitude": 41,
+                "period": 1.18
+            }
+        },
+        {
+            "id": "HU15",
+            "name": "리자드맨 창병",
+            "baseHp": 24,
+            "contactDamage": 8,
+            "moveSpeed": 66,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "chase",
+            "anim": "enemy.hu15",
+            "knockbackResist": 0.15,
+            "tier": "normal",
+            "family": "humanoid",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 296,
+            "params": {
+                "separation": 15
+            }
+        },
+        {
+            "id": "HX01",
+            "name": "모험심 강한 청년",
+            "baseHp": 20,
+            "contactDamage": 7,
+            "moveSpeed": 57,
+            "hitbox": 11,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "stagger",
+            "anim": "enemy.hx01",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 300,
+            "params": {
+                "moveDuration": 0.81,
+                "pauseDuration": 0.21
+            }
+        },
+        {
+            "id": "HX02",
+            "name": "떠들썩한 청년",
+            "baseHp": 24,
+            "contactDamage": 8,
+            "moveSpeed": 49,
+            "hitbox": 12,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "stagger",
+            "anim": "enemy.hx02",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 304,
+            "params": {
+                "moveDuration": 0.81,
+                "pauseDuration": 0.21
+            }
+        },
+        {
+            "id": "HX03",
+            "name": "엘프 검무사",
+            "baseHp": 24,
+            "contactDamage": 10,
+            "moveSpeed": 61,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.hx03",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 308,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 287,
+                "dashDuration": 0.7,
+                "cooldown": 3.44,
+                "dashDamage": 10,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HX04",
+            "name": "엘프 마도사",
+            "baseHp": 16,
+            "contactDamage": 3,
+            "moveSpeed": 51,
+            "hitbox": 16,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hx04",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 312,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.19,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 9,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HX05",
+            "name": "엘프 군주",
+            "baseHp": 589,
+            "contactDamage": 17,
+            "moveSpeed": 56,
+            "hitbox": 32,
+            "expValue": 65,
+            "goldValue": 42,
+            "unlockAt": 270,
+            "ai": "chase",
+            "anim": "enemy.hx05",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "humanoid2",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 316,
+            "scale": 2.1,
+            "params": {
+                "separation": 32
+            }
+        },
+        {
+            "id": "HX06",
+            "name": "엘프 명사수",
+            "baseHp": 16,
+            "contactDamage": 3,
+            "moveSpeed": 52,
+            "hitbox": 16,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hx06",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 320,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.24,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 9,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HX07",
+            "name": "엘프 방랑자",
+            "baseHp": 15,
+            "contactDamage": 7,
+            "moveSpeed": 79,
+            "hitbox": 13,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "zigzag",
+            "anim": "enemy.hx07",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 324,
+            "params": {
+                "amplitude": 42,
+                "period": 1.14
+            }
+        },
+        {
+            "id": "HX08",
+            "name": "즐거운 꼬마",
+            "baseHp": 20,
+            "contactDamage": 7,
+            "moveSpeed": 57,
+            "hitbox": 11,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "stagger",
+            "anim": "enemy.hx08",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 328,
+            "params": {
+                "moveDuration": 0.82,
+                "pauseDuration": 0.2
+            }
+        },
+        {
+            "id": "HX09",
+            "name": "인어 물술사",
+            "baseHp": 214,
+            "contactDamage": 8,
+            "moveSpeed": 41,
+            "hitbox": 28,
+            "expValue": 25,
+            "goldValue": 15,
+            "unlockAt": 180,
+            "ai": "ranged",
+            "anim": "enemy.hx09",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "humanoid2",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 332,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.08,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 16,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HX10",
+            "name": "인어 꿰뚫는 자",
+            "baseHp": 24,
+            "contactDamage": 10,
+            "moveSpeed": 62,
+            "hitbox": 16,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.hx10",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 336,
+            "params": {
+                "detect": 200,
+                "windup": 0.66,
+                "dashSpeed": 291,
+                "dashDuration": 0.7,
+                "cooldown": 3.58,
+                "dashDamage": 10,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HX11",
+            "name": "인어 투창병",
+            "baseHp": 215,
+            "contactDamage": 8,
+            "moveSpeed": 41,
+            "hitbox": 28,
+            "expValue": 25,
+            "goldValue": 15,
+            "unlockAt": 180,
+            "ai": "ranged",
+            "anim": "enemy.hx11",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "humanoid2",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 340,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.07,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 16,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HX12",
+            "name": "인어 신비가",
+            "baseHp": 16,
+            "contactDamage": 3,
+            "moveSpeed": 53,
+            "hitbox": 16,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.hx12",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 344,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.29,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 9,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "HX13",
+            "name": "인어 정찰병",
+            "baseHp": 20,
+            "contactDamage": 8,
+            "moveSpeed": 72,
+            "hitbox": 16,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "zigzag",
+            "anim": "enemy.hx13",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 348,
+            "params": {
+                "amplitude": 41,
+                "period": 1.17
+            }
+        },
+        {
+            "id": "HX14",
+            "name": "혹사당한 마을 사람",
+            "baseHp": 29,
+            "contactDamage": 9,
+            "moveSpeed": 47,
+            "hitbox": 14,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "stagger",
+            "anim": "enemy.hx14",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 352,
+            "params": {
+                "moveDuration": 0.79,
+                "pauseDuration": 0.23
+            }
+        },
+        {
+            "id": "HX15",
+            "name": "장난치는 아이",
+            "baseHp": 19,
+            "contactDamage": 7,
+            "moveSpeed": 54,
+            "hitbox": 10,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "stagger",
+            "anim": "enemy.hx15",
+            "knockbackResist": 0.1,
+            "tier": "normal",
+            "family": "humanoid2",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 356,
+            "params": {
+                "moveDuration": 0.82,
+                "pauseDuration": 0.2
+            }
+        },
+        {
+            "id": "MG01",
+            "name": "숙련 강령술사",
+            "baseHp": 164,
+            "contactDamage": 8,
+            "moveSpeed": 44,
+            "hitbox": 27,
+            "expValue": 25,
+            "goldValue": 12,
+            "unlockAt": 180,
+            "ai": "ranged",
+            "anim": "enemy.mg01",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 360,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.74,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 22,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG02",
+            "name": "타락한 트렌트",
+            "baseHp": 21,
+            "contactDamage": 13,
+            "moveSpeed": 56,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.mg02",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 364,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 263,
+                "dashDuration": 0.7,
+                "cooldown": 3.28,
+                "dashDamage": 13,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "MG03",
+            "name": "능란한 마녀",
+            "baseHp": 13,
+            "contactDamage": 4,
+            "moveSpeed": 49,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.mg03",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 368,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.48,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 14,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG04",
+            "name": "대지 정령",
+            "baseHp": 20,
+            "contactDamage": 13,
+            "moveSpeed": 57,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.mg04",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 372,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 268,
+                "dashDuration": 0.7,
+                "cooldown": 3.34,
+                "dashDamage": 13,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "MG05",
+            "name": "숙달된 드루이드",
+            "baseHp": 172,
+            "contactDamage": 8,
+            "moveSpeed": 42,
+            "hitbox": 27,
+            "expValue": 25,
+            "goldValue": 12,
+            "unlockAt": 180,
+            "ai": "ranged",
+            "anim": "enemy.mg05",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 376,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.64,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 23,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG06",
+            "name": "화염 정령",
+            "baseHp": 20,
+            "contactDamage": 12,
+            "moveSpeed": 59,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.mg06",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 380,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 277,
+                "dashDuration": 0.7,
+                "cooldown": 3.43,
+                "dashDamage": 12,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "MG07",
+            "name": "팔랑이는 픽시",
+            "baseHp": 14,
+            "contactDamage": 4,
+            "moveSpeed": 47,
+            "hitbox": 15,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.mg07",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 384,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.44,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 14,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG08",
+            "name": "빛나는 도깨비불",
+            "baseHp": 12,
+            "contactDamage": 4,
+            "moveSpeed": 53,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.mg08",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 388,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.71,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 13,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG09",
+            "name": "고목 트렌트",
+            "baseHp": 21,
+            "contactDamage": 13,
+            "moveSpeed": 58,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.mg09",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 392,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 273,
+                "dashDuration": 0.7,
+                "cooldown": 3.42,
+                "dashDamage": 13,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "MG10",
+            "name": "얼음 골렘",
+            "baseHp": 22,
+            "contactDamage": 13,
+            "moveSpeed": 56,
+            "hitbox": 15,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.mg10",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 396,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 263,
+                "dashDuration": 0.7,
+                "cooldown": 3.28,
+                "dashDamage": 13,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "MG11",
+            "name": "강철 골렘",
+            "baseHp": 788,
+            "contactDamage": 27,
+            "moveSpeed": 39,
+            "hitbox": 30,
+            "expValue": 88,
+            "goldValue": 56,
+            "unlockAt": 270,
+            "ai": "shockwave",
+            "anim": "enemy.mg11",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "magical",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 400,
+            "scale": 2.1,
+            "params": {
+                "radius": 107,
+                "damage": 24,
+                "windup": 0.8,
+                "cooldown": 5.7,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "MG12",
+            "name": "마법 요정",
+            "baseHp": 13,
+            "contactDamage": 4,
+            "moveSpeed": 51,
+            "hitbox": 15,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.mg12",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 404,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.66,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 13,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG13",
+            "name": "초보 화염술사",
+            "baseHp": 12,
+            "contactDamage": 4,
+            "moveSpeed": 54,
+            "hitbox": 14,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.mg13",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 408,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.74,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 12,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG14",
+            "name": "비열한 마녀",
+            "baseHp": 14,
+            "contactDamage": 4,
+            "moveSpeed": 50,
+            "hitbox": 16,
+            "expValue": 2,
+            "unlockAt": 30,
+            "ai": "ranged",
+            "anim": "enemy.mg14",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 412,
+            "params": {
+                "keep": 175,
+                "tooClose": 140,
+                "tooFar": 235,
+                "cooldown": 2.69,
+                "windup": 0.55,
+                "projSpeed": 115,
+                "projDamage": 13,
+                "maxRange": 275
+            }
+        },
+        {
+            "id": "MG15",
+            "name": "물 정령",
+            "baseHp": 19,
+            "contactDamage": 12,
+            "moveSpeed": 62,
+            "hitbox": 14,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.mg15",
+            "knockbackResist": 0.05,
+            "tier": "normal",
+            "family": "magical",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2",
+                "stage4"
+            ],
+            "frameStart": 416,
+            "params": {
+                "detect": 200,
+                "windup": 0.64,
+                "dashSpeed": 291,
+                "dashDuration": 0.7,
+                "cooldown": 3.63,
+                "dashDamage": 12,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM01",
+            "name": "뿔 달린 말썽꾼",
+            "baseHp": 25,
+            "contactDamage": 13,
+            "moveSpeed": 59,
+            "hitbox": 10,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.dm01",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 420,
+            "params": {
+                "detect": 200,
+                "windup": 0.59,
+                "dashSpeed": 277,
+                "dashDuration": 0.7,
+                "cooldown": 3.52,
+                "dashDamage": 13,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM02",
+            "name": "발톱의 혐오체",
+            "baseHp": 484,
+            "contactDamage": 24,
+            "moveSpeed": 43,
+            "hitbox": 27,
+            "expValue": 54,
+            "goldValue": 35,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.dm02",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 424,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "detect": 200,
+                "windup": 0.66,
+                "dashSpeed": 202,
+                "dashDuration": 0.7,
+                "cooldown": 3.54,
+                "dashDamage": 24,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "E8",
+            "name": "진홍 임프",
+            "baseHp": 30,
+            "contactDamage": 12,
+            "moveSpeed": 55,
+            "hitbox": 16,
+            "expValue": 5,
+            "unlockAt": 270,
+            "ai": "charge",
+            "knockbackResist": 0,
+            "params": {
+                "detect": 200,
+                "windup": 0.6,
+                "dashSpeed": 260,
+                "dashDuration": 0.7,
+                "cooldown": 3.5,
+                "dashDamage": 12,
+                "recover": 0.4
+            },
+            "anim": "enemy.e8",
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage1",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 428
+        },
+        {
+            "id": "EL2",
+            "name": "타락한 흑기사",
+            "baseHp": 720,
+            "contactDamage": 20,
+            "moveSpeed": 50,
+            "hitbox": 32,
+            "expValue": 60,
+            "goldValue": 51,
+            "unlockAt": 270,
+            "ai": "shockwave",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "scale": 2,
+            "params": {
+                "radius": 110,
+                "damage": 18,
+                "windup": 0.8,
+                "cooldown": 6,
+                "knockback": 80
+            },
+            "anim": "enemy.el2",
+            "family": "demon",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage1",
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 432
+        },
+        {
+            "id": "DM03",
+            "name": "갓 태어난 악마",
+            "baseHp": 31,
+            "contactDamage": 15,
+            "moveSpeed": 53,
+            "hitbox": 12,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.dm03",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 436,
+            "params": {
+                "detect": 200,
+                "windup": 0.61,
+                "dashSpeed": 249,
+                "dashDuration": 0.7,
+                "cooldown": 3.3,
+                "dashDamage": 15,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM04",
+            "name": "부유하는 눈알",
+            "baseHp": 25,
+            "contactDamage": 12,
+            "moveSpeed": 67,
+            "hitbox": 13,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "anim": "enemy.dm04",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 440,
+            "params": {
+                "amplitude": 39,
+                "period": 1.22
+            }
+        },
+        {
+            "id": "DM05",
+            "name": "역겨운 후벼파는 놈",
+            "baseHp": 32,
+            "contactDamage": 15,
+            "moveSpeed": 55,
+            "hitbox": 13,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.dm05",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 444,
+            "params": {
+                "detect": 200,
+                "windup": 0.63,
+                "dashSpeed": 259,
+                "dashDuration": 0.7,
+                "cooldown": 3.62,
+                "dashDamage": 15,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM06",
+            "name": "히죽이는 그렘린",
+            "baseHp": 34,
+            "contactDamage": 16,
+            "moveSpeed": 52,
+            "hitbox": 13,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.dm06",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 448,
+            "params": {
+                "detect": 200,
+                "windup": 0.63,
+                "dashSpeed": 244,
+                "dashDuration": 0.7,
+                "cooldown": 3.44,
+                "dashDamage": 16,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM07",
+            "name": "사악한 장난꾸러기",
+            "baseHp": 26,
+            "contactDamage": 14,
+            "moveSpeed": 57,
+            "hitbox": 10,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.dm07",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 452,
+            "params": {
+                "detect": 200,
+                "windup": 0.59,
+                "dashSpeed": 268,
+                "dashDuration": 0.7,
+                "cooldown": 3.35,
+                "dashDamage": 14,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM08",
+            "name": "심연 발로르",
+            "baseHp": 918,
+            "contactDamage": 27,
+            "moveSpeed": 43,
+            "hitbox": 22,
+            "expValue": 102,
+            "goldValue": 66,
+            "unlockAt": 270,
+            "ai": "shockwave",
+            "anim": "enemy.dm08",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "demon",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 456,
+            "scale": 2.1,
+            "params": {
+                "radius": 94,
+                "damage": 24,
+                "windup": 0.8,
+                "cooldown": 6.42,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "DM09",
+            "name": "뾰족한 악마 자손",
+            "baseHp": 28,
+            "contactDamage": 14,
+            "moveSpeed": 59,
+            "hitbox": 12,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "charge",
+            "anim": "enemy.dm09",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 460,
+            "params": {
+                "detect": 200,
+                "windup": 0.61,
+                "dashSpeed": 277,
+                "dashDuration": 0.7,
+                "cooldown": 3.68,
+                "dashDamage": 14,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM10",
+            "name": "짓궂은 꼬마 악마",
+            "baseHp": 21,
+            "contactDamage": 12,
+            "moveSpeed": 66,
+            "hitbox": 9,
+            "expValue": 3,
+            "unlockAt": 30,
+            "ai": "charge",
+            "anim": "enemy.dm10",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 464,
+            "params": {
+                "detect": 200,
+                "windup": 0.58,
+                "dashSpeed": 310,
+                "dashDuration": 0.7,
+                "cooldown": 3.73,
+                "dashDamage": 12,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM11",
+            "name": "꿰는 추적자",
+            "baseHp": 32,
+            "contactDamage": 15,
+            "moveSpeed": 53,
+            "hitbox": 13,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.dm11",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 468,
+            "params": {
+                "detect": 200,
+                "windup": 0.62,
+                "dashSpeed": 249,
+                "dashDuration": 0.7,
+                "cooldown": 3.4,
+                "dashDamage": 15,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM12",
+            "name": "오염된 악당",
+            "baseHp": 36,
+            "contactDamage": 16,
+            "moveSpeed": 53,
+            "hitbox": 15,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.dm12",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 472,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 249,
+                "dashDuration": 0.7,
+                "cooldown": 3.63,
+                "dashDamage": 16,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "DM13",
+            "name": "뒤틀린 해골",
+            "baseHp": 23,
+            "contactDamage": 5,
+            "moveSpeed": 43,
+            "hitbox": 13,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dm13",
+            "knockbackResist": 0.2,
+            "tier": "normal",
+            "family": "demon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage3",
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 476,
+            "params": {
+                "keep": 160,
+                "tooClose": 130,
+                "tooFar": 220,
+                "cooldown": 2.06,
+                "windup": 0.45,
+                "projSpeed": 130,
+                "projDamage": 14,
+                "maxRange": 260
+            }
+        },
+        {
+            "id": "DR01",
+            "name": "성체 녹색 드래곤",
+            "baseHp": 700,
+            "contactDamage": 24,
+            "moveSpeed": 36,
+            "hitbox": 25,
+            "expValue": 70,
+            "goldValue": 50,
+            "unlockAt": 180,
+            "ai": "shockwave",
+            "anim": "enemy.dr01",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "dragon",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 480,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "radius": 99,
+                "damage": 22,
+                "windup": 0.8,
+                "cooldown": 6.01,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "DR02",
+            "name": "성체 백색 드래곤",
+            "baseHp": 1756,
+            "contactDamage": 33,
+            "moveSpeed": 33,
+            "hitbox": 32,
+            "expValue": 130,
+            "goldValue": 125,
+            "unlockAt": 270,
+            "ai": "shockwave",
+            "anim": "enemy.dr02",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "dragon",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 484,
+            "scale": 2.1,
+            "params": {
+                "radius": 110,
+                "damage": 30,
+                "windup": 0.8,
+                "cooldown": 5.98,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "DR03",
+            "name": "물 드레이크",
+            "baseHp": 33,
+            "contactDamage": 11,
+            "moveSpeed": 58,
+            "hitbox": 14,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "zigzag",
+            "anim": "enemy.dr03",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 488,
+            "params": {
+                "amplitude": 41,
+                "period": 1.16
+            }
+        },
+        {
+            "id": "DR04",
+            "name": "새끼 황동 드래곤",
+            "baseHp": 24,
+            "contactDamage": 4,
+            "moveSpeed": 45,
+            "hitbox": 13,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr04",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 492,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 3.17,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 17,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "DR05",
+            "name": "새끼 구리 드래곤",
+            "baseHp": 25,
+            "contactDamage": 5,
+            "moveSpeed": 43,
+            "hitbox": 13,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr05",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 496,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 3.05,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 17,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "DR06",
+            "name": "새끼 녹색 드래곤",
+            "baseHp": 24,
+            "contactDamage": 4,
+            "moveSpeed": 45,
+            "hitbox": 12,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr06",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 500,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 3.11,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 17,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "DR07",
+            "name": "새끼 백색 드래곤",
+            "baseHp": 27,
+            "contactDamage": 5,
+            "moveSpeed": 43,
+            "hitbox": 14,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr07",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 504,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 3.12,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 18,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "DR08",
+            "name": "준성체 청동 드래곤",
+            "baseHp": 29,
+            "contactDamage": 5,
+            "moveSpeed": 40,
+            "hitbox": 14,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr08",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 508,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 2.89,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 19,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "DR09",
+            "name": "완숙 청동 드래곤",
+            "baseHp": 700,
+            "contactDamage": 24,
+            "moveSpeed": 36,
+            "hitbox": 25,
+            "expValue": 70,
+            "goldValue": 50,
+            "unlockAt": 180,
+            "ai": "shockwave",
+            "anim": "enemy.dr09",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "dragon",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 512,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "radius": 99,
+                "damage": 22,
+                "windup": 0.8,
+                "cooldown": 6.11,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "DR10",
+            "name": "진흙 와이번",
+            "baseHp": 28,
+            "contactDamage": 10,
+            "moveSpeed": 65,
+            "hitbox": 13,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "anim": "enemy.dr10",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 516,
+            "params": {
+                "amplitude": 38,
+                "period": 1.25
+            }
+        },
+        {
+            "id": "DR11",
+            "name": "맹독 드레이크",
+            "baseHp": 31,
+            "contactDamage": 11,
+            "moveSpeed": 61,
+            "hitbox": 14,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "anim": "enemy.dr11",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 520,
+            "params": {
+                "amplitude": 40,
+                "period": 1.21
+            }
+        },
+        {
+            "id": "DR12",
+            "name": "왜소 와이번",
+            "baseHp": 22,
+            "contactDamage": 9,
+            "moveSpeed": 70,
+            "hitbox": 10,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "anim": "enemy.dr12",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 524,
+            "params": {
+                "amplitude": 39,
+                "period": 1.23
+            }
+        },
+        {
+            "id": "DR13",
+            "name": "청록 드레이크",
+            "baseHp": 32,
+            "contactDamage": 11,
+            "moveSpeed": 59,
+            "hitbox": 14,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "zigzag",
+            "anim": "enemy.dr13",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 528,
+            "params": {
+                "amplitude": 41,
+                "period": 1.18
+            }
+        },
+        {
+            "id": "DR14",
+            "name": "어린 황동 드래곤",
+            "baseHp": 29,
+            "contactDamage": 5,
+            "moveSpeed": 42,
+            "hitbox": 15,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr14",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 532,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 3.13,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 18,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "DR15",
+            "name": "어린 붉은 드래곤",
+            "baseHp": 29,
+            "contactDamage": 5,
+            "moveSpeed": 42,
+            "hitbox": 15,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.dr15",
+            "knockbackResist": 0.4,
+            "tier": "normal",
+            "family": "dragon",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage4",
+                "stage5"
+            ],
+            "frameStart": 536,
+            "params": {
+                "keep": 190,
+                "tooClose": 150,
+                "tooFar": 250,
+                "cooldown": 3.16,
+                "windup": 0.7,
+                "projSpeed": 150,
+                "projDamage": 18,
+                "maxRange": 300
+            }
+        },
+        {
+            "id": "HL01",
+            "name": "축복받은 검투사",
+            "baseHp": 39,
+            "contactDamage": 15,
+            "moveSpeed": 51,
+            "hitbox": 16,
+            "expValue": 6,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.hl01",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 540,
+            "params": {
+                "detect": 200,
+                "windup": 0.66,
+                "dashSpeed": 240,
+                "dashDuration": 0.7,
+                "cooldown": 3.38,
+                "dashDamage": 15,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HL02",
+            "name": "대담한 종사",
+            "baseHp": 37,
+            "contactDamage": 11,
+            "moveSpeed": 60,
+            "hitbox": 16,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "chase",
+            "anim": "enemy.hl02",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 544,
+            "params": {
+                "separation": 16
+            }
+        },
+        {
+            "id": "HL03",
+            "name": "결연한 병사",
+            "baseHp": 37,
+            "contactDamage": 14,
+            "moveSpeed": 53,
+            "hitbox": 15,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.hl03",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 548,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 249,
+                "dashDuration": 0.7,
+                "cooldown": 3.44,
+                "dashDamage": 14,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HL04",
+            "name": "독실한 수련사제",
+            "baseHp": 26,
+            "contactDamage": 5,
+            "moveSpeed": 43,
+            "hitbox": 16,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.hl04",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 552,
+            "params": {
+                "keep": 165,
+                "tooClose": 135,
+                "tooFar": 225,
+                "cooldown": 2.3,
+                "windup": 0.5,
+                "projSpeed": 140,
+                "projDamage": 14,
+                "maxRange": 265
+            }
+        },
+        {
+            "id": "HL05",
+            "name": "신성한 플라네타르",
+            "baseHp": 1317,
+            "contactDamage": 28,
+            "moveSpeed": 39,
+            "hitbox": 33,
+            "expValue": 130,
+            "goldValue": 94,
+            "unlockAt": 270,
+            "ai": "shockwave",
+            "anim": "enemy.hl05",
+            "knockbackResist": 1,
+            "tier": "miniboss",
+            "family": "holy",
+            "behavior": "shockwave",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 556,
+            "scale": 2.1,
+            "params": {
+                "radius": 111,
+                "damage": 25,
+                "windup": 0.8,
+                "cooldown": 6.41,
+                "knockback": 80
+            }
+        },
+        {
+            "id": "HL06",
+            "name": "총애받는 성직자",
+            "baseHp": 24,
+            "contactDamage": 4,
+            "moveSpeed": 48,
+            "hitbox": 16,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.hl06",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 560,
+            "params": {
+                "keep": 165,
+                "tooClose": 135,
+                "tooFar": 225,
+                "cooldown": 2.56,
+                "windup": 0.5,
+                "projSpeed": 140,
+                "projDamage": 13,
+                "maxRange": 265
+            }
+        },
+        {
+            "id": "HL07",
+            "name": "부유하는 케루빔",
+            "baseHp": 25,
+            "contactDamage": 10,
+            "moveSpeed": 68,
+            "hitbox": 14,
+            "expValue": 4,
+            "unlockAt": 90,
+            "ai": "zigzag",
+            "anim": "enemy.hl07",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "zigzag",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 564,
+            "params": {
+                "amplitude": 40,
+                "period": 1.19
+            }
+        },
+        {
+            "id": "HL08",
+            "name": "온화한 목자",
+            "baseHp": 586,
+            "contactDamage": 21,
+            "moveSpeed": 36,
+            "hitbox": 28,
+            "expValue": 65,
+            "goldValue": 42,
+            "unlockAt": 180,
+            "ai": "stagger",
+            "anim": "enemy.hl08",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "holy",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 568,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "moveDuration": 0.77,
+                "pauseDuration": 0.25
+            }
+        },
+        {
+            "id": "HL09",
+            "name": "성스러운 성전사",
+            "baseHp": 462,
+            "contactDamage": 24,
+            "moveSpeed": 46,
+            "hitbox": 28,
+            "expValue": 51,
+            "goldValue": 33,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.hl09",
+            "knockbackResist": 1,
+            "tier": "elite",
+            "family": "holy",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 572,
+            "scale": 1.75,
+            "dropsChest": true,
+            "params": {
+                "detect": 200,
+                "windup": 0.67,
+                "dashSpeed": 216,
+                "dashDuration": 0.7,
+                "cooldown": 3.59,
+                "dashDamage": 24,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HL10",
+            "name": "쾌활한 수사",
+            "baseHp": 46,
+            "contactDamage": 12,
+            "moveSpeed": 43,
+            "hitbox": 16,
+            "expValue": 7,
+            "unlockAt": 270,
+            "ai": "stagger",
+            "anim": "enemy.hl10",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "stagger",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 576,
+            "params": {
+                "moveDuration": 0.77,
+                "pauseDuration": 0.25
+            }
+        },
+        {
+            "id": "HL11",
+            "name": "굳건한 천사",
+            "baseHp": 36,
+            "contactDamage": 14,
+            "moveSpeed": 55,
+            "hitbox": 15,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.hl11",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 580,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 259,
+                "dashDuration": 0.7,
+                "cooldown": 3.59,
+                "dashDamage": 14,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HL12",
+            "name": "정의로운 데바",
+            "baseHp": 39,
+            "contactDamage": 15,
+            "moveSpeed": 51,
+            "hitbox": 16,
+            "expValue": 6,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.hl12",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 584,
+            "params": {
+                "detect": 200,
+                "windup": 0.66,
+                "dashSpeed": 240,
+                "dashDuration": 0.7,
+                "cooldown": 3.39,
+                "dashDamage": 15,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HL13",
+            "name": "검 아콘",
+            "baseHp": 36,
+            "contactDamage": 14,
+            "moveSpeed": 55,
+            "hitbox": 15,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "charge",
+            "anim": "enemy.hl13",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "charge",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 588,
+            "params": {
+                "detect": 200,
+                "windup": 0.65,
+                "dashSpeed": 259,
+                "dashDuration": 0.7,
+                "cooldown": 3.61,
+                "dashDamage": 14,
+                "recover": 0.4
+            }
+        },
+        {
+            "id": "HL14",
+            "name": "역전의 검사",
+            "baseHp": 33,
+            "contactDamage": 11,
+            "moveSpeed": 64,
+            "hitbox": 15,
+            "expValue": 5,
+            "unlockAt": 180,
+            "ai": "chase",
+            "anim": "enemy.hl14",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "chase",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 592,
+            "params": {
+                "separation": 15
+            }
+        },
+        {
+            "id": "HL15",
+            "name": "열광적인 사제",
+            "baseHp": 24,
+            "contactDamage": 4,
+            "moveSpeed": 47,
+            "hitbox": 16,
+            "expValue": 3,
+            "unlockAt": 90,
+            "ai": "ranged",
+            "anim": "enemy.hl15",
+            "knockbackResist": 0.35,
+            "tier": "normal",
+            "family": "holy",
+            "behavior": "ranged",
+            "stageAffinity": [
+                "stage2"
+            ],
+            "frameStart": 596,
+            "params": {
+                "keep": 165,
+                "tooClose": 135,
+                "tooFar": 225,
+                "cooldown": 2.55,
+                "windup": 0.5,
+                "projSpeed": 140,
+                "projDamage": 13,
+                "maxRange": 265
+            }
+        }
     ]
 }

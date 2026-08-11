@@ -91,6 +91,31 @@ export class SpawnSystem {
     get phase() { return this.phases[Math.max(0, this.phaseIndex)]; }
 
     /** 가중치 맵 → { defs, cum, total } 누적합 테이블 */
+    /**
+     * 스테이지 데이터를 적용한다. StageSystem 이 부른다.
+     *
+     * ★ 테이블을 다시 굽는 것이 핵심이다. 생성자에서 한 번 구운 누적합 테이블을 그대로 두면
+     *   스테이지를 바꿔도 1스테이지 적이 계속 나온다. 반대로 매 스폰마다 굽게 만들면
+     *   런 중 할당 0 규약이 깨진다 — 전환 시점에 한 번만 굽는 것이 정답이다.
+     * ★ elapsed 를 0 으로 되돌리지 않는다. 런 재시작은 씬 restart 가 담당하고
+     *   여기서는 "무엇이 나오는가"만 바꾼다. 둘을 섞으면 보스전 중 전환 같은 경우에 어긋난다.
+     *
+     * @param {{segments:object[], events?:object[], phases?:object[], bossAt?:number}} plan
+     */
+    applyStage(plan) {
+        if (!plan?.segments?.length) { console.warn("[SpawnSystem] 빈 스테이지 계획 — 무시한다"); return false; }
+        this.segments = plan.segments;
+        this.events = plan.events ?? [];
+        this.phases = plan.phases ?? [];
+        this.bossAt = plan.bossAt ?? this.bossAt;
+        this.tables = this.segments.map((seg) => this.bakeTable(seg));
+        this.segIndex = 0;
+        this.eventIndex = 0;
+        this.phaseIndex = -1;
+        this.suppressed = false;
+        return true;
+    }
+
     bakeTable(seg) {
         const defs = [];
         const cum = [];

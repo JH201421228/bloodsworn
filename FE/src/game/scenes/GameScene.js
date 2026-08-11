@@ -29,6 +29,7 @@ import { AudioSystem } from "../systems/AudioSystem";
 import { FxSystem } from "../systems/FxSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { ItemSystem } from "../systems/ItemSystem";
+import { StageSystem } from "../systems/StageSystem";
 import { QualitySystem } from "../systems/QualitySystem";
 import { EventBus } from "../EventBus";
 import { EVENTS } from "../constants";
@@ -84,6 +85,10 @@ export default class GameScene extends Phaser.Scene {
             this.fxSystem = new FxSystem(this, { player: this.player });
             this.combatSystem.fx = this.fxSystem;
             this.quality = new QualitySystem(this, { fx: this.fxSystem });
+            // 스테이지 — 적 풀·웨이브 곡선·보스·배경·환경 기믹을 한 번에 바꾼다.
+            // bossSystem 이 먼저 있어야 기믹이 보스전 중 강도를 판단할 수 있다.
+            this.stages = new StageSystem(this, { spawn: this.spawnSystem, boss: this.bossSystem });
+            this.stages.load(this.registry.get("stageId") ?? undefined);
             this.audio = new AudioSystem(this);
             this.input.once("pointerdown", () => this.audio.unlock());
 
@@ -142,6 +147,7 @@ export default class GameScene extends Phaser.Scene {
         this.combatSystem?.update(dt);
         this.projectiles?.update(dt); // 해시 재구축 뒤에 충돌을 본다
         this.items?.update(dt);      // 드롭 자석·획득·유물 규칙
+        this.stages?.update(dt);     // 환경 기믹
         this.bossSystem?.update(dt);
         this.fxSystem?.update(dt);
         this.quality?.update(dt);

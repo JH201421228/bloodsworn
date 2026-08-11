@@ -56,7 +56,7 @@ export class GroundSystem {
     /** props-grave.json의 바운딩 박스를 Phaser 프레임으로 등록한다 */
     registerFrames() {
         const data = this.scene.cache.json.get("props_grave");
-        const tex = this.scene.textures.get("props_grave");
+        const tex = this.scene.textures.get(this.propsKey ?? "props_grave");
         if (!data?.frames || !tex) {
             console.warn("[GroundSystem] 소품 데이터가 없다");
             return;
@@ -97,7 +97,7 @@ export class GroundSystem {
                 if (!s) return list;
                 const x = cx * CHUNK + rng() * CHUNK;
                 const y = cy * CHUNK + rng() * CHUNK;
-                s.setTexture("props_grave", d.name).setPosition(Math.round(x), Math.round(y));
+                s.setTexture(this.propsKey ?? "props_grave", d.name).setPosition(Math.round(x), Math.round(y));
                 // 발밑을 기준점으로 — 위아래 겹칠 때 y 정렬이 자연스럽다
                 s.setOrigin(0.5, 0.9);
                 if (kind === "fog") {
@@ -111,6 +111,24 @@ export class GroundSystem {
         }
         return list;
     }
+    /**
+     * 스테이지 테마 전환. StageSystem 이 부른다.
+     * ★ 텍스처가 없으면 호출자가 이미 폴백으로 바꿔 넘긴다. 여기서는 존재만 한 번 더 확인하고
+     *   없으면 조용히 유지한다 — 없는 키를 setTexture 하면 Phaser 가 초록 체크무늬를 그린다.
+     * ★ 소품은 이미 배치된 청크를 전부 버리고 다시 만든다. 텍스처만 갈면
+     *   이전 테마의 프레임 이름을 그대로 참조해 깨진 프레임이 남는다.
+     */
+    setTheme(groundTex, propsTex, tint = 0xffffff) {
+        if (groundTex && this.scene.textures.exists(groundTex)) this.ground.setTexture(groundTex);
+        this.ground.setTint(tint);
+        if (propsTex && propsTex !== this.propsKey && this.scene.textures.exists(propsTex)) {
+            this.propsKey = propsTex;
+            this.registerFrames();
+            this.chunks?.clear?.();
+            for (const s2 of this.props?.active ?? []) this.release(s2);
+        }
+    }
+
 
     update() {
         const cam = this.scene.cameras.main;
