@@ -343,13 +343,26 @@ this.encounters?.update(dt);
 | `medieval/elder.png` | 128x32 | 4 (32x32) | 예비 |
 | `steampunk/trader.png` | 128x32 | 4 (32x32) | 예비 |
 
-⚠ **프레임 크기가 32x32 와 34x34 로 섞여 있다.** `enemies.png` 같은 균일 격자가 아니므로
-`tools/build-npcs.mjs` 로 **하나의 균일 시트(40x40, 바닥 정렬 패딩)로 다시 구워야 한다.**
+✅ **2026-08-11 완료.** 프레임 크기가 32x32 와 34x34 로 섞여 있어 `enemies.png` 같은 균일 격자가
+아니었으므로 `tools/build-npcs.mjs` 가 **균일 시트(셀 40x40, 바닥 정렬 패딩)로 다시 굽는다.**
 `tools/build-monsters.mjs` 가 같은 문제를 이미 푼 전례다(`12-TASK-BACKLOG` T126).
 
-⚠ **라이선스 미확인**: `asset/npcs/Lively_NPCs_v3.1/` 에 라이선스 텍스트 파일이 없다.
-`17-LICENSES-AND-CREDITS` 에 항목을 추가하고 출처를 특정해야 한다. 사용자는 "무료로 받은 것"이라고
-확인해 주었으나 **문서상 근거가 아직 없다.** 상용 배포 전 해소 필요.
+| 산출 | 값 |
+|---|---|
+| 시트 | `FE/public/assets/npc/npcs.png` — 240x240 / 2.8KB / GPU 0.22MB(RGBA8888) |
+| 격자 | 40x40 · 6열 x 6행 = 36칸(실사용 29). **한 행이 정확히 한 종**이라 `frameStart = 종 인덱스 x 6` |
+| 매니페스트 | `public/assets.json` → `{ "key": "npcs", "frameWidth": 40, "frameHeight": 40 }` |
+| 카탈로그 | `src/data/npc-catalog.json` — 종별 `id / frameStart / frameCount / bodyW / bodyH / src` |
+| 애니 키 | `npc.merchant` `npc.witch` `npc.seer` `npc.shady_guy` `npc.elder` `npc.trader` (fps 6, 무한 반복) |
+| 정렬 | 셀 안에서 **바닥 정렬**(가로 가운데 / 세로 아래 변). 쓰는 쪽은 `setOrigin(0.5, 1)` 을 권장 — 스프라이트 y 가 곧 발이 닿는 지점이 된다 |
+
+애니 등록은 `registerAnims.js` 가 카탈로그를 루프해서 만든다. 조우 시스템은 애니 키를 손으로 적지 말고
+`npc-catalog.json` 의 `anim` 필드를 읽어라 — 프레임 배정을 두 곳에 적으면 시트를 다시 구울 때 어긋난다.
+
+✅ **라이선스 특정 완료(2026-08-11)**: **chierit** / https://chierit.itch.io/lively-npcs / **CC BY 4.0**.
+상업 사용 가능하고 **크레딧 표기가 유일한 조건**이다. `17-LICENSES-AND-CREDITS` 0 · 1 ⑫ · 5 · 6.2 · LC-06 에 반영했다.
+⚠ 남은 것: 크레딧 화면 구현(`LC-11`)과 팩 페이지 원문 사본 보관(`LC-10`). 배포 전 필수.
+⚠ 다만 **배포 zip 과 해시 대조는 하지 않았다** — 정황(zip 이름·49장·v3.1 의 gypsy→seer 리네임)이 전부 일치할 뿐이다.
 
 ### 7.2 보물상자 — 쓸 수 있는 아트가 없다
 
@@ -371,7 +384,7 @@ this.encounters?.update(dt);
 - 바닥 원: `StageSystem.obtainCircle()` 재사용
 - 가격: Phaser 텍스트
 
-### 7.4 Codex 의뢰 목록 (→ `29-ICON-IMAGE-PROMPTS` 에 프롬프트 추가)
+### 7.4 Codex 의뢰 목록 (→ `32-RUNE-AND-ENCOUNTER-ICON-PROMPTS` 에 프롬프트 전문이 있다)
 
 | # | 대상 | 개수 | 우선순위 |
 |---|---|---|---|
@@ -402,5 +415,5 @@ this.encounters?.update(dt);
 - `31-RUNE-EVOLUTION-TREE` — 룬의 내용, 트리 게이트, 24종 정의
 - `23-ITEM-SYSTEM` — 좌판이 파는 물건의 출처, 픽업 판정 재사용
 - `26-STAGES-AND-BOSSES` — 필드보스가 갈라져 나온 원본
-- `29-ICON-IMAGE-PROMPTS` — C-1~C-4 의뢰 프롬프트
+- `32-RUNE-AND-ENCOUNTER-ICON-PROMPTS` — C-1~C-4 의뢰 프롬프트 전문 (38종 시트)
 - `16-RISKS-AND-SCOPE-CUTS` — NPC/상자 라이선스 미해결 항목

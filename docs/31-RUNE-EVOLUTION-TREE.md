@@ -296,7 +296,9 @@ W3 뼈 회오리     Lv3   [ . ]          - [ . ]     - [ . ]
 ### 6.3 아이콘
 
 24종 전부 **유니코드 글리프 폴백**으로 시작한다(`awakenings.json` 의 `sigil` 과 같은 방식).
-Codex 의뢰는 `30` §7.4 의 C-2. 아이콘이 오면 `runes.json` 의 `icon` 필드만 채우면 된다.
+Codex 의뢰는 `32-RUNE-AND-ENCOUNTER-ICON-PROMPTS` 의 칸 00~23 이다.
+아이콘이 오면 `runes.json` 의 `icon` 필드에 프레임 번호만 채우면 된다.
+★ **글리프 폴백 코드를 지우지 마라** — 시트 품질이 나쁘면 매니페스트에서 빼는 것으로 되돌린다.
 
 ---
 
@@ -320,4 +322,4 @@ Codex 의뢰는 `30` §7.4 의 C-2. 아이콘이 오면 `runes.json` 의 `icon` 
 - `30-ENCOUNTERS-AND-FIELD-EVENTS` — 룬을 어디서 얻는가
 - `04-PACT-SYSTEM` — 축복·대가·각성과의 분업
 - `05-COMBAT-AND-BALANCE` — 무기 4종의 기본 수치
-- `29-ICON-IMAGE-PROMPTS` — 룬 아이콘 24종 의뢰 (C-2)
+- `32-RUNE-AND-ENCOUNTER-ICON-PROMPTS` — 룬 아이콘 24종 의뢰 (칸 00~23)

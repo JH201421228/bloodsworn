@@ -2,7 +2,7 @@
 
 > **문서 지위: 실행 문서(하위) — 그러나 배포 게이트다.**
 > 이 문서의 §5 판정에서 **🟥 항목이 하나라도 남아 있으면 Play 스토어에도 App Store에도 올리지 않는다.**
-> 최종 수정: 2026-08-10 / 조사자: 에셋 관리
+> 최종 수정: 2026-08-11 / 조사자: 에셋 관리
 > 에셋 매핑은 `09-ART-AUDIO-AND-ASSET-MAP.md`.
 >
 > ★ **배포 대상이 Android + iOS 동시로 바뀌었다(2026-08-10 확정). 이 문서의 판정은 하나도 바뀌지 않는다.**
@@ -22,6 +22,7 @@
 | 투사체 (BDragon1727 Fire Pixel Bullet 16x16) | 🟥 확인 필요 | 🟩 **상업 사용 가능 (기여 조건)** | "If you will be using on a commercial game, please contribute (any value)" — 금액 제한 없음 |
 | Raven Fantasy Icons | 🟥 최대 리스크 | 🟨 **구매 여부에 달림** | 무료 티어는 수익화 불가. 동봉 `Special Note to the Dev.txt` 에 **"thank you for your purchase"** 라고 적혀 있어 구매분일 가능성이 높다 |
 | pixel items0~6 (`asset/item/`) | 🟥 확인 불가 | 🟨 **출처 미상 유지** | 제작자·라이선스 단서 전무. 검색으로도 특정 불가 |
+| NPC (chierit Lively NPCs v3.1) | 🟨 미사용·제작자 **추정** | 🟩 **상업 사용 가능 — 단 크레딧 의무** | 팩 페이지 원문에 `Asset license: Creative Commons Attribution v4.0 International`. 조우 시스템(`30-ENCOUNTERS`)이 실제로 쓰게 되어 **미사용 → 사용**으로 전환 |
 
 ### 원문 인용
 
@@ -49,6 +50,21 @@
 → **실행 과제:** itch 구매 내역을 확인해 프리미엄 구매분이면 영수증을 보관한다.
 무료 다운로드분이었다면 $35 결제로 즉시 해소된다. 8,000+ 아이콘의 상업 사용권이 $35 라면
 6개월 프로젝트에서 가장 값싼 리스크 제거다.
+
+**chierit** — https://chierit.itch.io/lively-npcs
+> 페이지 "More information" 표: **`Asset license: Creative Commons Attribution v4.0 International`**
+> 설명: "Brighten up your next pixel RPG with these 49 FREE animated NPCs! - 32x32 size each - 4-6 frames each (idle animation only) - **recommended setting of 6 fps**"
+> 제작자 코멘트: "You can click the "more information" above to see the licence. **It's CC-BY4.0.**"
+> 상업 사용 질의("Is it free to use for commercial projects freely with no restrictions?")에 대한 제작자 답변: "Sure thing, man. No problem. :)"
+
+가격은 무료(Name your own price)이고 배포 zip 이름이 `Lively_NPCs_v3.1.zip` 으로 로컬 폴더명과 같다.
+v3.1 의 변경점이 devlog 상 "Changed the word 'gypsy' to 'seer' in the files" 인데 로컬에 `seer.png` 가 있고
+`gypsy` 가 없다 — **버전까지 일치한다.** 시트 49장도 페이지의 "49 FREE animated NPCs" 와 같다.
+
+→ **실행 과제:** CC BY 는 **크레딧이 조건**이다. 5 크레딧 문안에 반영했다(아래). 표기하지 않으면 무단 사용이 된다.
+⚠ **확인하지 못한 것:** 배포 zip 을 다시 받아 로컬 파일과 **해시 대조는 하지 않았다.** 위 4가지 정황이 모두
+일치하므로 동일 팩으로 판단했으나 바이트 단위로 증명한 것은 아니다. 사용자의 "무료로 받았다"는 진술은
+팩이 실제 무료 배포인 사실과 모순이 없으나, 그 진술 자체는 출처를 특정하는 근거가 되지 못한다.
 
 ### 판단 원칙
 동봉 파일에 라이선스가 없다고 해서 "사용 불가"가 아니다. **itch 상품 페이지가 라이선스의 소재지**다.
@@ -406,17 +422,32 @@ URL: `undead-asset-pack` · `vermin-asset-pack` · `demon-sprite-pack` · `drago
 
 ---
 
-#### ⑫ Lively NPCs v3.1 — **미사용** 🟨
+#### ⑫ Lively NPCs v3.1 — **사용 중** 🟨 (크레딧 의무)
+
+> **2026-08-11 변경**: `30-ENCOUNTERS-AND-FIELD-EVENTS` 3 의 조우 NPC 4종이 이 팩을 쓰기로 확정되어
+> **미사용 → 사용**으로 바뀌었다. 그와 함께 출처·라이선스를 itch 페이지 원문으로 특정했다(0 참고).
 
 | 항목 | 값 |
 |---|---|
-| 경로 | `asset/npcs/Lively_NPCs_v3.1/` (267 파일 / 5MB) |
-| **동봉 라이선스** | ❌ 없음 ✅ |
-| 추정 제작자 | **chierit** 🌐 https://chierit.itch.io/lively-npcs (폴더 구성 `medieval` / `steampunk` / `elementals`, 버전 v3.x가 일치) |
-| 웹 확인 요지 | 🌐 **CC-BY 4.0** — 상업 사용 가능하나 **크레딧 표기 의무 있음** |
-| **판정** | 🟨 **조건부 (크레딧 의무).** 정본에 NPC가 없어 **미사용** → §4.4 블랙리스트 유지 |
+| 경로 | `asset/npcs/Lively_NPCs_v3.1/` (267 파일 / 5MB) 중 **시트 6장만** 사용 |
+| 사용 파일 | `medieval/{merchant,witch,seer,shady_guy,elder}.png` · `steampunk/trader.png` |
+| 배포 경로 | `FE/public/assets/npc/npcs.png` (240x240 / 2.8KB) — `tools/build-npcs.mjs` 가 6장을 균일 격자로 다시 구운 것 |
+| **동봉 라이선스** | ❌ 없음 ✅ — itch 는 라이선스를 **상품 페이지 메타데이터**로만 노출하므로 zip 에 파일이 없는 것이 정상이다 |
+| 제작자 | **chierit** ✅ https://chierit.itch.io/lively-npcs (2026-08-11 페이지 원문 직접 확인) |
+| **라이선스** | ✅ **CC BY 4.0** — `Asset license: Creative Commons Attribution v4.0 International` (제작자 코멘트로도 재확인) |
+| 상업 사용 | ✅ 가능. 수익화(광고·IAP) 전환과 충돌하지 않는다 |
+| **크레딧** | ✅ **의무.** CC BY 의 유일한 조건이다 → 5 문안 반영 완료 |
+| 개변 | ✅ 가능. 이 프로젝트는 잘라내기·바닥 정렬 패딩·재배치만 했고 그림 자체는 고치지 않았다 |
+| **판정** | 🟨 **조건부 — 크레딧을 실제로 화면에 띄우면(`LC-11`) 🟩.** 조건이 크레딧 하나뿐이라 해소가 가장 쉬운 항목이다 |
 
-**→ 액션 `LC-06`:** 사용하지 않는다. 만약 쓰게 되면 **크레딧 화면에 반드시 표기**(CC-BY는 의무).
+⚠ **확인하지 못한 것**: 배포 zip 을 다시 받아 로컬 파일과 **해시 대조하지 않았다.**
+zip 이름·시트 49장·v3.1 의 `gypsy → seer` 리네임·3분류 구성이 모두 일치하므로 동일 팩으로 판단했으나
+**바이트 단위로 증명한 것은 아니다.** 사용자는 "무료로 받은 것"이라고 확인해 주었고 팩이 실제로
+무료 배포(Name your own price)인 것과 모순이 없으나, **그 진술 자체가 출처를 특정하지는 못한다.**
+
+**→ 액션 `LC-06`:** ~~사용하지 않는다~~ → **사용 중이므로 크레딧 표기가 필수다.**
+남은 일은 (1) 크레딧 화면 구현(`LC-11`), (2) 팩 페이지 원문 사본을 `docs/licenses/lively-npcs.txt` 에 보관(`LC-10`).
+쓰지 않는 43장은 `FE/public/` 으로 복사되지 않는다 — `build-npcs.mjs` 가 6장만 읽는다.
 
 ---
 
@@ -566,7 +597,7 @@ Mulmaru가 OFL로 확정되었으므로 **대체는 불필요**하다. 아래는
 | **R3** | **출처 불명 투사체 팩** | `projectile` (MUST 경로) | 중 | 🟠 대체 가능 | 🟨 중 |
 | **R4** | DeepDive 몬스터 팩 — 조건 자체는 안전하나 **동봉 원문 부재** | `monsters` (MUST 경로) | 낮음 | 🟠 소명 자료 부족 | 🟨 중 |
 | **R5** | BGM 출처가 Pixabay가 아닐 경우 | `bgm` | 낮음 | 🔴 음원은 저작권 신고가 특히 활발 | 🟨 중 |
-| **R6** | 미사용 팩(NPC/보스 7종/아이템)을 **실수로 배포에 포함** | 여러 | 중 | 🟠 불필요한 노출 | 🟨 중 |
+| **R6** | 미사용 팩(보스 7종/아이템)을 **실수로 배포에 포함**. NPC 팩은 49장 중 **6장만** 굽고 나머지 43장은 배포 밖이다 | 여러 | 중 | 🟠 불필요한 노출 | 🟨 중 |
 | **R7** | 크레딧 화면 미구현 | 전체 | — | 🟠 CC-BY 계열 사용 시 즉시 위반 | 🟨 중 |
 | **R8** | 폰트 | `fonts` | — | — | 🟩 **해결됨** |
 
@@ -593,7 +624,8 @@ Q1. 다운로드 이력(itch.io My Library / 브라우저 기록 / 원본 ZIP)�
     NO  → Q2
 
 Q2. 그 에셋이 MUST 경로인가?
-    NO  → 즉시 배포에서 제외한다. (npcs, item, 미사용 보스 7종이 여기)
+    NO  → 즉시 배포에서 제외한다. (item, 미사용 보스 7종이 여기)
+          ※ npcs 는 2026-08-11 에 Q1(팩 페이지 특정)에서 통과해 이 분기를 빠져나갔다.
     YES → Q3
 
 Q3. 코드(Graphics/파티클)로 대체하는 데 2시간 이내인가?
@@ -679,6 +711,11 @@ Q4. 라이선스가 확실한 무료 대체 에셋을 1시간 안에 찾을 수 
     by Clembod
     https://clembod.itch.io
 
+  조우 NPC (상인 · 마녀 · 예언자 · 수상한 자)
+    Lively NPCs
+    by chierit  ·  CC BY 4.0
+    https://chierit.itch.io/lively-npcs
+
   배경 타일셋
     Dungeon Tileset
     by Szadi art
@@ -746,7 +783,7 @@ Q4. 라이선스가 확실한 무료 대체 에셋을 1시간 안에 찾을 수 
 |---|---|
 | C1 | **`팩 이름` / `by 제작자명` / `URL`** 3줄 세트로 통일 |
 | C2 | CC0/OFL 등 **라이선스명이 의무이거나 유의미할 때만** 병기 (예: Kenney CC0, Mulmaru OFL 1.1) |
-| C3 | **CC-BY 계열은 크레딧이 법적 의무**다. 해당 에셋을 쓰면 **반드시** 넣는다 (현재는 Lively NPCs만 해당 → 미사용) |
+| C3 | **CC-BY 계열은 크레딧이 법적 의무**다. 해당 에셋을 쓰면 **반드시** 넣는다 (현재는 Lively NPCs만 해당 → **사용 중이므로 필수**) |
 | C4 | URL은 **제작자 페이지 또는 팩 페이지**. 다운로드 직링크 금지 |
 | C5 | 사용하지 않은 팩은 **넣지 않는다** (허위 표기가 된다) |
 | C6 | 오프라인에서도 읽히도록 **텍스트로 표시**한다. 링크는 `Browser.open()`(Capacitor)으로 열되, 텍스트도 함께 노출 |
@@ -779,7 +816,7 @@ Q4. 라이선스가 확실한 무료 대체 에셋을 1시간 안에 찾을 수 
 | 8 | Fire Bullet 16x16 | `fx/fx-bullet.png` | **❓ 미확정** (BDragon1727 후보 🔶) | ❓ | ❓ | ❓ | ❓ | ❓ | — | **없음** (`desktop.ini` 단서만) | W2 투사체 | 🟥 **LC-04** |
 | 9 | BGM 13곡 | `audio/bgm/*` | universfield 외 8인 | https://pixabay.com 🔶 | **Pixabay Content License** 🌐 | ✅ | ❌ | ❓ | 2026-08-10 | 동봉 없음 / 웹 🌐 | 전 BGM | 🟨 **LC-08** |
 | 10 | (SFX) 절차적 생성 | — | 본 프로젝트 | — | 자체 제작 | ✅ | — | — | — | `FE/src/game/audio/Sfx.js` | SFX 12종 | 🟩 |
-| — | *(미사용)* Lively NPCs v3.1 | — | chierit 🌐 | https://chierit.itch.io/lively-npcs | **CC-BY 4.0** 🌐 | ✅ | **✅ 의무** | ❓ | 2026-08-10 | 동봉 없음 / 웹 🌐 | **미사용** | 🟨 **LC-06** |
+| 11 | Lively NPCs v3.1 (**49장 중 6장**) | `npc/npcs.png` | chierit | https://chierit.itch.io/lively-npcs ✅ | **CC BY 4.0** ✅ | ✅ | **✅ 의무** | ❓ | 2026-08-11 | 동봉 없음 / 팩 페이지 `Asset license` ✅ | 조우 NPC 6종(상인·마녀·예언자·수상한 자·예비 2) | 🟨 **LC-06** — 크레딧 표기하면 🟩 |
 | — | *(미사용)* Evil Wizard 2 | — | ❓ | ❓ | **CC0** ✅ | ✅ | ❌ | ❓ | 2026-08-10 | 동봉 `License.txt` ✅ | **미사용** | 🟩 |
 | — | *(미사용)* FREE_Samurai v1.2 | — | xzany 🔶 | ❓ | 독자(②와 동일) | ✅ | ❌ | ❓ | 2026-08-10 | 동봉 `License.txt` ✅ | **미사용** | 🟩 |
 | — | *(미사용)* MainCharacter(FreePack) | — | KBPixelArt | ❓ | KBPixelArt v1.0 | 🟨 | ❌ | ❓ | 2026-08-10 | 동봉 `License.txt` ✅ | **미사용** | 🟨 |
@@ -809,7 +846,7 @@ Q4. 라이선스가 확실한 무료 대체 에셋을 1시간 안에 찾을 수 
 | **LC-03** ★ | **이펙트 팩 출처 특정** (itch.io My Library / 원본 ZIP / 브라우저 기록). 실패 시 대체안 실행 | `effect` | 1~2h | **Day 2** | **DMCA 리스크로 MUST VFX 전량 사용 불가** |
 | **LC-04** | 투사체 팩 출처 특정. 실패 시 **코드 파티클로 대체** | `projectile` | 30분 | Day 2 | W2 시각 표현 공백 |
 | **LC-05** | `item` 팩 — 사용하지 않는다(블랙리스트 유지) | `item` | 0 | — | — |
-| **LC-06** | Lively NPCs — 사용하지 않는다. 쓰게 되면 **CC-BY 크레딧 필수** | `npcs` | 0 | — | CC-BY 위반 |
+| **LC-06** | Lively NPCs — **사용 중.** 출처·라이선스 특정 완료(2026-08-11 · chierit · CC BY 4.0). 남은 일은 **크레딧 표기**(LC-11 문안에 반영 완료)와 팩 페이지 원문 사본 보관(LC-10) | `npcs` | 10분 | Day 6 | **크레딧 없이 배포하면 즉시 CC-BY 위반** |
 | **LC-07** | 미사용 보스 4팩(NightBorne 포함) 배포 제외 확정 | `bosses` | 0 | Day 2 | 불필요한 노출 |
 | **LC-08** | BGM 배포 13곡의 Pixabay 트랙 페이지 확인 + URL·업로더·라이선스 기록. 미발견 곡은 즉시 교체 | `bgm` | 40분 | Day 2 | 음원 저작권 신고 리스크 |
 | **LC-09** | Mulmaru `OFL.txt` 원문을 `FE/public/assets/fonts/`에 동봉 + 크레딧 표기 | `fonts` | 10분 | Day 1 | OFL 전문 동봉 요건 미충족 |
@@ -828,6 +865,7 @@ Q4. 라이선스가 확실한 무료 대체 에셋을 1시간 안에 찾을 수 
 [ ] LC-02 완료 — Raven 아이콘 수익화 방침 확정 & Play 콘솔 신고 일치
 [ ] LC-03 완료 — 이펙트 팩 출처 확정 또는 대체 완료
 [ ] LC-04 완료 — 투사체 출처 확정 또는 대체 완료
+[ ] LC-06 완료 — 크레딧 화면에 chierit / Lively NPCs / CC BY 4.0 3줄이 실제로 보인다
 [ ] LC-08 완료 — BGM 13곡 Pixabay 확인 완료
 [ ] LC-09 완료 — OFL.txt 동봉
 [ ] LC-10 완료 — docs/licenses/ 근거 보관

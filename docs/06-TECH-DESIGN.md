@@ -346,23 +346,24 @@ export const EVENTS = {
 | 16 | `perf:sample` | `{ fps, entities, ms: { enemyAI, collision, weapons, render, total } }` | **디버그 모드에서만, 500ms마다** | 디버그 오버레이 |
 | 17 | `quality:changed` | `{ tier: "high"\|"low", reason }` | 적응형 품질 강등/복귀(§5.7) | 옵션 화면에 표시 |
 | 18 | `error:fatal` | `{ message, stack }` | 씬 생성 실패 등 | 에러 화면 + 타이틀 복귀 버튼 |
+| 19 | `rune:changed` | `{ weapons: [{ weaponId, name, level, t1, t2, t3 }] }` | 룬을 새겼을 때 / 무기 획득·레벨업 시 | 일시정지 화면의 룬 조망 갱신 (31 §6.2) |
 
 **R→P (React가 emit, Phaser가 수신)**
 
 | # | 이벤트 | 페이로드 | 발생 시점 | Phaser 반응 |
 |---|---|---|---|---|
-| 19 | `cmd:start-run` | `{ characterId, meta: MetaSnapshot, settings: Settings, seed? }` | 타이틀/성소에서 "런 시작" | `scene.start("GameScene", payload)` |
-| 20 | `cmd:pact-choose` | `{ index: 0\|1\|2 }` | 카드 탭 | `PactSystem.apply()` → `pact:applied` → `scene.resume()` |
-| 21 | `cmd:pact-reroll` | `{}` | 리롤 버튼 | 카드 3장 재생성 → `run:levelup` 재emit |
-| 22 | `cmd:pact-skip` | `{}` | 스킵 버튼 | HP 25% 회복 + 골드 +30 → `scene.resume()` |
-| 23 | `cmd:awakening-ack` | `{}` | 각성 배너 애니메이션 종료 | 히트스톱 해제, 충격파 발동 |
-| 24 | `cmd:pause` | `{ reason }` | 일시정지 버튼 / 앱 백그라운드 | `scene.pause()` + `sound.pauseAll()` |
-| 25 | `cmd:resume` | `{}` | 계속하기 | `scene.resume()` + `sound.resumeAll()` |
-| 26 | `cmd:abandon` | `{}` | 포기 확인 | 현재까지 골드 정산 → `run:ended` |
-| 27 | `cmd:settings` | `{ bgmVolume, sfxVolume, screenShake, damageNumbers, lowSpec, joystickMode }` | 옵션 변경 즉시 | 볼륨 반영, 흔들림 플래그, 품질 티어 강제 |
-| 28 | `cmd:debug` | `{ action: "levelup"\|"godmode"\|"timescale"\|"killall"\|"gold", value? }` | 치트키/디버그 패널 | §13 |
+| 20 | `cmd:start-run` | `{ characterId, meta: MetaSnapshot, settings: Settings, seed? }` | 타이틀/성소에서 "런 시작" | `scene.start("GameScene", payload)` |
+| 21 | `cmd:pact-choose` | `{ index: 0\|1\|2 }` | 카드 탭 | `PactSystem.apply()` → `pact:applied` → `scene.resume()` |
+| 22 | `cmd:pact-reroll` | `{}` | 리롤 버튼 | 카드 3장 재생성 → `run:levelup` 재emit |
+| 23 | `cmd:pact-skip` | `{}` | 스킵 버튼 | HP 25% 회복 + 골드 +30 → `scene.resume()` |
+| 24 | `cmd:awakening-ack` | `{}` | 각성 배너 애니메이션 종료 | 히트스톱 해제, 충격파 발동 |
+| 25 | `cmd:pause` | `{ reason }` | 일시정지 버튼 / 앱 백그라운드 | `scene.pause()` + `sound.pauseAll()` |
+| 26 | `cmd:resume` | `{}` | 계속하기 | `scene.resume()` + `sound.resumeAll()` |
+| 27 | `cmd:abandon` | `{}` | 포기 확인 | 현재까지 골드 정산 → `run:ended` |
+| 28 | `cmd:settings` | `{ bgmVolume, sfxVolume, screenShake, damageNumbers, lowSpec, joystickMode }` | 옵션 변경 즉시 | 볼륨 반영, 흔들림 플래그, 품질 티어 강제 |
+| 29 | `cmd:debug` | `{ action: "levelup"\|"godmode"\|"timescale"\|"killall"\|"gold", value? }` | 치트키/디버그 패널 | §13 |
 
-> **총 28개.** 이 표에 없는 통신이 필요해지면 그것은 대개 §2의 소유권 배분이 잘못되었다는 신호다.
+> **총 29개.** 이 표에 없는 통신이 필요해지면 그것은 대개 §2의 소유권 배분이 잘못되었다는 신호다.
 > 이벤트를 추가하기 전에 "이 값을 정말 React가 알아야 하나"를 먼저 묻는다.
 
 ### 3.3 ★ 금지 규칙 — 60fps 값을 Zustand에 넣지 않는다
