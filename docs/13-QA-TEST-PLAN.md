@@ -1131,3 +1131,146 @@ MEM 84MB          t:04:32  Lv18  scene:2
 - 7일 일정: → `11-ROADMAP-7DAYS.md`
 - 빌드 / 배포: → `12-BUILD-AND-RELEASE.md`
 </content>
+
+---
+
+## 12. 조우·룬 전수 검증 결과 (2026-08-12)
+
+> 대상: §3.11 전투 조우 EC-01~EC-16 · §3.12 룬 RN-01~RN-14 = **30건 전수**.
+> 계기: 제단 인간성 수취 / `pact.awakened` 미충전 버그 수정 / 상인 5등급 가격 / 궤 폴백 /
+> 필드보스 `engageGrace`·`leaveBeforeBoss` / 근접 스윙 모션·참격 이펙트 / 적 150종 파이프라인이
+> 연달아 들어간 뒤 전수 재검증이 없던 상태였다.
+>
+> **측정 환경** — 데스크톱 Chrome 151 · 캔버스 1280x720(논리 640x360) · `vite build` 프로덕션 스냅샷을
+> 정적 서버로 서빙 · `?debug=1` 치트 · CDP 하네스. **실기기 값이 아니다.**
+> 성능 표본은 `requestAnimationFrame` 델타 30초(약 1,790프레임)에서 직접 뽑았고
+> `QualitySystem.low1` 을 함께 적었다. 측정 중 `godMode`·무적프레임을 켜고 매 250ms 마다
+> `dead` 를 풀고 체력을 채웠다(§11 「런이 죽어 있으면 조우가 아무 일도 안 한다」 함정 회피).
+>
+> ⚠ **측정을 가로막은 것** — 타이틀 화면이 렌더 즉시 죽는 버그가 있어(아래 12.4 BUG-1)
+> 하네스에서 `window.GoldIcon` 전역 스텁을 주입해 우회했다. 소스는 고치지 않았다.
+
+### 12.1 전투 조우 (EC-01 ~ EC-16)
+
+| ID | 결과 | 실측값 | 비고 |
+|---|---|---|---|
+| **EC-01** | **PASS** | 31.0초 / 310표본, `isPaused()===true` **0회**. 적 3~42체 유지, 최근접 적 거리 114px → **0px** 도달 | 측정 중 `checkLevelUp` 을 막았고 그 사이 **41회**의 레벨업이 눌렸다 — 안 막았으면 표본 대부분이 정지로 잡혔다(§11 E-1 함정) |
+| **EC-02** | **PASS** | 조우 7종 x3 = **21회** 전후 입력 핸들러 **완전 동일**: GameScene `pointerdown:1` / HudScene `pointerdown:1,pointermove:1,pointerup:1,pointerupoutside:1`. `setInteractive` 객체 0. `.enc-layer` 이하 전부 `pointer-events:none`. 캔버스 5곳 탭 → hp·좌판·조우·좌표 전부 불변 | 주석 제거 후 `EncounterSystem.js` 의 `scene.pause` / `scene.input` / `addEventListener` / `setInteractive` **각 0건** (RuneSystem 도 0건) |
+| EC-03 | PASS | 7종 x30 = **210회 전부 화면 밖**(화면 안 생성 0). 거리 **208~393px** | 정본 「200~260px」보다 큰 값이 나오는 것은 의도된 확장이다 — 좌우 방향은 반폭 320 + pad 28 을 넘겨야 화면 밖이 된다(`placePoint` 주석). 최소값 208px ≥ 200 |
+| EC-04 | PASS | 화면 밖: `arrow.visible=true`, 종류 글리프 `⚖`, `scrollFactor=0`, `depth=100`. 조우가 화면 안으로 들어오면 화살표·글리프 자동 소등 | 조우가 사라질 때까지 유지됨을 24.5초 → 22.6초 구간에서 확인 |
+| **EC-05** | **PASS** | maxHp 100 / 가격 12%(=12HP). `hp=12` → `canPay=false`, `locked=true`, 색 `0x4a4650`(LOCKED). 밟아도 hp **12 유지**, `dead=false`. `hp=11` false / `hp=13` true | 「미만」이 아니라 「이하」 판정이 정확하다 |
+| EC-06 | PASS | maxHp **60** → 20% = **12HP** 지불 / maxHp **300** → 20% = **60HP** 지불. 비율 **5.0** = maxHp 비율 5.0 | `maxHp` 는 getter 라 `combatSystem.maxHp = n` 이 먹지 않는다 — `stats.add('maxHp','add',…)` 로 바꿔야 유효 측정이 된다 |
+| EC-07 | PASS | 좌판 3개 → 1개 밟은 뒤 `slotsOn 0` · `circle.visible 0` · NPC 비표시 · `act.on=false`. hp 100→88 | `onePurchaseOnly:true` |
+| EC-08 | PASS | 전 무기 Lv1 → `offerable()` **0** → `force('witch')` = `"배치 실패 enc_witch"`, `act.on=false`. `drawKind` 200회 재추첨에서 마녀 채택 **0회**(전부 상인) | `encSim(100, 0)` 히스토그램에도 `enc_witch` 없음 |
+| EC-09 | PASS | 마녀 좌판 3칸 전부 룬(T1, −15%). 구매 → `rn_w2_pierce` 각인 + 대가 **SLOW 1중첩이 `tagCounts` 에 반영**. hp 100→85 | 인간성은 깎이지 않는다 — 마녀는 「산다」(설계대로, 30 §2.3) |
+| EC-10 | PASS | 예언자 구매 → `previewCards` 3장 설정, 리롤 2→3. 다음 레벨업 `pendingCards` 가 **완전 일치**(`bls_critdmg/epic` · `bls_spd/common` · `bls_magnet/rare`, 대가·인간성값까지). 사용 후 `previewCards=null` | |
+| **EC-11** | **PASS** | 필드보스(HP 438) 강제 처치 후: `bossSystem.onDefeat` 호출 **0** · `purgeMinions` **0** · `spawner.suppressed=false` · `dead=false` · `paused=false` · `bossSystem.defeated=false` · 잡몹 **23체 유지** · 「봉인된 궤」 2개 드롭 | 결과 화면 미표시, 5초 뒤에도 동일 |
+| **EC-12** | **PASS** | 700px 밖 66초: **받은 피해 0** · 보스 HP 1800 불변 · 스폰 지점 이탈 **최대 28px**(제자리 배회) · **61초에 소멸** · `engaged` 0 유지 | 리시 검증 추가: 400px 에서 6초 → 이탈 44px(추적 안 함), 120px 로 접근 → 6초 만에 거리 **1px** 까지 추격 시작 |
+| EC-13 | PASS | `encSim(100, offers=6)` **repeats 0** / `encSim(100, offers=0)` **repeats 0** / `encSim(500, 6)` **repeats 0** | 마녀가 못 나오는 경우(offers=0)도 확인 |
+| EC-14 | PASS | 룬 공급이 있는 상태 200회: **축복 110(55%) / 룬 52(26%) / 아이템 38(19%)** — 표기값 55/25/20 과 일치 | 룬 슬롯이 고갈된 상태 200회는 축복 108(54%) / 아이템 83(41.5%) / 룬 9(4.5%) — 넘친 룬 몫이 **아이템으로** 간다(2026-08-11 폴백 수정 의도대로). 한 런의 룬 슬롯 총량은 12개라 200회 개봉에서 룬 25% 는 구조상 불가능하다 |
+| **EC-15** | **PASS** | 조우 활성 + 적 **150체 유지** 30초(1,786프레임): **1% Low 55.6fps** · 평균 60.0 · 중앙 59.9 · 최악 프레임 48.4ms · `QualitySystem.low1` 60 · quality level 0(강등 없음) | 기준선(조우 없음, 적 150체) 1% Low **55.9fps** — 조우로 인한 저하 **0.3fps** |
+| EC-16 | PASS | 조우 21회(7종 x3) 전후 `scene.children.list.length` **1801 → 1801** | 좌판 오브젝트(원/아이콘/글리프/가격)가 전부 생성자 산이다 |
+
+### 12.2 룬 (RN-01 ~ RN-14)
+
+| ID | 결과 | 실측값 | 비고 |
+|---|---|---|---|
+| **RN-01** | **PASS** | 룬 **12개 전부 각인**(무기 4종 x T1~T3) 후 `wdef` JSON **2,759바이트가 디스크 `weapons.json` 과 문자열 단위 일치**. 「포기」 → 결과 화면 → 「다시 하기」 후에도 **일치**, 새 런 룬 **0개**, W1 Lv1 기본치 복귀, `mods` 항등원 | `w.s` 는 읽지도 쓰지도 않는다는 규약이 실제로 지켜진다 |
+| **RN-02** | **PASS** | 카드 **1,000회 = 3,000장** 생성 — 룬 id 일치 **0건** / 룬 이름 일치 **0건** | `validate.js ruleRunes` 가 데이터판(같은 id 의 축복 존재)도 막는다 |
+| RN-03 | PASS | W3 미보유 상태 `offerable()` 에 W3 룬 **0** | G-1 |
+| RN-04 | PASS | W3 **Lv1 제시 0** / **Lv3 은 T1 2종만** / T1 각인 후에도 Lv3 에서 **0** / **Lv5 에서 T2 2종** / T2 각인 후 **T3 2종** | G-2. requires 표: T1 needLv3 / T2·T3 needLv5 (24종 전부) |
+| RN-05 | PASS | T1 없이 T2 `engrave` **false**, T2 없이 T3 **false**, T1 각인 후에도 T3 **false** | G-3 |
+| RN-06 | PASS | T1 보유 상태에서 같은 단계 T1 `engrave` **false** | G-4 |
+| RN-07 | PASS | 룬 없음: `arcHalf` **80도**, 8방향 중 **3방향(0/45/315)** 명중. 「선혈의 원」: `arcHalf` **180도(=360도 전방위)**, **8/8 전방위 명중**. `drawArcFx` 명령 **27개** | 도형 누락 아님 — 360도 경로가 원+테두리로 실제 그려진다 |
+| RN-08 | PASS | 「연쇄」 명중 피해 **29 → 21.75 → 16.31 → 11.60**, 비율 **0.750** = 1−falloff(0.25). E0→E1→E2→E3 로 실제로 튄다 | `shot.bounce = {count:3, range:70, damageMult:0.75}` |
+| RN-09 | PASS | 룬 없음: 장판 **5개 산개**. 「성역」: 장판 **1개**, 좌표가 플레이어와 **정확히 일치(거리 0)**. (+300,+200) 및 (−500,−120) 순간이동 후에도 **거리 0** | 합쳐지고 따라온다 |
+| **RN-10** | **PASS** | 「연쇄」+적 150체 20초(200표본): 투사체 **최대 4개**(풀 상한 160), **`gen>=2` 0건**. T3 2개(선혈의 원+유성우)에서도 **최대 7개 / `gen>=2` 0건** | 연쇄는 탄을 만들지 않고 꺾는다 |
+| RN-11 | PASS | 일시정지에 무기 4종 x 슬롯 3칸 = **12칸** 표시, 새긴 칸에 글리프+이름, 빈 칸 `·`, 툴팁에 설명. `.screen` 은 `screen pause` **하나뿐** — 새 화면 없음 | |
+| **RN-12** | **PASS** | T3 룬 2개(선혈의 원 + 유성우) + 적 **150체 유지** 30초(1,791프레임): **1% Low 54.1fps** · 평균 60.1 · 최악 프레임 20.2ms · quality level 0 | **W1 을 계속 휘두르는 조건 별도 30초**: `fireArc` **77회** + `playAttack` **77회**, **1% Low 56.8fps** · 평균 60.0 · 최악 18.4ms |
+| RN-13 | PASS | `npm run validate` → **위반 0** / 경고 36 (전부 보스 시트·스테이지 지면 텍스처, 룬 무관) | `ruleRunes` 가 무기 id 실재 / tier 1~3 / requires 정합 / mod key / special id / 글리프 중복 / 축복 id 충돌을 전부 본다 |
+| RN-14 | PASS | `runes.json` 24종 **전부 `icon:null`**, `glyph` 24종 존재·**중복 0**. 마녀 좌판 3칸이 아이콘 대신 글리프(`◯ ▶ »`) 표시(`icon.visible=false`), 일시정지 조망도 글리프(`⋮ ∞ ✚`) 표시. **두부(tofu) 없음** | 관찰: `rn_w4_more` 의 `⋮`(U+22EE) 가 조망에서 폰트 대체로 콜론처럼 좁게 그려진다. 깨지지는 않는다 |
+
+**요약: 30건 중 PASS 30 / FAIL 0 / 미측정 0.**
+
+### 12.3 ★ `pact.awakened` 수정의 부작용
+
+`AwakeningSystem.trigger` 의 `this.pact?.awakened?.add(tag)` 한 줄이 살아난 것을 **라이브로 먼저 확인**했다 —
+`trigger('SLOW')`·`trigger('GREED')` 후 `[...pact.awakened] = ["SLOW","GREED"]`, `atCap=true`,
+세 번째 `trigger('FRAIL')` 은 `false` + 인간성 **100→80**(상한 초과 −20).
+
+그다음 `StatSystem`·`PactSystem` 인스턴스를 새로 만들어 Lv2~30 레벨업을 **800런씩** 시뮬레이션하고,
+`awakened.add` 를 하지 않는 **옛 동작**과 나란히 놓았다.
+
+| 지표 (런당) | 옛 동작 | 현재 | 판정 |
+|---|---|---|---|
+| 각성한 태그가 카드에 **다시 제시**된 횟수 | 17.1 / 17.8 | **0 / 0** | 수정 의도 달성 |
+| Lv4+ 카드 중 **대가 없는 카드** 비율 | 0% | **31.5%**(무작위) / **36.1%**(욕심) | ⚠ **새 부작용** |
+| **제단**이 대가 없이 지나가는 비율 | 0% | **42.9% / 49.1%** | ⚠ **새 부작용** |
+| **마녀**가 대가 없이 룬만 주는 횟수 | 0 | 0.16 / 0.50 | ⚠ **새 부작용** |
+| 상한 초과 **−20** 발생 횟수 | 3.40 / 3.65 | **3.00 / 2.17** | 과해지지 않았다 (오히려 감소) |
+| 인간성 0 「완전 흡혈귀화」 도달률 | 100% | 97.8% / 94.1% | ⚠ 거의 안 줄었다 |
+| 평균 최종 인간성 | 0.0 | 0.2 / 1.1 | |
+
+**레벨별 「대가 없는 카드」 비율** (무작위 선택, 600런)
+
+```
+Lv4~12  0%   Lv13  1%   Lv14  5%   Lv15 10%   Lv16 21%   Lv17 31%   Lv18 42%
+Lv19   49%   Lv20 54%   Lv22 60%   Lv25 64%   Lv28~30 66%
+```
+
+각성 상한(2) 도달 레벨 **중앙값 12**(최소 7 / 최대 17), **100% 의 런이 상한에 도달**한다.
+
+**원인** — `pickToll` 은 상한 도달 후 `willOverflow`(`cur + addStacks >= 3`) 인 태그를 **후보에서 통째로 뺀다**
+(`allowOverflow` 는 마지막 장에만 true). 각성한 2태그는 영구 제외이므로 남는 것은 4태그뿐이고,
+그 4태그가 2중첩에 닿는 순간 **후보가 0이 되어 대가 없이 지나간다**.
+
+**라이브 재현 절차** (제단이 순수 이득으로 돌아가는 경로)
+
+1. `?debug=1` 로 런 시작
+2. 콘솔에서 각성 2개를 채운다
+   ```js
+   const sc = __PHASER_GAME__.scene.getScene('GameScene');
+   sc.pact.tagCounts.SLOW = 2;  sc.combatSystem.awakening.trigger('SLOW');
+   sc.pact.tagCounts.GREED = 2; sc.combatSystem.awakening.trigger('GREED');
+   ```
+3. 남은 4태그를 2중첩으로 — `BS.toll('FRAIL',2) BS.toll('MYOPIA',2) BS.toll('BLIND',2) BS.toll('HUNGER',2)`
+4. `for (let i=0;i<8;i++) console.log(sc.encounters.rollToll('rare'))` → **8회 전부 `null`**
+5. `BS.enc('altar')` → 제단 위에서 3초
+
+**결과**: `pact.humanity` **100 그대로**, `tagCounts` **그대로**, `Object.keys(pact.owned).length` **0→1**
+— **epic 축복 1개를 대가 0 · 인간성 0 으로 받는다.**
+같은 상태에서 `BS.enc('witch')` 로 룬을 사면 룬만 각인되고 `tagCounts` 는 불변이다(hp 만 −15%).
+
+**의미**: 2026-08-11 에 「제단이 PACT epic 카드의 순수 상위 호환이라 인간성을 받게 했다」고 고친 것이
+런 후반에 **절반쯤 되돌아간다**. 그리고 「강해지는 것은 언제나 대가를 동반한다」는 PACT 의 문법이
+Lv20 이후 카드의 **2/3 에서 성립하지 않는다**.
+`PactSystem.pickToll` 주석이 목표로 잡은 「P2 특수 상태(완전 흡혈귀화)가 기본값이 되면 안 된다」도
+아직 달성되지 않았다 — 94~98% 다. 남은 −20 의 출처는 **마지막 장(`i===2`, `allowOverflow=true`)** 이다.
+
+★ 이 절은 **판단이 아니라 관측**이다. 수정은 하지 않았다.
+
+### 12.4 검증 중 발견한 별건 결함
+
+| # | 심각도 | 내용 | 재현 |
+|---|---|---|---|
+| **BUG-1** | **P0(출시 차단)** | `TitleScreen.jsx:66` 과 `ResultScreen.jsx:119` 가 `<GoldIcon />` 을 **import 없이** 쓴다. 로딩이 끝나 타이틀로 전환되는 순간 `Uncaught ReferenceError: GoldIcon is not defined` 로 **React 트리 전체가 죽고 런을 시작할 수 없다** | `?debug=1` 로 열고 로딩 완료를 기다린다. 개발 서버·프로덕션 빌드 양쪽에서 동일. `SanctumScreen` / `StageSelectScreen` / `PactOverlay` 에는 import 가 있다 |
+| BUG-2 | P2 | 필드보스 처치 보상의 「룬 확정 1개」는 게이트를 통과하는 룬이 없으면 **조용히 0개**가 된다(폴백 없음). 「봉인된 궤」에는 rune→items→blessing 폴백이 있는데 필드보스 보상에는 없다 | 무기 전부 Lv1 상태에서 `BS.enc('fieldboss')` → 강제 처치 → `ENCOUNTER_RESOLVED.label` 이 "봉인된 궤 2" 뿐 |
+
+### 12.5 측정 한계
+
+- 성능 수치는 **데스크톱 Chrome 151 / 1280x720 캔버스** 값이다. §4.1 의 차단선은 실기기 기준이므로 **실기기 재측정이 남아 있다**.
+- 다른 에이전트가 UI 파일을 편집 중이라 개발 서버 HMR 이 Phaser 인스턴스를 반복적으로 파괴했다.
+  그래서 소스를 **프로덕션 빌드로 한 번 굳혀** 정적 서버로 서빙하고 측정했다.
+  조우·룬·PACT·각성 소스는 측정 구간 동안 변경되지 않았다.
+- 타이틀 크래시(BUG-1)는 하네스에서 `window.GoldIcon = () => null` 전역 스텁을 주입해 우회했다.
+  이 스텁은 골드 아이콘 그림 하나만 비우며 조우·룬 경로에는 닿지 않는다.
+- ⚠ Chrome 창이 가려지거나 최소화되면 `requestAnimationFrame` 이 멈춰 Phaser 씬 전환 자체가 얼어붙는다.
+  「로딩 0% 에서 멈춤」으로 보이지만 원인은 게임이 아니다. 자동 측정 시
+  `--disable-backgrounding-occluded-windows --disable-renderer-backgrounding --disable-background-timer-throttling`
+  를 반드시 켤 것. (이번에 한 시간을 여기에 썼다.)
+- 스크린샷: `C:\Users\741u7\.claude\jobs\9664143b\tmp\qa30\` 의
+  `shot-EC01-merchant-30s.png` · `shot-EC04-arrow.png` · `shot-EC05-locked-pedestals.png` ·
+  `shot-EC07-merchant-3stalls.png` · `shot-EC07-after-buy.png` · `shot-EC11-fieldboss-killed.png` ·
+  `shot-EC12-fieldboss-ignored.png` · `shot-EC15-perf.png` · `shot-perf-baseline.png` ·
+  `shot-RN07-circle.png` · `shot-RN09-sanctuary.png` · `shot-RN10-chain150.png` ·
+  `shot-RN11-pause-runetree.png` · `shot-RN12-perf.png` · `shot-RN14-witch-glyph.png` · `shot-swing-150.png`
