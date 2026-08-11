@@ -73,3 +73,12 @@ sketch
 .DS_*
 Thumbs.db
 desktop.ini
+
+# ── 로컬 APK 산출물 ───────────────────────────────────────────
+# `gradlew assembleDebug` 결과를 눈에 보이는 곳에 복사해 두는 폴더.
+# ★ 커밋 금지 — 디버그 APK 1개가 약 18MB 이고 빌드마다 통째로 바뀐다.
+#   델타 압축이 안 되므로 저장소가 빌드 횟수에 비례해 부풀어 오른다.
+#   배포는 Play Console 업로드로 하지 git 으로 하지 않는다.
+FE/dist-apk/
+*.apk
+*.aab
