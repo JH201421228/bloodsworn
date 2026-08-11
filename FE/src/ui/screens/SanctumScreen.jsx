@@ -11,6 +11,7 @@ import { useStore, persistSave } from "@/state/store";
 import { SANCTUM_UPGRADES, nextCost } from "@/state/metaSlice";
 import { SCREENS } from "@/state/uiSlice";
 import { requestStartRun } from "@/state/bridge";
+import { resolveAdPlacement, showRewarded } from "@/monetization";
 
 function Tile({ def, level, gold, onBuy }) {
     const [denied, setDenied] = useState(false);
@@ -59,6 +60,13 @@ function Tile({ def, level, gold, onBuy }) {
 
 export default function SanctumScreen() {
     const gold = useStore((s) => s.gold);
+    const offer = resolveAdPlacement("sanctum_offering");
+    const takeOffering = async () => {
+        const { rewarded } = await showRewarded("sanctum_offering");
+        if (!rewarded) return;   // 실패는 조용히 넘어간다. 보상이 없을 뿐 진행은 막지 않는다.
+        useStore.getState().addGold(offer?.reward?.amount ?? 120);
+        persistSave();
+    };
     const upgrades = useStore((s) => s.upgrades);
     const buyUpgrade = useStore((s) => s.buyUpgrade);
     const setScreen = useStore((s) => s.setScreen);
@@ -92,6 +100,14 @@ export default function SanctumScreen() {
             </div>
 
             <div className="sanctum__foot">
+                {/* 헌납 — 하루 상한이 있고(shop.json caps.perDay) 유저가 눌러야만 뜬다.
+                    ★ 성소는 "시간을 사는" 자리다. 전투력을 직접 파는 것이 아니라
+                      영구 성장을 앞당길 뿐이라 P2W 경계선(20-MONETIZATION 2)을 넘지 않는다. */}
+                {offer?.ready && (
+                    <button className="btn" onClick={takeOffering}>
+                        ⬤ 헌납한다 (+{offer.reward?.amount ?? 120})
+                    </button>
+                )}
                 <button className="btn btn--primary" onClick={requestStartRun}>
                     ▶ 출 정
                 </button>

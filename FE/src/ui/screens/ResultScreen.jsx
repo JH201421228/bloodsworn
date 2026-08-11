@@ -15,6 +15,8 @@ import { SCREENS } from "@/state/uiSlice";
 import { requestStartRun } from "@/state/bridge";
 import { fmtTime, awakenLabel, pickEnding } from "@/ui/screens/screenUtils";
 import RunLootSummary from "@/ui/inventory/RunLootSummary";
+import { resolveAdPlacement, showRewarded } from "@/monetization";
+import { persistSave } from "@/state/store";
 
 /**
  * 골드 카운트업 700ms. 화면 아무 데나 탭하면 즉시 최종값으로 건너뛴다(2회 탭을 요구하지 않는다).
@@ -60,6 +62,22 @@ export default function ResultScreen() {
     const r = useStore((s) => s.lastResult);
     const setScreen = useStore((s) => s.setScreen);
 
+    // 광고 골드 2배.
+    // ★ effect 로 초기화하지 않는다 — "어느 결과에 대해 수령했는가"를 상태로 들면
+    //   결과가 바뀌는 순간 자동으로 미수령이 된다. 리셋 effect 자체가 필요 없어진다.
+    const [claimedFor, setClaimedFor] = useState(null);
+    const claimed = claimedFor === r;
+    const dbl = resolveAdPlacement("gold_double");
+    const claimDouble = async (e) => {
+        e.stopPropagation();  // 루트가 포인터로 카운트다운을 건너뛴다 — 버블을 막는다
+        if (claimed) return;
+        setClaimedFor(r);
+        const { rewarded } = await showRewarded("gold_double");
+        if (!rewarded) { setClaimedFor(null); return; }
+        const mult = dbl?.reward?.mult ?? 2;
+        useStore.getState().addGold(Math.floor(gold * (mult - 1)));
+        persistSave();
+    };
     const gold = r?.gold ?? 0;
     const [shownGold, skipCount] = useCountUp(gold);
 
@@ -100,6 +118,16 @@ export default function ResultScreen() {
                     <div className="result__gold">
                         획득 골드 ⬤ {shownGold.toLocaleString("ko-KR")}
                     </div>
+                    {/* 보상형 광고 — 유저가 스스로 누른 것만 띄운다(shop.json _adRule).
+                        ★ bridge 가 이미 addGold(result.gold) 를 했으므로 여기서는 **차액만** 더한다.
+                          전액을 또 더하면 3배가 된다.
+                        ★ 광고가 준비 안 됐거나 실패하면 버튼이 없거나 아무 일도 안 일어난다 —
+                          실패는 "보상 없음"이지 "진행 불가"가 아니다. */}
+                    {!claimed && dbl?.ready && gold > 0 && (
+                        <button className="btn btn--sm result__dbl" onClick={claimDouble}>
+                            ▶ 광고 보고 골드 x{dbl.reward?.mult ?? 2}
+                        </button>
+                    )}
                 </section>
                 {/* 이번 판 전리품. result__panels 가 1fr 1fr 격자라 세 번째 칸을 그냥 넣으면
                         2행이 되어 360px 를 넘는다 — has-loot 토큰이 3열로 바꾼다 */}
