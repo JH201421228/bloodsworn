@@ -84,6 +84,8 @@ export default function PactOverlay() {
     return (
         <div className="ui-stage pact-stage">
             {/* 녹턴 대사 — 화자가 있어야 카드 3장이 '시스템'이 아니라 '거래'로 읽힌다 */}
+            {/* 녹턴 초상 — 대사 옆에 화자가 보여야 카드 3장이 '시스템'이 아니라 '거래'로 읽힌다 */}
+            {pact.nocturneLine && <div className="pact-nocturne-portrait" aria-hidden="true" />}
             {pact.nocturneLine && (
                 <p className="pact-nocturne" key={pact.nocturneLine}>“{pact.nocturneLine}”</p>
             )}

@@ -73,7 +73,7 @@ export default function OptionsScreen({ onClose }) {
         });
 
     return (
-        <div className="screen">
+        <div className="screen options">
             <div className="topbar">
                 <button className="btn btn--ghost btn--sm" onClick={onClose}>
                     ◀ 닫기

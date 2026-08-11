@@ -70,7 +70,7 @@ export default function SanctumScreen() {
     };
 
     return (
-        <div className="screen">
+        <div className="screen sanctum">
             <div className="topbar">
                 <button className="btn btn--ghost btn--sm" onClick={() => setScreen(SCREENS.TITLE)}>
                     ◀ 뒤로

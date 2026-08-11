@@ -1,0 +1,171 @@
+/*
+ * art.css — Codex 아트를 기존 레이아웃 위에 덧입힌다. (아트 배선)
+ *
+ * ★ 왜 별도 파일인가
+ *   레이아웃(screens.css / index.css)과 아트를 섞으면 나중에 아트를 교체할 때
+ *   무엇이 배치이고 무엇이 껍데기인지 구분이 안 된다. 여기 있는 규칙은 전부
+ *   "그림을 입히는 것"뿐이고, 크기·위치는 기존 파일이 정한 것을 그대로 쓴다.
+ *
+ * ★ 경로가 ../img/ 인 이유
+ *   빌드 후 이 CSS 는 dist/assets/index-*.css 가 되고 그림은 dist/img/ 에 그대로 복사된다.
+ *   절대경로 /img/ 는 Capacitor 의 file:// 스킴에서 깨지므로 상대경로를 써야 한다.
+ *
+ * ★ image-rendering: pixelated
+ *   전부 논리 해상도(640x360) 기준으로 재단된 픽셀아트다. 브라우저 기본 보간을 쓰면
+ *   확대 시 뭉개져서 "저해상도 이미지를 늘린 것"처럼 보인다.
+ */
+
+.screen,
+.ui-screen img,
+.pact-card,
+.humanity__heart,
+.btn {
+    image-rendering: pixelated;
+}
+
+/* ── 화면 배경 4종 ────────────────────────────────────────────
+   640x360 원본이 논리 해상도와 정확히 같다. cover 로 늘리면 정수배가 깨지므로
+   100% 100% 로 스테이지 박스에 정확히 맞춘다. */
+.screen.title { background: url("../img/bg/title.png") no-repeat center / 100% 100%; }
+.screen.sanctum { background: url("../img/bg/sanctum.png") no-repeat center / 100% 100%; }
+.screen.result.is-win { background: url("../img/bg/result-win.png") no-repeat center / 100% 100%; }
+.screen.result.is-lose { background: url("../img/bg/result-lose.png") no-repeat center / 100% 100%; }
+
+/* ── 타이틀 로고 (512x192 = 8:3) ──────────────────────────────
+   텍스트를 지우지 않고 밀어낸다. 스크린리더는 여전히 제목을 읽는다. */
+.title__logo {
+    width: calc(256 * var(--u));
+    height: calc(96 * var(--u));
+    background: url("../img/ui/logo.png") no-repeat center / contain;
+    text-indent: -9999px;
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+/* ── 버튼 (96x28 · 9-slice) ──────────────────────────────────
+   모서리 장식이 6px 이라 그 안쪽만 늘린다. fill 로 가운데 양피지를 유지한다. */
+.btn {
+    /* ★ repeat 가 아니라 stretch 다. 96x28 원본을 224px 폭으로 늘리면 repeat 는
+       모서리 리벳을 가운데까지 반복해 울타리처럼 보인다. 가장자리 6px 은 단순한
+       금속 띠라서 늘려도 뭉개지지 않는다. */
+    border: calc(6 * var(--u)) solid transparent;
+    border-image: url("../img/ui/btn-normal.png") 6 fill stretch;
+    background: none;
+    /* 양피지 바탕이므로 글자는 어두워야 읽힌다. 기존의 밝은 회색은 대비가 없다. */
+    color: #2a1d14;
+    text-shadow: 0 calc(1 * var(--u)) 0 rgba(255, 244, 214, 0.35);
+}
+.btn:active:not(:disabled) {
+    border-image-source: url("../img/ui/btn-pressed.png");
+    /* 눌린 그림은 안쪽이 어두우므로 글자를 밝게 뒤집는다 */
+    color: #f4e9c8;
+    text-shadow: 0 calc(1 * var(--u)) 0 rgba(0, 0, 0, 0.5);
+}
+.btn:disabled { filter: grayscale(0.7) brightness(0.6); }
+
+/* ── 패널 (240x160 · 9-slice) — 옵션·크레딧·성소 ────────────── */
+.modal__panel,
+.panel,
+.sanctum__panel {
+    border: calc(12 * var(--u)) solid transparent;
+    border-image: url("../img/ui/panel.png") 12 fill stretch;
+    background: none;
+}
+
+/* ── 인간성 심장 (16x16) ──────────────────────────────────────
+   ★ 색만으로 구분하지 않는다(10-UIUX 9.1). 채움/빔이 형태로 갈리고,
+     금 간 상태는 채운 그림에 필터를 얹어 세 단계가 눈으로 구분된다. */
+.humanity__heart {
+    display: inline-block;
+    width: calc(16 * var(--u));
+    height: calc(16 * var(--u));
+    color: transparent;
+    background: url("../img/ui/heart-empty.png") no-repeat center / contain;
+}
+.humanity__heart.is-full { background-image: url("../img/ui/heart-full.png"); }
+.humanity__heart.is-cracked {
+    background-image: url("../img/ui/heart-full.png");
+    filter: grayscale(0.55) brightness(0.75);
+}
+
+/* ── PACT 카드 (160x240 — 현재 카드 크기와 정확히 일치) ──────── */
+.pact-card {
+    border: calc(10 * var(--u)) solid transparent;
+    border-image: url("../img/ui/card-common.png") 10 fill stretch;
+    background: none;
+}
+/* ★ 등급 규칙(.pact-card.is-*)이 index.css 에 있어 구체성이 더 높다.
+   같은 구체성으로 테두리 폭을 다시 잡아야 프레임이 제 두께로 그려진다.
+   border-image-width 는 border-width 의 배수이므로 폭이 4px 로 남으면 프레임이 실선처럼 보인다. */
+.pact-card.is-common,
+.pact-card.is-rare,
+.pact-card.is-epic {
+    /* ★ border 단축 속성을 쓰면 안 된다 — 단축은 border-image 를 초기화한다.
+       그래서 폭은 잡히는데 프레임 이미지가 사라진다. 개별 속성으로 쓴다. */
+    border-width: calc(10 * var(--u));
+    border-style: solid;
+    border-color: transparent;
+    border-image-slice: 10 fill;
+    border-image-repeat: stretch;
+    background: none;
+}
+.pact-card.is-rare { border-image-source: url("../img/ui/card-rare.png"); }
+.pact-card.is-epic { border-image-source: url("../img/ui/card-epic.png"); }
+
+/* ── 녹턴 초상 (128x160) ──────────────────────────────────────
+   좌상단 x=12. 대사(x=60)와 인접해 "누가 말하는가"가 명확해진다(10-UIUX §532). */
+.pact-nocturne-portrait {
+    position: absolute;
+    /* ★ 인간성 심장이 상단 좌측을 이미 쓰고 있다. 초상을 y=8 에 두면 겹쳐서 둘 다 못 읽는다.
+       심장 아래(y=30)에 두고 카드 좌측단(x=64)을 침범하지 않는 폭으로 줄인다. */
+    left: calc(6 * var(--u));
+    top: calc(30 * var(--u));
+    width: calc(52 * var(--u));
+    height: calc(65 * var(--u));
+    background: url("../img/portrait/nocturne.png") no-repeat center / contain;
+    pointer-events: none;
+    animation: nocturne-portrait-in 220ms ease-out both;
+}
+@keyframes nocturne-portrait-in {
+    from { opacity: 0; transform: translateX(calc(-6 * var(--u))); }
+    to { opacity: 1; transform: none; }
+}
+
+/* ── 각성 인장 (128x128) ─────────────────────────────────────── */
+.awaken-sigil { /* 텍스트 기호는 밀어내고 인장 이미지로 대체한다 */
+    color: transparent;
+    font-size: 0;
+    width: calc(64 * var(--u));
+    height: calc(64 * var(--u));
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+/* 인장은 .awaken-stage 의 data-tag 로 고른다 — JSX 를 고치지 않아도 된다 */
+[data-tag="FRAIL"] .awaken-sigil { background-image: url("../img/seal/seal-frail.png"); }
+[data-tag="SLOW"] .awaken-sigil { background-image: url("../img/seal/seal-slow.png"); }
+[data-tag="MYOPIA"] .awaken-sigil { background-image: url("../img/seal/seal-myopia.png"); }
+[data-tag="GREED"] .awaken-sigil { background-image: url("../img/seal/seal-greed.png"); }
+[data-tag="BLIND"] .awaken-sigil { background-image: url("../img/seal/seal-blind.png"); }
+[data-tag="HUNGER"] .awaken-sigil { background-image: url("../img/seal/seal-hunger.png"); }
+[data-tag="ASCENSION"] .awaken-sigil { background-image: url("../img/seal/seal-ascension.png"); }
+
+/* ── 카드 텍스트 대비 ─────────────────────────────────────────
+   ★ 기존 색은 "어두운 카드 배경" 전제로 잡힌 밝은 색이다. 양피지 프레임을 입히는 순간
+     전부 안 읽힌다. 아트를 바꿨으면 그 위의 글자색도 같이 바꿔야 한다.
+   ★ 등급 표시와 대가는 색을 유지하되 양피지에서 읽히는 명도로 낮춘다 —
+     색맹 대응상 등급은 색이 아니라 기호(○◇◆)와 프레임 문양으로도 구분된다. */
+.pact-card .pact-card__name { color: #241a12; }
+.pact-card .pact-card__effect { color: #1d4f46; }
+.pact-card .pact-card__lv,
+.pact-card .pact-card__stacks { color: #5c4a35; }
+.pact-card .pact-card__rarity { color: #6b5030; }
+.pact-card .pact-card__divider { color: #8c2a22; }
+.pact-card .pact-card__toll { color: #8c1f18; }
+.pact-card .pact-card__tollv { color: #4a3524; }
+.pact-card .pact-card__humanity { color: #8c1f18; }
+.pact-card .pact-card__awaken { color: #8a6a12; }
+.pact-card .pact-dot.is-empty { color: #a8977c; }
+.pact-card .pact-dot.is-filled { color: #8c1f18; }
+.pact-card .pact-dot.is-gain { color: #a8790f; }

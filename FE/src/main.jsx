@@ -7,6 +7,8 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "@/App";
 import "./index.css";
+// ★ index.css 다음이어야 한다. 앞에 오면 레이아웃 기본값이 아트를 덮어쓴다.
+import "@/ui/art.css";
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>

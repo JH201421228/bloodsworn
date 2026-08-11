@@ -1,0 +1,63 @@
+{
+    "_comment": [
+        "접두 · 접미 정의. 설계 정본 docs/23-ITEM-SYSTEM.md 5장.",
+        "",
+        "★ weights 는 '점수' 가중치다 — 자동 장착이 두 장비를 비교할 때만 쓴다(23 문서 4.2).",
+        "  score = Σ(mod.value × weights[stat]) + rarities[].scoreBonus.",
+        "  스탯마다 값의 단위가 다르므로(maxHp 는 +8, armor 는 +0.03) 가중치가 그 차이를 흡수한다.",
+        "  기준: 흔한 접사 하나가 대략 3~4점이 되도록 맞췄다. 이 값이 곧 밸런싱 손잡이다.",
+        "  ★ dashCd 가 음수인 이유: 좋은 방향이 감소(-0.06)라서, 곱하면 양수 점수가 나와야 한다.",
+        "",
+        "★ weight 는 '추첨' 가중치다 — 어느 접사가 붙을지 정한다.",
+        "  23 문서 2장의 역할 분리에 따라 haste·magnet·armor·regen·moveSpeed·luck 계열을 높게,",
+        "  damage 계열을 낮게 뒀다. 아이템은 '이번 런을 어떻게 굴릴지'를 바꾸는 쪽이고",
+        "  '무엇을 키울지'는 PACT 축복의 몫이다.",
+        "",
+        "★ tiers[0] 은 uncommon/rare, tiers[1] 은 epic 이 쓴다(rarities[].affixTier).",
+        "  등급이 개수(affixCount)와 수치(affixTier)를 동시에 올리므로 epic 이 확실히 세다.",
+        "★ op 는 add/mul 뿐이다. toll/tollAdd 는 PACT 전용이다(불변식 I-2)."
+    ],
+    "schemaVersion": 1,
+    "weights": {
+        "damage": 80, "haste": 85, "crit": 90, "critMult": 35, "range": 50, "area": 60,
+        "knockback": 15, "lifeOnKill": 8, "maxHp": 0.45, "armor": 90, "regen": 12,
+        "iframe": 40, "moveSpeed": 70, "magnet": 25, "expMult": 40, "vision": 0.14,
+        "luck": 80, "dashCd": -60, "itemFind": 30
+    },
+    "prefixes": [
+        { "id": "p_hungry",  "name": "굶주린",     "tags": ["offense"], "stat": "damage",     "op": "mul", "tiers": [0.05, 0.08], "weight": 7 },
+        { "id": "p_keen",    "name": "날카로운",   "tags": ["offense"], "stat": "crit",       "op": "add", "tiers": [0.03, 0.05], "weight": 8 },
+        { "id": "p_furious", "name": "성난",       "tags": ["offense"], "stat": "haste",      "op": "mul", "tiers": [0.06, 0.10], "weight": 14 },
+        { "id": "p_heavy",   "name": "육중한",     "tags": ["offense"], "stat": "knockback",  "op": "mul", "tiers": [0.14, 0.22], "weight": 10 },
+        { "id": "p_savage",  "name": "광포한",     "tags": ["offense"], "stat": "critMult",   "op": "mul", "tiers": [0.09, 0.15], "weight": 8 },
+        { "id": "p_far",     "name": "머나먼",     "tags": ["offense"], "stat": "range",      "op": "mul", "tiers": [0.07, 0.11], "weight": 9 },
+        { "id": "p_hard",    "name": "단단한",     "tags": ["defense"], "stat": "armor",      "op": "add", "tiers": [0.035, 0.055], "weight": 14 },
+        { "id": "p_stout",   "name": "강건한",     "tags": ["defense"], "stat": "maxHp",      "op": "add", "tiers": [8, 14],      "weight": 13 },
+        { "id": "p_tenaci",  "name": "끈질긴",     "tags": ["defense"], "stat": "regen",      "op": "add", "tiers": [0.3, 0.5],   "weight": 13 },
+        { "id": "p_blurred", "name": "흐릿한",     "tags": ["defense"], "stat": "iframe",     "op": "mul", "tiers": [0.08, 0.13], "weight": 9 },
+        { "id": "p_swift",   "name": "재빠른",     "tags": ["utility"], "stat": "moveSpeed",  "op": "mul", "tiers": [0.05, 0.08], "weight": 14 },
+        { "id": "p_greedy",  "name": "탐욕스러운", "tags": ["utility"], "stat": "magnet",     "op": "mul", "tiers": [0.12, 0.20], "weight": 14 },
+        { "id": "p_lucky",   "name": "운 좋은",    "tags": ["utility"], "stat": "luck",       "op": "add", "tiers": [0.035, 0.055], "weight": 12 },
+        { "id": "p_wide",    "name": "드넓은",     "tags": ["utility"], "stat": "area",       "op": "mul", "tiers": [0.06, 0.10], "weight": 9 },
+        { "id": "p_bright",  "name": "밝은",       "tags": ["utility"], "stat": "vision",     "op": "add", "tiers": [22, 34],     "weight": 8 },
+        { "id": "p_silent",  "name": "은밀한",     "tags": ["utility"], "stat": "dashCd",     "op": "mul", "tiers": [-0.06, -0.10], "weight": 10 }
+    ],
+    "suffixes": [
+        { "id": "s_thirst",  "name": "갈증의",   "tags": ["offense"], "stat": "lifeOnKill", "op": "add", "tiers": [0.35, 0.6],  "weight": 12 },
+        { "id": "s_hunt",    "name": "사냥의",   "tags": ["offense"], "stat": "damage",     "op": "mul", "tiers": [0.04, 0.07], "weight": 7 },
+        { "id": "s_hawk",    "name": "매의",     "tags": ["offense"], "stat": "crit",       "op": "add", "tiers": [0.025, 0.045], "weight": 8 },
+        { "id": "s_execut",  "name": "처형의",   "tags": ["offense"], "stat": "critMult",   "op": "mul", "tiers": [0.08, 0.14], "weight": 8 },
+        { "id": "s_wave",    "name": "파도의",   "tags": ["offense"], "stat": "area",       "op": "mul", "tiers": [0.05, 0.09], "weight": 9 },
+        { "id": "s_steel",   "name": "강철의",   "tags": ["defense"], "stat": "armor",      "op": "add", "tiers": [0.03, 0.05], "weight": 14 },
+        { "id": "s_bone",    "name": "뼈의",     "tags": ["defense"], "stat": "maxHp",      "op": "add", "tiers": [7, 12],      "weight": 13 },
+        { "id": "s_moss",    "name": "이끼의",   "tags": ["defense"], "stat": "regen",      "op": "add", "tiers": [0.25, 0.45], "weight": 13 },
+        { "id": "s_shade",   "name": "그늘의",   "tags": ["defense"], "stat": "iframe",     "op": "mul", "tiers": [0.07, 0.12], "weight": 9 },
+        { "id": "s_dash",    "name": "질주의",   "tags": ["utility"], "stat": "moveSpeed",  "op": "mul", "tiers": [0.045, 0.075], "weight": 14 },
+        { "id": "s_abyss",   "name": "심연의",   "tags": ["utility"], "stat": "expMult",    "op": "mul", "tiers": [0.07, 0.12], "weight": 11 },
+        { "id": "s_wake",    "name": "각성의",   "tags": ["utility"], "stat": "haste",      "op": "mul", "tiers": [0.05, 0.08], "weight": 14 },
+        { "id": "s_lodest",  "name": "자석의",   "tags": ["utility"], "stat": "magnet",     "op": "mul", "tiers": [0.10, 0.18], "weight": 14 },
+        { "id": "s_hound",   "name": "사냥개의", "tags": ["utility"], "stat": "itemFind",   "op": "mul", "tiers": [0.10, 0.16], "weight": 10 },
+        { "id": "s_star",    "name": "별의",     "tags": ["utility"], "stat": "luck",       "op": "add", "tiers": [0.03, 0.05], "weight": 12 },
+        { "id": "s_wind",    "name": "바람의",   "tags": ["utility"], "stat": "dashCd",     "op": "mul", "tiers": [-0.05, -0.09], "weight": 10 }
+    ]
+}

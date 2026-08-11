@@ -28,6 +28,98 @@
         {
             "key": "props_grave",
             "url": "assets/map/props-grave.png"
+        },
+        {
+            "key": "bg-title",
+            "url": "img/bg/title.png"
+        },
+        {
+            "key": "bg-sanctum",
+            "url": "img/bg/sanctum.png"
+        },
+        {
+            "key": "bg-win",
+            "url": "img/bg/result-win.png"
+        },
+        {
+            "key": "bg-lose",
+            "url": "img/bg/result-lose.png"
+        },
+        {
+            "key": "ui-logo",
+            "url": "img/ui/logo.png"
+        },
+        {
+            "key": "ui-panel",
+            "url": "img/ui/panel.png"
+        },
+        {
+            "key": "ui-btn",
+            "url": "img/ui/btn-normal.png"
+        },
+        {
+            "key": "ui-btn-pressed",
+            "url": "img/ui/btn-pressed.png"
+        },
+        {
+            "key": "ui-bar-hp",
+            "url": "img/ui/bar-hp-frame.png"
+        },
+        {
+            "key": "ui-bar-exp",
+            "url": "img/ui/bar-exp-frame.png"
+        },
+        {
+            "key": "ui-card-common",
+            "url": "img/ui/card-common.png"
+        },
+        {
+            "key": "ui-card-rare",
+            "url": "img/ui/card-rare.png"
+        },
+        {
+            "key": "ui-card-epic",
+            "url": "img/ui/card-epic.png"
+        },
+        {
+            "key": "ui-heart-full",
+            "url": "img/ui/heart-full.png"
+        },
+        {
+            "key": "ui-heart-empty",
+            "url": "img/ui/heart-empty.png"
+        },
+        {
+            "key": "portrait-nocturne",
+            "url": "img/portrait/nocturne.png"
+        },
+        {
+            "key": "seal-frail",
+            "url": "img/seal/seal-frail.png"
+        },
+        {
+            "key": "seal-slow",
+            "url": "img/seal/seal-slow.png"
+        },
+        {
+            "key": "seal-myopia",
+            "url": "img/seal/seal-myopia.png"
+        },
+        {
+            "key": "seal-greed",
+            "url": "img/seal/seal-greed.png"
+        },
+        {
+            "key": "seal-blind",
+            "url": "img/seal/seal-blind.png"
+        },
+        {
+            "key": "seal-hunger",
+            "url": "img/seal/seal-hunger.png"
+        },
+        {
+            "key": "seal-ascension",
+            "url": "img/seal/seal-ascension.png"
         }
     ],
     "spritesheets": [
