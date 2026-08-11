@@ -1232,7 +1232,9 @@ export class BossSystem {
         this.clearProjectiles();
 
         // 골드 공식의 bossClear 항 (08-DATA-SCHEMA goldFormula: perKill 1 / bossClear 200)
-        this.combat.gold += this.def.goldOnClear;
+        // 클리어 보상에도 성소 「탐욕」이 붙는다 — 처치 골드만 오르고 보상은 안 오르면
+        // "골드 획득 +10%"라는 문구가 거짓이 된다.
+        this.combat.gold += this.def.goldOnClear * (this.combat.stats?.get("goldMult") ?? 1);
 
         this.corpse.setPosition(this.lastX, this.lastY).setVisible(true).setAlpha(1);
         this.playAnim(this.corpse, "death");

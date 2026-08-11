@@ -30,6 +30,12 @@ export class PactSystem {
         this.awakened = new Set();
         this.humanity = 100;
         this.rerollLeft = 2;
+        /**
+         * 각성 필요 중첩. 성소 「각성 촉진」이 낮춘다(3 -> 최저 2.6).
+         * ★ 상수를 바꾸지 않고 인스턴스에 두는 이유: AWAKEN_STACKS 는 다른 모듈도 import 하는
+         *   전역이라 바꾸면 그 런에만 적용되어야 할 것이 프로세스 전체에 남는다.
+         */
+        this.awakenStacksOverride = AWAKEN_STACKS;
         this.prevLine = null;  // 직전 녹턴 대사 — 연속 중복을 막는다
         this.lastLine = null;
     }
@@ -160,7 +166,7 @@ export class PactSystem {
             //   P2 특수 상태가 기본값이 되고 엔딩 3분기가 진조 하나로 붕괴한다.
             //   그래서 후보에서 통째로 뺀다 — 남는 게 없으면 그 카드는 대가가 없다.
             //   녹턴이 그 방향으로는 더 가져갈 게 없다는 뜻이라 서사와도 맞는다.
-            const willOverflow = atCap && cur + addStacks >= AWAKEN_STACKS;
+            const willOverflow = atCap && cur + addStacks >= this.awakenStacksOverride;
             if (willOverflow && !allowOverflow) continue;
             if (willOverflow) w *= 0.2; // 정본 §6.3 — 남겨두되 드물게
             if (this.isAtFloor(t)) w *= 0.3;
@@ -207,7 +213,7 @@ export class PactSystem {
             stacksBefore: cur,
             stacksAfter: after,
             /** T342 — 이 카드를 고르면 각성하는가 */
-            triggersAwakening: cur < AWAKEN_STACKS && after >= AWAKEN_STACKS,
+            triggersAwakening: cur < this.awakenStacksOverride && after >= this.awakenStacksOverride,
             desc: t.desc.replace("{v}", t.stat === "drain" ? amount.toFixed(1) : Math.round(amount * 100)),
             feel: t.feel,
         };

@@ -88,6 +88,11 @@ const EQUIP_SLOTS = ["fang", "hide", "charm"];
 /** ItemSystem.js:246 resetRules() 의 플래그 이름. 그 외 rule 은 :634 에서 조용히 무시된다 */
 const RELIC_RULES = ["magnetPulse", "slowAura", "secondWind", "goldSalvage", "burstOnUse"];
 /** ItemSystem.js:599~616 applyUse() 가 실제로 처리하는 type. 그 외는 먹어도 아무 일이 없다 */
+/** SanctumSystem.js 의 STAT_ALIAS 거울. 데이터 이름 -> StatSystem 키 */
+const SANCTUM_ALIAS = { damageMult: "damage", speedMult: "moveSpeed" };
+/** SanctumSystem.applySpecial 이 처리하는 special id 거울 */
+const SANCTUM_SPECIALS = ["reroll_plus", "awaken_threshold_reduce"];
+
 const USE_EFFECT_TYPES = ["heal", "healPct", "buff", "bomb", "slow", "exp"];
 /** ItemSystem.js:564~569 pickup() 의 카테고리 분기 */
 const ITEM_CATEGORIES = ["use", "gold", "relic", "equip"];
@@ -682,9 +687,14 @@ function ruleAffixesAndSanctum(R, D) {
         }
         const e = u.effectPerLevel ?? {};
         if (e.op === "special") { if (!isStr(e.id)) R.err(`sanctum ${u.id}: special 인데 id 가 없다`); continue; }
-        if (!has(STAT_OPS, e.op)) R.warn(`sanctum ${u.id}: effectPerLevel.op "${e.op}" 를 StatSystem 이 모른다`);
-        if (!(e.stat in BASE_STATS)) R.warn(`sanctum ${u.id}: effectPerLevel.stat "${e.stat}" 이 StatSystem BASE 에 없다 — 지금은 effectPerLevel 을 읽는 코드 자체가 없다(성소 효과 미배선)`);
-        if (!isNum(e.value)) R.err(`sanctum ${u.id}: effectPerLevel.value 누락/비숫자`);
+        if (e.op !== "special" && !has(STAT_OPS, e.op)) R.warn(`sanctum ${u.id}: effectPerLevel.op "${e.op}" 를 StatSystem 이 모른다`);
+        if (e.op === "special") {
+            if (!has(SANCTUM_SPECIALS, e.id)) R.err(`sanctum ${u.id}: special "${e.id}" 을 SanctumSystem.applySpecial 이 모른다 — 사도 아무 효과가 없다`);
+        } else {
+            const key = SANCTUM_ALIAS[e.stat] ?? e.stat;
+            if (!(key in BASE_STATS)) R.err(`sanctum ${u.id}: stat "${e.stat}" 이 StatSystem BASE 에도 STAT_ALIAS 에도 없다 — 그 업그레이드는 아무 효과가 없다`);
+        }
+        if (e.op !== "special" && !isNum(e.value)) R.err(`sanctum ${u.id}: effectPerLevel.value 누락/비숫자`);
     }
 }
 

@@ -374,7 +374,7 @@ export class CombatSystem {
                 this.awakening?.onKill(e);
                 this.items?.rollDrop(e);
                 this.fx?.killBurst(e.x, e.y);
-                this.gold += e.goldValue ?? 1;
+                this.gold += (e.goldValue ?? 1) * this.stats.get("goldMult");
                 const leech = this.stats.get("lifeOnKill");
                 if (leech > 0) this.hp = Math.min(this.maxHp, this.hp + leech);
                 this.dropOrb(e.x, e.y, e.expValue);

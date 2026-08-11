@@ -30,6 +30,7 @@ import { FxSystem } from "../systems/FxSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { ItemSystem } from "../systems/ItemSystem";
 import { StageSystem } from "../systems/StageSystem";
+import { applySanctum } from "../systems/SanctumSystem";
 import { QualitySystem } from "../systems/QualitySystem";
 import { EventBus } from "../EventBus";
 import { EVENTS } from "../constants";
@@ -66,6 +67,16 @@ export default class GameScene extends Phaser.Scene {
                 stats: this.stats, pact: this.pact, combat: this.combatSystem, player: this.player,
             });
             this.combatSystem.awakening = this.awakening;
+
+            // ★ 성소는 stats·pact 가 만들어진 **뒤**, 전투가 시작되기 **전**에 적용해야 한다.
+            //   앞이면 붙일 대상이 없고, 뒤면 이미 첫 프레임이 옛 수치로 돌아간다.
+            //   maxHp 가 오르므로 hp 초기화보다도 먼저여야 만피로 시작한다.
+            const sanc = applySanctum(this, this.registry.get("sanctum") ?? {});
+            if (sanc.stats || sanc.specials.length) {
+                this.combatSystem.hp = this.combatSystem.maxHp;   // 늘어난 최대체력을 반영
+                console.info("[성소] 스탯 " + sanc.stats + "건" +
+                    (sanc.specials.length ? " · " + sanc.specials.join(" · ") : ""));
+            }
 
             this.bossSystem = new BossSystem(this, {
                 player: this.player, spawn: this.spawnSystem, combat: this.combatSystem, stats: this.stats,

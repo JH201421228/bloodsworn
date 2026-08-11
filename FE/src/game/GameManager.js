@@ -55,6 +55,9 @@ class GameManagerImpl {
             //   (결과 화면 [다시], 성소 [출정])은 직전 스테이지를 그대로 잇는다 —
             //   "방금 진 그 스테이지를 다시"라는 기대와 맞다.
             if (p?.stageId) g.registry.set("stageId", p.stageId);
+            // 성소 업그레이드. registry 에 두면 씬 재시작을 넘어 살아남아
+            // 결과 화면 [다시 하기] 로 돌아온 런에도 그대로 적용된다.
+            if (p?.meta?.upgrades) g.registry.set("sanctum", p.meta.upgrades);
             else if (!g.registry.has("stageId")) g.registry.set("stageId", "stage1");
             const gs = g.scene.getScene(SCENES.GAME);
             if (!gs || !gs.scene.isActive()) { g.scene.start(SCENES.GAME); return; }
