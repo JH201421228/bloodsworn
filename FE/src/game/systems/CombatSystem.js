@@ -19,6 +19,11 @@ import { dist2 } from "../utils/math";
 import weaponsData from "@/data/weapons.json";
 
 const MAX_PROJECTILES = 200;
+/** W3 유골 / W4 장판에 쓰는 투사체 아틀라스 시트. data/projectiles.json 의 키와 같아야 한다.
+ *  ★ 텍스처가 없으면(에셋 미빌드) 예전 도형으로 조용히 되돌아간다 —
+ *    무기가 안 보이는 것보다 못생긴 게 낫다. */
+const W3_SHEET = "proj-shuriken-ash";
+const W4_SHEET = "proj-spin-ash";
 const MAX_ORBIT = 5;    // W3 유골 최대 수 (Lv5)
 const MAX_ZONES = 12;   // W4 장판 최대 수 (Lv5 5곳 x 지속 1.8s / 쿨 2.6s)
 const MAX_ORBS = 300;
@@ -82,10 +87,25 @@ export class CombatSystem {
 
         // ── W3 뼈 회오리: 유골 스프라이트는 미리 5개 만들어 두고 보이기/숨기기만 한다
         this.orbitBones = [];
+        this.orbitArt = scene.textures.exists(W3_SHEET);
         for (let i = 0; i < MAX_ORBIT; i++) {
-            const b = scene.add.circle(-999, -999, 4, 0xe8e0d0);
+            const b = this.orbitArt
+                ? scene.add.sprite(-999, -999, W3_SHEET, 0)
+                : scene.add.circle(-999, -999, 4, 0xe8e0d0);
             b.setDepth(DEPTH.PROJECTILE).setVisible(false);
             this.orbitBones.push(b);
+        }
+        if (this.orbitArt) {
+            // 유골은 궤도를 도는 내내 회전한다. 프레임 애니메이션 + 스프라이트 자체 회전을
+            // 함께 쓰면 축이 두 개가 되어 어지럽다 — 애니메이션만 쓰고 rotation 은 건드리지 않는다.
+            const key = W3_SHEET + ".spin";
+            if (!scene.anims.exists(key)) {
+                scene.anims.create({
+                    key, frames: scene.anims.generateFrameNumbers(W3_SHEET, { start: 0, end: 3 }),
+                    frameRate: 16, repeat: -1,
+                });
+            }
+            for (const b of this.orbitBones) b.play(key);
         }
         // 재타격 쿨은 적별로 관리한다. 적 객체에 직접 시간을 박으면 풀 재사용 시
         // 죽었다 살아난 적이 공짜 무적을 얻는다.
@@ -93,10 +113,29 @@ export class CombatSystem {
         this.orbitSweep = 0;
 
         // ── W4 성수 낙하: 장판 풀
-        this.zones = new Pool(MAX_ZONES, () => {
+        // 장판은 바닥 면적이라 채움(원)이 필요하고, 테두리는 링 아트가 훨씬 잘 읽힌다.
+        // 둘을 1:1 고정 짝으로 묶는다 — 매번 짝을 찾으면 그것도 비용이다.
+        this.zoneArt = scene.textures.exists(W4_SHEET);
+        this.zoneRings = [];
+        for (let i = 0; i < MAX_ZONES; i++) {
+            const r = this.zoneArt ? scene.add.sprite(-999, -999, W4_SHEET, 0) : null;
+            r?.setDepth(DEPTH.FX + 1).setVisible(false).setAlpha(0.85);
+            this.zoneRings.push(r);
+        }
+        if (this.zoneArt) {
+            const key = W4_SHEET + ".pulse";
+            if (!scene.anims.exists(key)) {
+                scene.anims.create({
+                    key, frames: scene.anims.generateFrameNumbers(W4_SHEET, { start: 0, end: 3 }),
+                    frameRate: 10, repeat: -1,
+                });
+            }
+        }
+        this.zones = new Pool(MAX_ZONES, (i) => {
             const g = scene.add.circle(-999, -999, 30, 0xdfd08a, 0.22);
-            g.setStrokeStyle(1, 0xf4e9b8, 0.5);
+            if (!this.zoneArt) g.setStrokeStyle(1, 0xf4e9b8, 0.5);
             g.setDepth(DEPTH.FX).setVisible(false);
+            g.__ring = this.zoneRings[i];
             return g;
         });
 
@@ -550,7 +589,12 @@ export class CombatSystem {
     // ── W3 뼈 회오리 ────────────────────────────────────────────
     /** 유골 개수가 바뀌면 스프라이트 표시 수를 맞춘다 */
     syncOrbit(wp) {
-        for (let i = 0; i < MAX_ORBIT; i++) this.orbitBones[i].setVisible(i < wp.s.count);
+        for (let i = 0; i < MAX_ORBIT; i++) {
+            const b = this.orbitBones[i];
+            b.setVisible(i < wp.s.count);
+            // 레벨이 오르면 유골도 커진다 — 수치가 올랐다는 것을 눈으로 알 수 있어야 한다
+            if (this.orbitArt) b.setScale(0.8 + wp.level * 0.08);
+        }
     }
 
     /**
@@ -608,6 +652,13 @@ export class CombatSystem {
             z.setPosition(this.player.x + Math.cos(a) * d, this.player.y + Math.sin(a) * d);
             z.setRadius(radius);
             z.setVisible(true).setAlpha(0.22);
+            const ring = z.__ring;
+            if (ring) {
+                // 링 원본이 24px 이므로 장판 지름에 맞춰 늘린다
+                ring.setPosition(z.x, z.y).setVisible(true).setAlpha(0.85)
+                    .setDisplaySize(radius * 2.2, radius * 2.2);
+                ring.play(W4_SHEET + ".pulse", true);
+            }
             z.zr2 = radius * radius;
             z.damage = w.damage * this.stats.get("damage");
             z.life = w.duration;
@@ -632,9 +683,12 @@ export class CombatSystem {
             z.life -= dt;
             if (z.life <= 0) {
                 z.setVisible(false).setPosition(-999, -999);
+                z.__ring?.setVisible(false).setPosition(-999, -999);
                 this.zones.release(z);
             } else {
-                z.setAlpha(0.10 + 0.14 * Math.min(1, z.life)); // 사라질 때 옅어진다
+                const a = Math.min(1, z.life);
+                z.setAlpha(0.10 + 0.14 * a); // 사라질 때 옅어진다
+                z.__ring?.setAlpha(0.35 + 0.5 * a);
             }
         }
     }
