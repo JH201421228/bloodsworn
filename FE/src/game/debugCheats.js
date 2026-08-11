@@ -76,6 +76,54 @@ export function installCheats(scene) {
             }
             return rs.snapshot().find((s) => s.weaponId === wid);
         },
+        // ── 조우 (30-ENCOUNTERS-AND-FIELD-EVENTS) ───────────────────────
+        /** 지금 즉시 그 조우를 띄운다. id 또는 kind 둘 다 받는다.
+         *  BS.enc('merchant') BS.enc('enc_witch') BS.enc('fieldboss') BS.enc('altar') */
+        enc: (k) => scene.encounters?.force(k) ?? '조우 시스템 없음',
+        /** 지금 떠 있는 조우 상태 — 좌판 좌표·가격·잠김까지 그대로 본다 */
+        encState: () => {
+            const es = scene.encounters;
+            if (!es) return '조우 시스템 없음';
+            const a = es.active;
+            return {
+                paused: scene.scene.isPaused(),   // ★ E-1 — 조우 중에도 항상 false 여야 한다
+                act: a ? { id: a.id, kind: a.kind, life: +a.life.toFixed(1), x: Math.round(a.x), y: Math.round(a.y) } : null,
+                fieldBoss: es.fb.on ? { hp: es.fb.e?.hp, maxHp: es.fb.e?.maxHp, life: +es.fb.life.toFixed(1), leashR: es.fb.e?.__leashR } : null,
+                suppressed: scene.spawnSystem.suppressed,  // ★ E-4 — 필드보스는 이걸 켜지 않는다
+                slots: es.slots.filter((s) => s.on).map((s) => ({
+                    kind: s.kind, label: s.label, pricePct: Math.round(s.price * 100),
+                    priceHp: Math.round(es.priceHp(s.price)), locked: s.locked,
+                    x: Math.round(s.x), y: Math.round(s.y),
+                })),
+            };
+        },
+        /** 창 스케줄(초). 디렉터가 언제 무엇을 띄울지의 시간축이다 */
+        encWindows: () => {
+            const es = scene.encounters;
+            if (!es) return '조우 시스템 없음';
+            if (!es.schedule) es.buildSchedule();
+            return es.schedule.map((w) => w.id + ' @' + Math.round(w.at) + 's [' + w.pool.join(',') + ']');
+        },
+        /** ★ E-6 — 디렉터 규칙 검증. 100런 시뮬레이션에서 같은 조우 연속 배치가 0회여야 한다.
+         *  씬을 만지지 않는 순수 함수라 몇 번을 돌려도 런 상태가 오염되지 않는다. */
+        encSim: (n = 100, offers = 6) => scene.encounters?.simulate(n, offers) ?? '조우 시스템 없음',
+        /** 좌판을 밟은 것으로 친다 — 걸어가지 않고 구매 판정만 본다. BS.encBuy(0) */
+        encBuy: (i = 0) => {
+            const es = scene.encounters;
+            const s = es?.slots?.filter((x) => x.on)[i];
+            if (!s) return '그 좌판이 없다';
+            if (s.locked) return '잠김 — 체력이 가격 이하다 (E-3)';
+            scene.player.setPosition(s.x, s.y);
+            return { moved: [Math.round(s.x), Math.round(s.y)], label: s.label };
+        },
+        /** 보물상자를 발밑에 떨군다. 30 §3.7 보상 3종 추첨을 눈으로 본다 */
+        chest: (n = 1) => {
+            for (let i = 0; i < n; i++) {
+                const a = (Math.PI * 2 * i) / n;
+                scene.spawnSystem.dropChest(scene.player.x + Math.cos(a) * 24, scene.player.y + Math.sin(a) * 24, 'cheat');
+            }
+            return scene.spawnSystem.chests.activeCount;
+        },
         /** 보스 즉시 소환 — 6분을 기다리지 않고 보스전을 검증한다 */
         boss: () => { scene.spawnSystem.elapsed = 360; return !!scene.bossSystem.spawn(); },
         /** 보스 HP 직접 설정 — 페이즈 전환/처치 연출을 10초 만에 본다 */
@@ -100,6 +148,7 @@ export function installCheats(scene) {
         window.BS = BS;
         console.log("[치트] BS.spawn(50) BS.god() BS.speed(3) BS.wave(6) BS.stat() BS.heal() BS.kill()");
         console.log("[치트·룬] BS.runeOffers() BS.rune('rn_w2_twin') BS.runeForce('rn_w2_chain') BS.runeMax('W3') BS.runes()");
+        console.log("[치트·조우] BS.enc('merchant') BS.encState() BS.encBuy(0) BS.encWindows() BS.encSim(100) BS.chest(2)");
     }
     return BS;
 }

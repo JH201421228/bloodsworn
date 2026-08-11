@@ -1,0 +1,187 @@
+{
+    "_comment": [
+        "조우와 필드 이벤트. 설계 정본 docs/30-ENCOUNTERS-AND-FIELD-EVENTS.md.",
+        "",
+        "★ 두 불변식이 이 파일의 형태를 정했다(30 §1).",
+        "  I-3  조우는 게임을 멈추지 않는다 — scene.pause() 를 부르는 조우는 없다.",
+        "  탭 0회 조우는 버튼을 만들지 않는다. 그래서 '선택지'가 아니라 '좌판(pedestal)'이다 —",
+        "       고를 것이 3개면 바닥에 3개를 놓고 플레이어가 걸어가서 밟는다(30 §1.3).",
+        "",
+        "★ price 는 전부 '최대 체력에 대한 비율'이다(30 §2/§5). 절대값이 아니다 —",
+        "  maxHp 는 FRAIL 대가·성소·장비로 런마다 다르고, 비율이어야 '똑같이 아프다'가 성립한다.",
+        "  ⚠ 30 §5 가 스스로 '전부 미검증 추정'이라고 적어 둔 값이다. 확정값으로 취급하지 말 것.",
+        "",
+        "★ windows[].at 은 초가 아니라 bossAt 대비 '비율'이다(30 §4.1).",
+        "  런 길이가 스테이지마다 300~450초로 다르기 때문이다. 초로 굳히면 stage2(300초)에서",
+        "  W5(480초)가 영원히 오지 않는다.",
+        "",
+        "★ 아이콘 임시 배선 (30 §7.2). 상자·조우 마커 전용 아트는 아직 없다.",
+        "  items 아틀라스의 기존 프레임을 빌려 쓰고 있고, docs/32 의 Codex 산출물이 오면",
+        "  아래 texture/frame* 문자열만 갈아 끼우면 된다. 코드에는 프레임 이름이 없다."
+    ],
+    "schemaVersion": 1,
+
+    "spawn": {
+        "_comment": "화면 밖 200~260px 에 생성한다(30 §4.3). 눈앞에 뜨면 '간다/안 간다'가 없다.",
+        "distMin": 200,
+        "distMax": 260,
+        "offscreenPad": 28,
+        "bannerMs": 1800,
+        "pedestalGap": 46,
+        "pedestalAhead": 34,
+        "pickRadius": 14
+    },
+
+    "windows": [
+        { "id": "W1", "at": 0.12, "jitter": 8, "pool": ["enc_seer", "enc_merchant", "enc_chest"] },
+        { "id": "W2", "at": 0.28, "jitter": 8, "pool": ["enc_merchant", "enc_witch", "enc_shady", "enc_altar"] },
+        { "id": "W3", "at": 0.44, "jitter": 8, "pool": ["enc_merchant", "enc_witch", "enc_seer", "enc_shady", "enc_altar", "enc_fieldboss", "enc_chest"] },
+        { "id": "W4", "at": 0.62, "jitter": 8, "pool": ["enc_merchant", "enc_witch", "enc_seer", "enc_shady", "enc_altar", "enc_fieldboss", "enc_chest"] },
+        { "id": "W5", "at": 0.80, "jitter": 8, "pool": ["enc_merchant", "enc_witch", "enc_altar"] }
+    ],
+
+    "rules": {
+        "_comment": "30 §4.2 추첨 규칙 4가지. 순수 확률이 아니다 — 창은 고정, 내용만 추첨한다.",
+        "noRepeatPrevWindow": true,
+        "maxPerRun": { "enc_fieldboss": 1, "enc_altar": 2 }
+    },
+
+    "encounters": [
+        {
+            "id": "enc_merchant",
+            "name": "떠돌이 상인",
+            "kind": "merchant",
+            "npc": "merchant",
+            "stay": 25,
+            "blinkLast": 5,
+            "pedestals": 3,
+            "onePurchaseOnly": true
+        },
+        {
+            "id": "enc_witch",
+            "name": "재의 마녀",
+            "kind": "witch",
+            "npc": "witch",
+            "stay": 25,
+            "blinkLast": 5,
+            "pedestals": 3,
+            "onePurchaseOnly": true,
+            "tollRarity": "common"
+        },
+        {
+            "id": "enc_seer",
+            "name": "눈먼 예언자",
+            "kind": "seer",
+            "npc": "seer",
+            "stay": 25,
+            "blinkLast": 5,
+            "pedestals": 1,
+            "onePurchaseOnly": true,
+            "rerollBonus": 1,
+            "rerollCap": 4
+        },
+        {
+            "id": "enc_shady",
+            "name": "수상한 자",
+            "kind": "shady",
+            "npc": "shady_guy",
+            "stay": 25,
+            "blinkLast": 5,
+            "pedestals": 2,
+            "onePurchaseOnly": true
+        },
+        {
+            "id": "enc_altar",
+            "name": "피의 제단",
+            "kind": "altar",
+            "npc": null,
+            "stay": 30,
+            "blinkLast": 6,
+            "pedestals": 0,
+            "channelSec": 3,
+            "radius": 34,
+            "color": 10620973,
+            "alpha": 0.3,
+            "blessingRarity": "epic",
+            "tollRarity": "rare"
+        },
+        {
+            "id": "enc_fieldboss",
+            "name": "배회하는 것",
+            "kind": "fieldboss",
+            "npc": null,
+            "stay": 60,
+            "blinkLast": 0,
+            "pedestals": 0
+        },
+        {
+            "id": "enc_chest",
+            "name": "봉인된 궤",
+            "kind": "chest",
+            "npc": null,
+            "stay": 0,
+            "blinkLast": 0,
+            "pedestals": 0
+        }
+    ],
+
+    "prices": {
+        "_comment": [
+            "30 §5. 최대 체력 대비 비율. ⚠ 전부 미검증 추정치다.",
+            "merchant 는 30 §5 의 3단계(일반 12 / 희귀 20 / 전설 30)를 items.rarities 5종에 편 것이다 —",
+            "uncommon 은 '일반', epic 은 '전설' 쪽에 붙였다. 등급이 5개인데 표가 3줄이라 어딘가는 겹친다."
+        ],
+        "merchant": { "common": 0.12, "uncommon": 0.12, "rare": 0.2, "epic": 0.3, "legendary": 0.3 },
+        "witch": { "1": 0.15, "2": 0.22, "3": 0.32 },
+        "shady": 0.25,
+        "seer": 0,
+        "altar": 0
+    },
+
+    "shady": {
+        "_comment": [
+            "30 §3.4. ★ 50:50 이 아니다. 정확히 반반이면 기댓값 계산이 한 번에 끝나고",
+            "다시는 고민하지 않는다. 10% 의 함정이 '지금 체력으로 정예 3체를 감당할 수 있나'를 매번 다시 묻는다."
+        ],
+        "outcomes": [
+            { "id": "jackpot", "weight": 45, "label": "전설 유물", "relicRarity": "legendary" },
+            { "id": "dud", "weight": 45, "label": "빈손" },
+            { "id": "trap", "weight": 10, "label": "매복", "eliteCount": 3 }
+        ]
+    },
+
+    "chest": {
+        "_comment": [
+            "30 §3.7. 보물상자는 이미 있었다 — 문제는 11x9 노란 사각형이었고, CHEST_OPENED 를",
+            "구독하는 코드가 0이었고, 보상이 축복 1개 고정이라 열 때마다 같았다는 것이다.",
+            "★ 아이콘은 임시다. items 아틀라스의 주머니 프레임을 빌린다(30 §7.2).",
+            "  docs/32 C-1 의 상자 2프레임이 오면 texture/frameClosed/frameOpen 만 바꾼다."
+        ],
+        "texture": "items",
+        "frameClosed": "itm_pouch",
+        "frameOpen": "itm_relic_book",
+        "scale": 1.15,
+        "rewards": [
+            { "kind": "blessing", "weight": 55, "label": "대가 없는 축복" },
+            { "kind": "rune", "weight": 25, "label": "룬" },
+            { "kind": "items", "weight": 20, "label": "아이템 다발", "count": 3 }
+        ]
+    },
+
+    "fieldboss": {
+        "_comment": [
+            "30 §3.6. enemies.json 의 tier:'miniboss' 10종을 재사용한다.",
+            "★ BossSystem 을 부르지 않는다. 부르면 suppressed=true / purgeMinions / endRun 셋이 함께 와서",
+            "  잡몹이 영구히 멈추고 화면이 비고 런이 끝난다. 필드보스는 셋 전부를 피해야 한다.",
+            "★ hpMult 가 1.0 인 것은 손을 놓은 것이 아니다. SpawnSystem.reset 이 이미 seg.hpMult 를",
+            "  곱하고 있고(W3~W4 구간에서 3.5~5배), 그 위에 또 곱하면 60초 안에 못 잡는다 —",
+            "  체류 60초는 '무시할 수 있다'를 만드는 장치인데 '못 잡는다'가 되면 의미가 뒤집힌다."
+        ],
+        "hpMult": 1.0,
+        "leashRadius": 140,
+        "wanderMult": 0.28,
+        "rewardRunes": 1,
+        "rewardChests": 2,
+        "chestSpread": 26
+    }
+}

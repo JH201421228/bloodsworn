@@ -88,6 +88,24 @@ export class EnemyAISystem {
 
     /** @returns {boolean} 이 프레임의 속도를 상태 머신이 확정했는가 */
     tickSpecial(e, now, px, py) {
+        /**
+         * ★ 필드보스 리시 — 30 §3.6 "회피 가능하게 만드는 3가지 장치" 중 첫 번째.
+         *   반경 밖에서는 **추적하지 않고 제자리를 배회한다.** 무시하려면 무시할 수 있어야
+         *   무시가 선택이 된다. 여기(tickSpecial 맨 앞)에 두는 이유는 두 가지다 —
+         *   ① true 를 돌려주면 retarget 이 통째로 건너뛰어 추격 코드가 아예 안 돈다.
+         *   ② charge/shockwave 같은 특수기도 함께 잠긴다. 멀리서 충격파를 맞으면
+         *      "제자리를 배회한다"는 약속이 거짓말이 된다.
+         *   __leashR 은 EncounterSystem 이 필드보스에만 심는다. 나머지 적은 이 if 를
+         *   비교 한 번으로 지나가므로 적 150체에서도 비용이 없다.
+         */
+        if (e.__leashR > 0 && dist2(e.x, e.y, px, py) > e.__leashR * e.__leashR) {
+            // 스폰 지점 근처를 천천히 도는 원운동. 방향이 계속 돌아 멀리 가지 않는다.
+            const a = now * 0.0006 + e.aiPhase;
+            const s = e.speed * (e.__leashMul ?? 0.28);
+            e.vx = Math.cos(a) * s;
+            e.vy = Math.sin(a) * s;
+            return true;
+        }
         switch (e.def.ai) {
             case "ranged": return this.tickRanged(e, now, px, py);
             case "charge": return this.tickCharge(e, now, px, py);

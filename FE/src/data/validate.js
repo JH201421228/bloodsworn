@@ -37,6 +37,8 @@ import droptables from "./droptables.json" with { type: "json" };
 import projectiles from "./projectiles.json" with { type: "json" };
 import awakenings from "./awakenings.json" with { type: "json" };
 import runes from "./runes.json" with { type: "json" };
+import encounters from "./encounters.json" with { type: "json" };
+import npcCatalog from "./npc-catalog.json" with { type: "json" };
 import sanctum from "./sanctum.json" with { type: "json" };
 import audio from "./audio.json" with { type: "json" };
 // 스탯 이름은 문자열 목록을 여기 복사하면 안 된다. 코드가 쓰는 표를 그대로 가져온다 —
@@ -110,6 +112,14 @@ const RUNE_SPECIALS = [
 ];
 /** 31 §2 — 무기당 3단계, 각 단계 2택. 이 형태가 깨지면 좌판이 "선택"이 아니게 된다 */
 const RUNE_TIER_MAX = 3;
+/** EncounterSystem.fillSlot / beginEncounter 의 분기 거울. 여기 없는 kind 는 배치돼도 아무 일이 없다 */
+const ENCOUNTER_KINDS = ["merchant", "witch", "seer", "shady", "altar", "fieldboss", "chest"];
+/** EncounterSystem.grantShady 가 실제로 처리하는 결과 id. 그 외는 조용히 "빈손"이 된다 */
+const SHADY_OUTCOMES = ["jackpot", "dud", "trap"];
+/** EncounterSystem.rollChestReward 의 분기 거울 (30 §3.7) */
+const CHEST_REWARD_KINDS = ["blessing", "rune", "items"];
+/** PactSystem.describeToll / describeBlessing 이 아는 등급. tolls.json 의 rarityMult 키와 같다 */
+const PACT_RARITIES = ["common", "rare", "epic"];
 const RUNE_PER_TIER = 2;
 /** StatSystem.js:97~105 recalc() 가 아는 연산자 */
 const STAT_OPS = ["add", "mul", "toll", "tollAdd", "awaken"];
@@ -768,6 +778,176 @@ function ruleRunes(R, D) {
     }
 }
 
+/**
+ * 조우 (30 §3~§7). 읽는 곳: EncounterSystem — drawKind(디렉터) / fillSlot(좌판) /
+ *   rollChestReward(상자) / beginFieldBoss(필드보스), SpawnSystem(상자 아트).
+ *
+ * ★ 이 규칙이 잡아야 하는 조용한 사고 5가지
+ *   1 kind 오타 -> beginEncounter 의 분기에 안 걸려 조우가 **배치는 되는데 아무것도 안 뜬다.**
+ *   2 windows[].pool 에 없는 id -> drawKind 가 조용히 건너뛰고 그 창이 통째로 빈다.
+ *     런에 사건이 5번 있다는 약속이 소리 없이 4번이 된다.
+ *   3 prices 누락 -> 기본값으로 굴러가므로 30 §5 의 가격표와 실제가 어긋난다. 크래시가 없다.
+ *   4 상자 프레임 오타 -> SpawnSystem 이 옛 노란 사각형으로 내려간다. 30 §3.7 이 지우려 한 그것이다.
+ *   5 필드보스 풀이 0종 -> 그 창이 영원히 재추첨된다. "필드보스를 본 적이 없다"로만 나타난다.
+ */
+function ruleEncounters(R, D) {
+    const E = D.encounters;
+    if (!E) return; // 번들에 안 실렸으면 이 규칙만 건너뛴다
+    const encIds = new Set();
+    const npcIds = new Set((D.npcCatalog?.npcs ?? []).map((n) => n.id));
+    const rarityIds = new Set((D.items.rarities ?? []).map((r) => r.id));
+    const kinds = new Set();
+
+    for (const e of E.encounters ?? []) {
+        checkShape(R, `encounter ${e.id}`, e, { id: isStr, name: isStr, kind: isStr, stay: isNum });
+        if (encIds.has(e.id)) R.err(`encounter ${e.id}: id 가 중복이다 — defOf 에서 나중 것이 앞 것을 덮는다`);
+        encIds.add(e.id);
+        if (!has(ENCOUNTER_KINDS, e.kind)) {
+            R.err(`encounter ${e.id}: kind "${e.kind}" 는 EncounterSystem 분기에 없다 — 배치돼도 아무것도 안 뜬다`);
+            continue;
+        }
+        kinds.add(e.kind);
+        // npc 는 npc-catalog.json 의 id 다. 오타면 좌판만 뜨고 NPC 가 통째로 사라진다
+        if (e.npc !== null && e.npc !== undefined && !npcIds.has(e.npc)) {
+            R.err(`encounter ${e.id}: npc "${e.npc}" 가 npc-catalog.json 에 없다 — NPC 없이 좌판만 뜬다`);
+        }
+        // 좌판 개수는 EncounterSystem 의 MAX_SLOTS(3) 를 넘을 수 없다. 넘으면 조용히 잘린다
+        if (!isNum(e.pedestals) || e.pedestals < 0 || e.pedestals > 3) {
+            R.err(`encounter ${e.id}: pedestals ${e.pedestals} 는 0~3 밖이다 (EncounterSystem MAX_SLOTS=3)`);
+        }
+        // 30 §4.4 체류 시간. 궤(0)만 예외 — 소멸하지 않는다
+        if (e.kind !== "chest" && (!isNum(e.stay) || e.stay <= 0)) {
+            R.err(`encounter ${e.id}: stay ${e.stay} 가 0 이하다 — 뜨자마자 사라진다`);
+        }
+        if (isNum(e.blinkLast) && isNum(e.stay) && e.blinkLast > e.stay) {
+            R.warn(`encounter ${e.id}: blinkLast ${e.blinkLast}s 가 stay ${e.stay}s 보다 길다 — 등장하자마자 점멸한다`);
+        }
+        for (const k of ["tollRarity", "blessingRarity"]) {
+            if (e[k] && !has(PACT_RARITIES, e[k])) {
+                R.err(`encounter ${e.id}.${k} "${e[k]}" 를 PactSystem 이 모른다 (${PACT_RARITIES.join("/")}) — describeToll 이 undefined 배율을 쓴다`);
+            }
+        }
+    }
+    for (const k of ENCOUNTER_KINDS) {
+        if (!kinds.has(k)) R.err(`encounters: kind "${k}" 를 가진 조우가 하나도 없다 — 코드에 분기만 남고 데이터가 없다`);
+    }
+
+    // ── 디렉터 창 (30 §4.1) ──
+    let prevAt = -1;
+    for (const w of E.windows ?? []) {
+        const at = `windows ${w.id}`;
+        if (!isNum(w.at) || w.at <= 0 || w.at >= 1) {
+            R.err(`${at}: at ${w.at} 는 bossAt 대비 비율이라 0~1 사이여야 한다 — 1 이상이면 보스 뒤로 밀린다`);
+        } else {
+            if (w.at <= prevAt) R.err(`${at}: at ${w.at} 가 직전 창 ${prevAt} 이하다 — 창 순서가 뒤집힌다`);
+            prevAt = w.at;
+        }
+        if (!w.pool?.length) { R.err(`${at}: pool 이 비었다 — 이 창은 영원히 아무것도 안 띄운다`); continue; }
+        for (const id of w.pool) {
+            if (!encIds.has(id)) R.err(`${at}.pool: 조우 id "${id}" 가 encounters 에 없다 — drawKind 가 조용히 건너뛴다`);
+        }
+        // 필드보스는 bossAt 이전에만 살 수 있다(30 §3.6 각주). SpawnSystem.js:231 이
+        // elapsed >= bossAt 에서 suppressed 를 자동으로 켜므로 그 뒤로는 스폰 자체가 막힌다.
+        if (w.pool.includes("enc_fieldboss") && isNum(w.at) && w.at > 0.85) {
+            R.err(`${at}: at ${w.at} 에 enc_fieldboss 가 있다 — bossAt 직전이라 최종 보스와 연전이 된다 (30 §4.1 은 W5 에서 뺐다)`);
+        }
+    }
+    if (!(E.windows ?? []).length) R.err("encounters.windows 가 비었다 — 조우가 한 번도 안 나온다");
+
+    // ── 규칙 (30 §4.2) ──
+    for (const id of Object.keys(E.rules?.maxPerRun ?? {})) {
+        if (!encIds.has(id)) R.err(`encounters.rules.maxPerRun "${id}" 조우가 없다 — 상한이 아무것도 막지 않는다`);
+    }
+
+    // ── 가격 (30 §5) ──
+    const P = E.prices ?? {};
+    for (const r of rarityIds) {
+        const v = P.merchant?.[r];
+        if (!isNum(v)) R.err(`encounters.prices.merchant.${r} 누락 — 그 등급 좌판이 기본값 12% 로 팔린다 (EncounterSystem.fillMerchant)`);
+        else if (v < 0 || v >= 1) R.err(`encounters.prices.merchant.${r} = ${v} — 최대 체력 대비 비율이라 0 이상 1 미만이어야 한다. 1 이상이면 영원히 못 산다`);
+    }
+    for (let t = 1; t <= RUNE_TIER_MAX; t++) {
+        const v = P.witch?.[String(t)];
+        if (!isNum(v)) R.err(`encounters.prices.witch T${t} 누락 — 그 단계 룬이 기본값 15% 로 팔린다`);
+        else if (v < 0 || v >= 1) R.err(`encounters.prices.witch T${t} = ${v} — 0 이상 1 미만이어야 한다`);
+    }
+    for (const k of ["shady", "seer", "altar"]) {
+        if (!isNum(P[k])) R.err(`encounters.prices.${k} 누락/비숫자`);
+        else if (P[k] < 0 || P[k] >= 1) R.err(`encounters.prices.${k} = ${P[k]} — 0 이상 1 미만이어야 한다`);
+    }
+
+    // ── 「수상한 자」 (30 §3.4) ──
+    const outs = E.shady?.outcomes ?? [];
+    let sw = 0;
+    for (const o of outs) {
+        if (!has(SHADY_OUTCOMES, o.id)) R.err(`encounters.shady.outcomes "${o.id}" 를 EncounterSystem.grantShady 가 모른다 — 그 몫은 빈손이 된다`);
+        if (!isNum(o.weight)) R.err(`encounters.shady.outcomes ${o.id}: weight 누락`);
+        else sw += o.weight;
+        if (o.id === "jackpot" && o.relicRarity && !rarityIds.has(o.relicRarity)) {
+            R.err(`encounters.shady jackpot.relicRarity "${o.relicRarity}" 가 items.rarities 에 없다 — 대박이 빈손이 된다`);
+        }
+    }
+    if (sw <= 0) R.err("encounters.shady.outcomes 가중치 합이 0 이다 — 항상 첫 결과만 나온다");
+    // 30 §3.4 의 핵심 논증 — 정확히 반반이면 기댓값 계산이 끝나고 다시는 고민하지 않는다
+    const jw = outs.find((o) => o.id === "jackpot")?.weight ?? 0;
+    const dw = outs.find((o) => o.id === "dud")?.weight ?? 0;
+    if (sw > 0 && jw + dw >= sw) R.warn("encounters.shady: 함정 몫이 0 이다 — 30 §3.4 가 거부한 50:50 이 된다");
+
+    // ── 「봉인된 궤」 (30 §3.7) ──
+    const C = E.chest ?? {};
+    let cw = 0;
+    for (const r of C.rewards ?? []) {
+        if (!has(CHEST_REWARD_KINDS, r.kind)) R.err(`encounters.chest.rewards "${r.kind}" 를 rollChestReward 가 모른다`);
+        if (!isNum(r.weight)) R.err(`encounters.chest.rewards ${r.kind}: weight 누락`);
+        else cw += r.weight;
+    }
+    if (cw <= 0) R.err("encounters.chest.rewards 가중치 합이 0 이다 — 30 §3.7 이 고치려던 '열 때마다 같다'로 되돌아간다");
+    if (!isStr(C.texture) || !isStr(C.frameClosed)) {
+        R.err("encounters.chest.texture/frameClosed 누락 — SpawnSystem 이 옛 노란 사각형으로 내려간다 (30 §3.7)");
+    } else {
+        // 프레임 표는 노드판에서만 읽을 수 있다(public/ 은 번들 밖). 없으면 이 검사만 건너뛴다.
+        for (const [name, frames] of [["public/assets/items/items.json", D.itemAtlas], ["src/ui/inventory/itemFrames.json", D.itemFrames]]) {
+            if (!frames || C.texture !== "items") continue;
+            for (const k of ["frameClosed", "frameOpen"]) {
+                if (C[k] && !(C[k] in frames)) {
+                    R.err(`encounters.chest.${k} "${C[k]}" 프레임이 ${name} 에 없다 — 상자가 옛 노란 사각형으로 내려간다`);
+                }
+            }
+        }
+    }
+
+    // ── 필드보스 (30 §3.6) ──
+    const F = E.fieldboss ?? {};
+    if (!(D.enemies.enemies ?? []).some((e) => e.tier === "miniboss")) {
+        R.err("enemies.json 에 tier miniboss 가 0종이다 — 필드보스 창이 영원히 재추첨된다 (30 §3.6)");
+    }
+    if (!(D.enemies.enemies ?? []).some((e) => e.tier === "elite")) {
+        R.err("enemies.json 에 tier elite 가 0종이다 — 「수상한 자」의 함정이 아무것도 소환하지 않는다");
+    }
+    if (!isNum(F.leashRadius) || F.leashRadius <= 0) {
+        R.err(`encounters.fieldboss.leashRadius ${F.leashRadius} — 0 이하면 리시가 꺼져 필드보스가 끝까지 추적한다. 30 §3.6 회피 장치 1이 사라진다`);
+    }
+    if (!isNum(F.hpMult) || F.hpMult <= 0) R.err("encounters.fieldboss.hpMult 누락/0 이하");
+    if (!isNum(F.rewardChests) || !isNum(F.rewardRunes)) R.err("encounters.fieldboss.rewardChests/rewardRunes 누락");
+    const fbStay = (E.encounters ?? []).find((e) => e.kind === "fieldboss")?.stay;
+    if (isNum(fbStay) && fbStay < 20) {
+        R.warn(`enc_fieldboss.stay ${fbStay}s — 화면 밖 200~260px 에서 걸어오는 데만 몇 초가 든다. 30 §3.6 은 60초다`);
+    }
+
+    // ── 배치 (30 §4.3) ──
+    const S = E.spawn ?? {};
+    for (const k of ["distMin", "distMax", "pedestalGap", "pickRadius"]) {
+        if (!isNum(S[k])) R.err(`encounters.spawn.${k} 누락/비숫자`);
+    }
+    if (isNum(S.distMin) && isNum(S.distMax) && S.distMin > S.distMax) {
+        R.err(`encounters.spawn: distMin ${S.distMin} 이 distMax ${S.distMax} 보다 크다`);
+    }
+    // 좌판 3개가 서로 겹치면 어느 것을 밟았는지 알 수 없다. 판정 반경의 2배는 벌려야 한다
+    if (isNum(S.pedestalGap) && isNum(S.pickRadius) && S.pedestalGap < S.pickRadius * 2) {
+        R.err(`encounters.spawn: pedestalGap ${S.pedestalGap} 이 pickRadius ${S.pickRadius} 의 2배 미만이다 — 좌판 판정이 겹쳐 무엇을 샀는지 알 수 없다`);
+    }
+}
+
 /** 어픽스·성소 — 스탯 이름이 코드 표에 없으면 모디파이어가 허공에 쌓인다 */
 function ruleAffixesAndSanctum(R, D) {
     const rarities = D.items.rarities ?? [];
@@ -912,6 +1092,7 @@ const RULES = [
     ruleWeapons, ruleEnemies, ruleBlessings, ruleTolls, rulePhases, ruleNocturne,
     ruleStageEnemyPools, ruleWaveWeights, ruleBossAssignment, ruleBossSheets, ruleTelegraph,
     ruleItems, ruleItemIcons, ruleDroptables, ruleProjectiles, ruleAwakenings, ruleRunes,
+    ruleEncounters,
     ruleAffixesAndSanctum, ruleAudio, ruleWaveCurve, ruleManifest,
 ];
 
@@ -939,6 +1120,7 @@ export function browserBundle() {
     return {
         weapons, enemies, blessings, tolls, phases, nocturne, stages,
         boss, bossAtlas, items, affixes, droptables, projectiles, awakenings, runes, sanctum, audio,
+        encounters, npcCatalog,
     };
 }
 

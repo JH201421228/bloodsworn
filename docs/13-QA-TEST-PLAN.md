@@ -1094,6 +1094,35 @@ MEM 84MB          t:04:32  Lv18  scene:2
 
 ---
 
+## 11. 조우와 필드 이벤트 (E-1 ~ E-8)
+
+> 정본 `30-ENCOUNTERS-AND-FIELD-EVENTS` §8. 대상: `EncounterSystem` / `encounters.json` /
+> `SpawnSystem`(보물상자) / `EnemyAISystem`(필드보스 리시) / `ui/encounter`.
+> 재현 치트: `?debug=1` → `BS.enc('merchant')` `BS.encState()` `BS.encBuy(0)` `BS.encSim(100)` `BS.chest(2)`
+
+| # | 항목 | 통과 조건 | 재현 방법 |
+|---|---|---|---|
+| E-1 | 조우가 게임을 멈추지 않는다 | 조우 중 `scene.isPaused()` 가 항상 false | `BS.enc(k)` 후 `BS.encState().paused` 를 연속 표본. **레벨업 PACT 와 섞으면 측정이 안 된다** — `checkLevelUp` 을 임시로 막고 잰다 |
+| E-2 | 조작이 늘지 않았다 | 조이스틱·대시 외 입력 핸들러 0 | 조우 7종을 전부 띄운 전후로 각 씬의 `input._events` 를 비교. `.enc-layer` 하위에 `pointer-events !== none` 인 요소 0 |
+| E-3 | 체력이 0 이하로 지불되지 않는다 | 잔여 체력이 가격 **이하**면 구매 차단 | `hp = maxHp * 0.25` 로 두고 25% 좌판을 밟는다. `canPay(0.25) === false` (미만이 아니라 이하다 — 같으면 0 이 되고 그건 죽는 것이다) |
+| E-4 | 필드보스가 런을 끝내지 않는다 | 처치 후 `spawner.suppressed === false`, `RUN_ENDED` 미발생, 잡몹 정화 없음 | `BS.enc('fieldboss')` → 강제 처치 → `dead/paused/bossSystem.defeated` 전부 false, 이후에도 잡몹 수가 는다 |
+| E-5 | 필드보스를 무시할 수 있다 | 리시 반경(140px) 밖에서 추적 안 함, 60초 후 소멸, 피해 0 | 400px 밖에 서서 12초 관측 — 스폰 지점 이탈이 리시 반경 안에 머문다. 120px 로 다가가면 추적이 시작된다 |
+| E-6 | 디렉터가 같은 조우를 연속 배치하지 않는다 | 100런 시뮬레이션에서 연속 0회 | `BS.encSim(100)` 의 `repeats === 0`. 마녀가 못 나오는 경우도 봐야 한다 — `BS.encSim(100, 0)` (제시 가능 룬 0개) |
+| E-7 | 성능 | 조우 활성 + 적 150체에서 **1% Low >= 40fps** (평균이 아니다) | `BS.wave(11); BS.spawn(150); BS.enc('merchant')` 후 좌판 옆에서 10초 이상 관측, `sc.quality.low1` |
+| E-8 | 런 중 `new` 금지 | 조우 오브젝트 전부 풀링 | 조우를 21회 띄웠다 걷은 뒤 `sc.children.list.length` 가 그대로다 |
+
+**E-1 의 함정**: 이 런에서 정지가 일어나는 유일한 원인은 PACT 레벨업이다. 적 150체를 스폰하면
+레벨업이 연달아 터져 표본의 90%가 정지로 잡힌다. **조우가 정지를 만드는가**를 재는 시험이므로
+레벨업을 잠시 막고 재야 한다. 소스 수준 보증도 함께 본다 — 주석을 걷어낸 `EncounterSystem.js` 에
+`scene.pause(` / `scene.input` / `addEventListener` / `setInteractive` 가 각각 0건이어야 한다.
+
+**E-5 의 함정**: 필드보스 10종은 AI 가 섞여 있다(`chase` / `charge` / `shockwave`).
+`charge` 형은 돌진 쿨다운 때문에 3초 안에 거리를 못 좁힌다 — 리시 경계 시험은 `chase`/`zigzag` 형이
+뽑힐 때까지 다시 뽑아서 재야 오탐이 안 난다.
+
+
+---
+
 ## 10. 다음 문서
 
 - UI/UX 규격: → `10-UIUX-LANDSCAPE.md`

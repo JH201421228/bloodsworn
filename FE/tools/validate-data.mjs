@@ -84,6 +84,8 @@ const bundle = {
     projectiles: d("projectiles.json"),
     awakenings: d("awakenings.json"),
     runes: d("runes.json"),
+    encounters: d("encounters.json"),
+    npcCatalog: d("npc-catalog.json"),
     sanctum: d("sanctum.json"),
     audio: d("audio.json"),
     // ── 번들 밖. 브라우저판은 이 셋을 못 보므로 여기서만 검사된다 ──

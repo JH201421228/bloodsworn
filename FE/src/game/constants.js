@@ -22,6 +22,14 @@ export const EVENTS = {
     /** 룬을 새겼거나 무기 레벨이 바뀌었다. 일시정지 화면의 룬 조망이 이걸로 갱신된다 (31 §6.2).
      *  ★ 60fps 값이 아니다 — 레벨업/조우 빈도로만 바뀌므로 스토어에 실어도 된다(06 §3.3). */
     RUNES_CHANGED: "rune:changed",
+    /** 조우 4종 (30 §6). ★ 전부 저빈도다 — 런당 5회 안팎이라 스토어/React 가 맞다.
+     *  좌판 좌표·남은 시간 같은 60fps 값은 여기 실리지 않는다. 방향 화살표는
+     *  EncounterSystem 이 setScrollFactor(0) 으로 직접 그린다(06 §3.3). */
+    ENCOUNTER_SPAWNED: "encounter:spawned",
+    ENCOUNTER_RESOLVED: "encounter:resolved",
+    ENCOUNTER_EXPIRED: "encounter:expired",
+    /** 「눈먼 예언자」 — 다음 레벨업 카드 3장 미리보기 (30 §3.3) */
+    SEER_PREVIEW: "seer:preview",
     BOSS_SPAWNED: "boss:spawned",
     BOSS_HP: "boss:hp",
     RUN_PAUSED: "run:paused",

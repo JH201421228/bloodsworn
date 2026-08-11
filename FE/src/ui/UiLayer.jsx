@@ -23,6 +23,7 @@ import AwakeningBanner from "@/ui/awakening/AwakeningBanner";
 import HumanityHearts from "@/ui/hud/HumanityHearts";
 import EquipSlots from "@/ui/inventory/EquipSlots";
 import ItemToasts from "@/ui/inventory/ItemToasts";
+import EncounterHud from "@/ui/encounter/EncounterHud";
 import TitleScreen from "@/ui/screens/TitleScreen";
 import SanctumScreen from "@/ui/screens/SanctumScreen";
 import OptionsScreen from "@/ui/screens/OptionsScreen";
@@ -212,6 +213,10 @@ export default function UiLayer() {
                         절대좌표가 Phaser 캔버스와 어긋난다. */}
                     <EquipSlots />
                     <ItemToasts />
+                    {/* 조우 등장 배너 + 예언자 미리보기(30 §4.3 / §3.3).
+                        ★ 방향 화살표는 여기 없다 — 매 프레임 좌표가 바뀌는 값이라
+                        Phaser 가 setScrollFactor(0) 으로 직접 그린다(06 §3.3). */}
+                    <EncounterHud />
                 </div>
             )}
 

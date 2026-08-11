@@ -107,6 +107,17 @@ export class CombatSystem {
          *  ★ null 이어도 게임은 그대로 굴러간다 — 룬은 조우에서만 들어오고, 조우는 아직 없을 수 있다.
          *    그래서 훅은 전부 옵셔널 체이닝이고 mods 는 무기 인스턴스가 스스로 항등원을 들고 있다. */
         this.runes = null;
+        /**
+         * 「눈먼 예언자」 미리보기 (30 §3.3). EncounterSystem 이 다음 레벨의 카드 3장을
+         * 미리 뽑아 여기 심어 두고, 아래 checkLevelUp 이 그것을 **그대로** 쓴다.
+         * ★ 따로 뽑아 보여주기만 하면 예언이 아니라 거짓말이 된다 — 실제로 나오는 카드와
+         *   다른 3장을 보고 "다음에 W2 강화가 있으니 지금 마녀에게 W2 룬을 산다"는 계획을
+         *   세우게 되기 때문이다. 그 계획이 배신당하면 조우 전체의 신뢰가 무너진다.
+         * ★ nocturneLine 도 함께 보관한다. 카드와 대사는 같은 generate() 가 함께 만든 짝이라
+         *   따로 두면 미리 본 카드에 엉뚱한 대사가 붙는다.
+         */
+        this.previewCards = null;
+        this.previewLine = null;
 
         /**
          * 무기 레지스트리. id -> { def, level, s(=현재 레벨 수치), timer }
@@ -651,14 +662,18 @@ export class CombatSystem {
         if (this.exp < this.expToNext) return;
         this.exp -= this.expToNext;
         this.level++;
-        const cards = this.pact.generate(this.level);
+        // 예언자가 미리 보여준 3장이 있으면 그것이 이번 레벨업의 카드다(30 §3.3)
+        const cards = this.previewCards ?? this.pact.generate(this.level);
+        const line = this.previewCards ? this.previewLine : this.pact.lastLine;
+        this.previewCards = null;
+        this.previewLine = null;
         this.pendingCards = cards;
         // 카드가 뜨는 동안 게임을 멈춘다 (T304)
         this.scene.scene.pause();
         EventBus.emit(EVENTS.RUN_LEVELUP, {
             level: this.level,
             cards,
-            nocturneLine: this.pact.lastLine,
+            nocturneLine: line,
             canSkip: true,
             humanity: this.pact.humanity,
             rerollLeft: this.pact.rerollLeft,

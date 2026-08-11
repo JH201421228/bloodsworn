@@ -336,8 +336,8 @@ export const EVENTS = {
 | 6 | `pact:applied` | `{ cardId, blessing, toll, humanity, tagCounts, willAwaken }` | 카드 적용 완료 | `runSlice` 갱신, 오버레이 닫기 |
 | 7 | `awakening:triggered` | `{ tag, awakeningId, name, quote, index: 1\|2 }` | 태그 3중첩 도달, 히트스톱 시작 시 | `AwakeningBanner` 표시 |
 | 8 | `humanity:zero` | `{ atTimeSec }` | 인간성 0 도달 | 「완전 흡혈귀화」 배너 |
-| 9 | `elite:spawned` | `{ eliteId, x, y }` | 엘리트 스폰 | (선택) 경고 토스트 |
-| 10 | `chest:opened` | `{ gold, blessingId }` | 보물상자 획득 | 획득 토스트 |
+| 9 | `elite:spawned` | `{ id, name, hp, x, y, timeSec, field? }` | 엘리트 스폰 · **필드보스 등장**(30 §3.6) | 등장 배너. 구독자 0이던 죽은 이벤트를 30 이 살렸다 |
+| 10 | `chest:opened` | `{ x, y, sourceId, kind: "blessing"\|"rune"\|"items", label, blessing }` | 보물상자 획득 | 획득 토스트 (30 §3.7 로 페이로드 확장) |
 | 11 | `boss:spawned` | `{ bossId, maxHp }` | 6:00 보스 등장 | BGM 전환 트리거, 보스 이름 배너 |
 | 12 | `boss:hp` | `{ hp, maxHp, phase }` | **200ms 스로틀** (60fps 아님) | 보스 HP바(React) 갱신 |
 | 13 | `run:paused` | `{ reason: "user"\|"levelup"\|"blur" }` | `scene.pause()` 시 | 일시정지 모달 |
@@ -347,6 +347,13 @@ export const EVENTS = {
 | 17 | `quality:changed` | `{ tier: "high"\|"low", reason }` | 적응형 품질 강등/복귀(§5.7) | 옵션 화면에 표시 |
 | 18 | `error:fatal` | `{ message, stack }` | 씬 생성 실패 등 | 에러 화면 + 타이틀 복귀 버튼 |
 | 19 | `rune:changed` | `{ weapons: [{ weaponId, name, level, t1, t2, t3 }] }` | 룬을 새겼을 때 / 무기 획득·레벨업 시 | 일시정지 화면의 룬 조망 갱신 (31 §6.2) |
+| 30 | `encounter:spawned` | `{ id, name, kind, x, y }` | 디렉터가 조우를 배치한 순간 (30 §4.3) | 등장 배너 1.8초 |
+| 31 | `encounter:resolved` | `{ id, kind, choice, label }` | 좌판을 밟아 조우가 해소됨 | 결과 한 줄 배너 |
+| 32 | `encounter:expired` | `{ id, kind }` | 체류 시간 종료 / 조우 소멸 | 배너·표시 정리 |
+| 33 | `seer:preview` | `{ cards: Card[3], atLevel }` | 「눈먼 예언자」 미리보기 (30 §3.3) | 상단 미리보기 줄. 그 레벨업까지 남는다 |
+
+> ★ 30~33 은 전부 **저빈도**다(런당 5회 안팎). 조우의 좌표·남은 시간 같은 60fps 값은
+> 이 표에 없다 — 방향 화살표는 Phaser 가 setScrollFactor(0) 으로 직접 그린다(§3.3).
 
 **R→P (React가 emit, Phaser가 수신)**
 
@@ -363,7 +370,7 @@ export const EVENTS = {
 | 28 | `cmd:settings` | `{ bgmVolume, sfxVolume, screenShake, damageNumbers, lowSpec, joystickMode }` | 옵션 변경 즉시 | 볼륨 반영, 흔들림 플래그, 품질 티어 강제 |
 | 29 | `cmd:debug` | `{ action: "levelup"\|"godmode"\|"timescale"\|"killall"\|"gold", value? }` | 치트키/디버그 패널 | §13 |
 
-> **총 29개.** 이 표에 없는 통신이 필요해지면 그것은 대개 §2의 소유권 배분이 잘못되었다는 신호다.
+> **총 33개.** 이 표에 없는 통신이 필요해지면 그것은 대개 §2의 소유권 배분이 잘못되었다는 신호다.
 > 이벤트를 추가하기 전에 "이 값을 정말 React가 알아야 하나"를 먼저 묻는다.
 
 ### 3.3 ★ 금지 규칙 — 60fps 값을 Zustand에 넣지 않는다

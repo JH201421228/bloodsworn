@@ -20,6 +20,8 @@ import { LOGICAL_HEIGHT, MAX_LOGICAL_WIDTH } from "../config";
 import { dist2 } from "../utils/math";
 import enemiesData from "@/data/enemies.json";
 import phasesData from "@/data/phases.json";
+// 상자 아트 키와 보상표는 조우 정본이 갖는다(30 §3.7). 여기서는 읽기만 한다.
+import encData from "@/data/encounters.json";
 import { TEMPO_SCALE } from "./PlayerSystem";
 
 export const MAX_ENEMIES = 150;
@@ -140,12 +142,28 @@ export class SpawnSystem {
             return s;
         });
 
-        // 보물상자 풀 (T503). 엘리트가 죽은 자리에 남고, 밟으면 열린다
+        /**
+         * 보물상자 풀 (T503 → 30 §3.7). 엘리트가 죽은 자리에 남고, 밟으면 열린다.
+         *
+         * ★ 11x9 노란 사각형이었다. 도형은 "미완성"이 아니라 "고장"으로 읽힌다 —
+         *   30 §7.2 대로 items 아틀라스의 주머니 프레임을 임시로 빌린다.
+         *   ⚠ 전용 상자 아트(docs/32 C-1)가 오면 **encounters.json 의 chest.frameClosed 만**
+         *     갈아 끼우면 된다. 프레임 이름을 코드에 적지 않은 이유가 그것이다.
+         *   아틀라스가 아직 안 구워졌으면 옛 사각형으로 조용히 내려간다 — 상자가 아예
+         *   안 보이는 것보다 못생긴 게 낫다(ItemSystem 의 폴백과 같은 규약).
+         */
+        const chestArt = encData.chest ?? {};
+        const chestTex = chestArt.texture ?? "items";
+        this.chestArt = scene.textures.exists(chestTex) && !!scene.textures.get(chestTex)?.has(chestArt.frameClosed);
         this.chests = new Pool(MAX_CHESTS, () => {
-            const c = scene.add.rectangle(-999, -999, 11, 9, 0xd9b45a);
-            c.setStrokeStyle(1, 0x6b4a12).setDepth(DEPTH.ORB + 1).setVisible(false);
+            const c = this.chestArt
+                ? scene.add.sprite(-999, -999, chestTex, chestArt.frameClosed).setScale(chestArt.scale ?? 1.15)
+                : scene.add.rectangle(-999, -999, 11, 9, 0xd9b45a).setStrokeStyle(1, 0x6b4a12);
+            c.setDepth(DEPTH.ORB + 1).setVisible(false);
             return c;
         });
+        /** 상자 맥동의 기준 배율. 아트를 쓰면 1 이 아니다 — setScale 이 이 값을 곱해야 크기가 안 튄다 */
+        this.chestScale = this.chestArt ? (chestArt.scale ?? 1.15) : 1;
 
         // 페이즈 색조 오버레이 (T502).
         // ★ Phaser 카메라에는 지속 틴트가 없다(flash/fade/shake 뿐).
@@ -295,13 +313,19 @@ export class SpawnSystem {
         }
     }
 
-    /** 엘리트 1체. 등장을 알려야 하므로 이벤트를 쏜다 */
-    spawnElite(id) {
+    /**
+     * 엘리트 1체. 등장을 알려야 하므로 이벤트를 쏜다.
+     * @param {string} id enemies.json 의 적 id
+     * @param {{x:number,y:number}|null} at 배치 좌표. 없으면 기존대로 링 위.
+     *   ★ EncounterSystem 이 필드보스를 "화면 밖 200~260px"에 놓기 위해 넘긴다(30 §4.3).
+     *     링 반경(400+)에 놓으면 등장 순간 화살표만 보이고 조우가 너무 멀어진다.
+     */
+    spawnElite(id, at = null) {
         const def = this.byId[id];
         if (!def) return null;
         const e = this.obtainOrRecycle();
         if (!e) return null;
-        this.reset(e, def, this.ringPoint());
+        this.reset(e, def, at ?? this.ringPoint());
         EventBus.emit(EVENTS.ELITE_SPAWNED, {
             id: def.id, name: def.name, hp: e.maxHp, x: e.x, y: e.y, timeSec: Math.floor(this.elapsed),
         });
@@ -401,6 +425,12 @@ export class SpawnSystem {
         e.isBoss = false;  // 풀 재사용 시 보스 표식이 남으면 잡몹이 불사가 된다
         e.slowUntil = 0;   // 각성 「중력의 군주」 슬로우 만료 시각
         e.orbHitAt = 0;    // 각성 「탐욕의 왕관」 오브 관통 재타격 쿨
+        // ★ 필드보스 표식은 반드시 여기서 지운다(30 §3.6).
+        //   남으면 그 스프라이트를 물려받은 잡몹이 영원히 제자리를 배회한다 —
+        //   "가끔 어떤 적이 안 쫓아온다"는, 재현도 추적도 어려운 종류의 버그다.
+        e.__leashR = 0;
+        e.__leashMul = 0;
+        e.__encToken = 0;
 
         e.aiPhase = Math.random() * Math.PI * 2; // 지그재그 위상. 전원이 같은 박자로 흔들리지 않게
         e.stateTimer = 0;
@@ -501,14 +531,26 @@ export class SpawnSystem {
         for (let i = list.length - 1; i >= 0; i--) {
             const c = list[i];
             // 숨 쉬듯 맥동시킨다 — 묘지 바닥 소품과 구분되지 않으면 밟히지 않는다
-            c.setScale(1 + Math.sin(t / 220) * 0.09);
+            c.setScale(this.chestScale * (1 + Math.sin(t / 220) * 0.09));
             if (dist2(c.x, c.y, this.player.x, this.player.y) <= CHEST_PICKUP_R2) this.openChest(c);
         }
     }
 
+    /**
+     * ★ 보상이 축복 1개 고정이라 **열 때마다 같았다**(30 §3.7).
+     *   3종 추첨(축복 55 / 룬 25 / 아이템 다발 20)의 표와 실행은 EncounterSystem 이 갖는다 —
+     *   룬과 아이템 풀을 아는 것이 그쪽이기 때문이다. 조우 시스템이 없으면(디버그 씬 등)
+     *   기존 동작인 "대가 없는 축복 1개"로 조용히 내려간다.
+     * ★ CHEST_OPENED 는 **이미 쏘고 있었는데 구독자가 0이었다.** 새 이벤트를 만들지 않고
+     *   페이로드만 넓혀 살린다(30 §6). 토스트는 ui/encounter 가 이걸 듣는다.
+     */
     openChest(c) {
-        const blessing = this.grantFreeBlessing();
-        EventBus.emit(EVENTS.CHEST_OPENED, { x: c.x, y: c.y, sourceId: c.sourceId, blessing });
+        const r = this.scene.encounters?.rollChestReward?.(c.x, c.y)
+            ?? { kind: "blessing", label: this.grantFreeBlessing()?.name ?? "축복", blessing: null };
+        EventBus.emit(EVENTS.CHEST_OPENED, {
+            x: c.x, y: c.y, sourceId: c.sourceId,
+            kind: r.kind, label: r.label, blessing: r.blessing ?? null,
+        });
         this.scene.cameras.main.flash(160, 220, 190, 110, false);
         c.setVisible(false).setPosition(-999, -999);
         this.chests.release(c);

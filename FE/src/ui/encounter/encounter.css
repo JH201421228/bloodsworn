@@ -1,0 +1,82 @@
+/**
+ * encounter.css — 조우 UI 전용. (ui/encounter 소유)
+ * index.css / art.css / screens.css / inventory.css 는 건드리지 않는다.
+ *
+ * ★ 좌표 규약 (index.css "좌표계") — 모든 치수는 calc(N * var(--u)) 다.
+ *   N 은 논리 640x360 좌표의 픽셀 수이고, 부모는 .ui-hud-stage(캔버스와 1:1, 가로 가변)다.
+ *   가로 중앙 정렬에 left:50% 를 쓰는 이유: 부모 폭이 640 이 아니라 640~864 로 변한다.
+ *   % 로 폭을 잡으면 넓은 기기에서 배너가 화면 폭만큼 늘어난다.
+ *
+ * ★ pointer-events:none — 조우는 조작을 하나도 늘리지 않는다(30 §1.2 탭 0회).
+ *   배너를 누를 수 있게 만드는 순간 세 번째 조작이 생긴다.
+ */
+.enc-layer {
+    position: absolute;
+    left: 50%;
+    top: calc(48 * var(--u));
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(4 * var(--u));
+    pointer-events: none;
+    z-index: 6;
+}
+
+/* 등장 배너 — 나타났다 사라진다. 수명은 encounterStore 가 정하고 여기서는 그리기만 한다 */
+.enc-banner {
+    display: flex;
+    align-items: baseline;
+    gap: calc(5 * var(--u));
+    padding: calc(2 * var(--u)) calc(10 * var(--u));
+    border-radius: calc(2 * var(--u));
+    background: rgba(10, 7, 14, 0.72);
+    border-left: calc(2 * var(--u)) solid var(--enc-c, #c9b792);
+    color: var(--bone, #c7c2ce);
+    font-size: calc(11 * var(--u));
+    line-height: 1.35;
+    white-space: nowrap;
+    animation: enc-in 220ms ease-out;
+}
+@keyframes enc-in {
+    from { opacity: 0; transform: translateY(calc(-4 * var(--u))); }
+    to { opacity: 1; transform: none; }
+}
+
+/* 종류별 색. 화살표 글리프와 같은 축으로 읽히게 한다 */
+.enc-banner.is-merchant { --enc-c: #c9a227; }
+.enc-banner.is-witch { --enc-c: #6b3fa0; }
+.enc-banner.is-seer { --enc-c: #35c9b4; }
+.enc-banner.is-shady { --enc-c: #8a7fa8; }
+.enc-banner.is-altar { --enc-c: #c4182b; }
+.enc-banner.is-fieldboss { --enc-c: #ff5533; }
+.enc-banner.is-chest { --enc-c: #d9b45a; }
+
+.enc-banner__text { color: #f2e8d5; }
+.enc-banner__sub {
+    color: var(--enc-c, #c9b792);
+    font-size: calc(9 * var(--u));
+    letter-spacing: calc(0.5 * var(--u));
+}
+
+/* 예언자 미리보기 — 배너와 달리 그 레벨업까지 남는다(30 §3.3) */
+.enc-preview {
+    display: flex;
+    align-items: center;
+    gap: calc(6 * var(--u));
+    padding: calc(1 * var(--u)) calc(8 * var(--u));
+    border-radius: calc(2 * var(--u));
+    background: rgba(10, 7, 14, 0.6);
+    font-size: calc(9 * var(--u));
+    white-space: nowrap;
+}
+.enc-preview__tag {
+    color: var(--candle-light, #35c9b4);
+    letter-spacing: calc(0.5 * var(--u));
+}
+.enc-preview__card { color: #c7c2ce; }
+.enc-preview__toll {
+    color: var(--blood-light, #c4182b);
+    font-style: normal;
+    margin-left: calc(3 * var(--u));
+}

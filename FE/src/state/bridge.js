@@ -104,6 +104,12 @@ export function installBridge() {
     // 룬 조망. 룬을 새기거나 무기 레벨이 바뀔 때만 온다 — 일시정지 화면이 이걸 그린다(31 §6.2).
     sub(EVENTS.RUNES_CHANGED, (p) => s().setRunes(p?.weapons ?? []), "bridge:runes");
 
+    // 「눈먼 예언자」가 리롤을 +1 한다(30 §3.3). 카드 미리보기 자체는 ui/encounter 가
+    // 자기 스토어로 받는다 — 여기서는 전역 값인 rerollLeft 만 맞춘다.
+    sub(EVENTS.SEER_PREVIEW, (p) => {
+        if (typeof p?.rerollLeft === "number") s().setRerollLeft(p.rerollLeft);
+    }, "bridge:seer-preview");
+
     sub(EVENTS.BOSS_HP, (hp) => s().setBossHp(hp), "bridge:boss-hp");
 
     sub(EVENTS.RUN_ENDED, (result) => {

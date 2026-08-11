@@ -31,6 +31,7 @@ import { ProjectileSystem } from "../systems/ProjectileSystem";
 import { RuneSystem } from "../systems/RuneSystem";
 import { ItemSystem } from "../systems/ItemSystem";
 import { StageSystem } from "../systems/StageSystem";
+import { EncounterSystem } from "../systems/EncounterSystem";
 import { applySanctum } from "../systems/SanctumSystem";
 import { QualitySystem } from "../systems/QualitySystem";
 import { EventBus } from "../EventBus";
@@ -114,6 +115,16 @@ export default class GameScene extends Phaser.Scene {
             // bossSystem 이 먼저 있어야 기믹이 보스전 중 강도를 판단할 수 있다.
             this.stages = new StageSystem(this, { spawn: this.spawnSystem, boss: this.bossSystem });
             this.stages.load(this.registry.get("stageId") ?? undefined);
+
+            // 조우 — 전투 화면 「안」의 사건(30). ★ 정본 §6 은 items 다음 줄에 만들라고 적었지만
+            // **stages.load() 뒤**로 옮겼다. 디렉터의 창 5개는 bossAt 대비 비율로 잡히는데
+            // (30 §4.1), bossAt 을 확정하는 것이 stages.load 이기 때문이다. 앞에서 만들면
+            // stage2(300초)에서도 stage1(360초) 기준으로 창이 서고, 마지막 창이 보스 뒤로 밀린다.
+            // ※ 그래도 창 스케줄은 첫 update 에서 굽는다 — 런 중 스테이지 전환에도 맞기 위해서다.
+            this.encounters = new EncounterSystem(this, {
+                player: this.player, combat: this.combatSystem, stats: this.stats, spawn: this.spawnSystem,
+                items: this.items, runes: this.runes, pact: this.pact, boss: this.bossSystem,
+            });
             this.audio = new AudioSystem(this);
             this.input.once("pointerdown", () => this.audio.unlock());
 
@@ -178,6 +189,7 @@ export default class GameScene extends Phaser.Scene {
         this.combatSystem?.update(dt);
         this.projectiles?.update(dt); // 해시 재구축 뒤에 충돌을 본다
         this.items?.update(dt);      // 드롭 자석·획득·유물 규칙
+        this.encounters?.update(dt); // 조우 — 디렉터·좌판 판정·필드보스. ★ scene.pause() 를 부르지 않는다
         this.stages?.update(dt);     // 환경 기믹
         this.bossSystem?.update(dt);
         this.fxSystem?.update(dt);
