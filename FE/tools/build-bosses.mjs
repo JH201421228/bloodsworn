@@ -1,4 +1,8 @@
 /**
+ * ★ 이 파일이 뱉는 sheetName 은 **시트 메타데이터**이지 보스 이름이 아니다.
+ *   라이선스 때문에 시트 3종을 6보스가 돌려 쓰므로 둘이 일치하지 않는다.
+ *   게임에 표시되는 이름의 정본은 src/data/boss.json 이다.
+ *
  * 보스 파이프라인 — asset/bosses/ 의 6개 팩을 게임이 쓰는 균일 격자 시트로 정규화한다.
  *
  * 근거: 09-ART-AUDIO-AND-ASSET-MAP 2 / 17-LICENSES-AND-CREDITS 5.4 / docs/26-STAGES-AND-BOSSES

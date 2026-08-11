@@ -596,6 +596,33 @@ export class ItemSystem {
     applyUse(b) {
         const e = b.effect;
         if (!e) return;
+        // ★ 분기에 없는 type 은 "먹었는데 아무 일도 안 일어나는" 아이템이 된다.
+        //   taken 은 true 라 토스트까지 떠서 플레이어는 효과가 있었다고 믿는다 —
+        //   가장 조용하고 가장 나쁜 종류의 버그다. 마지막 else 에서 반드시 경고를 낸다.
+        if (e.type === "healPct") {
+            // 절대값이 아니라 최대체력 비율. FRAIL 로 maxHp 가 깎여도 쓸모가 유지된다.
+            const c = this.combat;
+            if (c) c.hp = Math.min(c.maxHp, c.hp + c.maxHp * (e.value ?? 0.25));
+            return;
+        }
+        if (e.type === "slow") {
+            // 화면 안 전원을 잠시 늦춘다. 적 객체의 slowMult 는 SpawnSystem.reset 이
+            // 매번 1 로 되돌리므로 풀 재사용으로 새지 않는다.
+            const until = this.scene.time.now + (e.duration ?? 4) * 1000;
+            const mult = 1 - (e.value ?? 0.45);
+            for (const en of this.spawn?.enemies ?? EMPTY_ARR) {
+                if (!en.__active) continue;
+                en.slowMult = Math.min(en.slowMult ?? 1, mult);
+                en.slowUntil = Math.max(en.slowUntil ?? 0, until);
+            }
+            return;
+        }
+        if (e.type === "exp") {
+            // EXP 를 직접 준다. expMult 를 곱하는 것은 오브 흡수 경로와 같은 규약이다.
+            const c = this.combat;
+            if (c) { c.exp += (e.value ?? 0) * (this.stats?.get("expMult") ?? 1); c.checkLevelUp(); }
+            return;
+        }
         if (e.type === "heal") {
             const c = this.combat;
             if (c) c.hp = Math.min(c.maxHp, c.hp + e.value);
@@ -622,6 +649,7 @@ export class ItemSystem {
             }
             this.scene.fxSystem?.hitStop?.(40);
         }
+        console.warn("[ItemSystem] 처리하지 않는 effect.type:", e.type, "-", b.id);
     }
 
     /** 유물 — 규칙 플래그를 켜고 스탯을 얹는다. 같은 유물은 두 번 나오지 않는다 */

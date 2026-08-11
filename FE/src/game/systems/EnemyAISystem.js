@@ -63,6 +63,9 @@ export class EnemyAISystem {
 
             // 이동은 매 프레임 (부드러움은 여기서 나온다). 슬로우는 이동에만 곱한다 —
             // 쿨다운까지 늦추면 "느려진 적이 더 자주 쏜다"는 착시가 생긴다
+            // 만료된 감속을 푼다. slowUntil 을 아무도 읽지 않으면 한 번 느려진 적은
+            // 풀에서 재활용될 때까지 영원히 느리다 — 소모품 「망각의 종」이 영구 효과가 된다.
+            if (e.slowUntil && now >= e.slowUntil) { e.slowUntil = 0; e.slowMult = 1; }
             const slow = e.slowMult ?? 1;
             e.x += e.vx * dt * slow;
             e.y += e.vy * dt * slow;

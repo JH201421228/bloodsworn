@@ -210,7 +210,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 0,
             "params": {
@@ -248,7 +249,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 4
         },
@@ -275,7 +277,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 8
         },
@@ -302,7 +305,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 12
         },
@@ -325,7 +329,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 16,
             "params": {
@@ -353,7 +358,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 20,
             "scale": 2.1,
@@ -381,7 +387,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 24,
             "swarmOnly": true,
@@ -414,7 +421,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 28
         },
@@ -442,7 +450,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 32
         },
@@ -465,7 +474,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 36,
             "swarmOnly": true,
@@ -493,7 +503,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 40,
             "params": {
@@ -524,7 +535,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 44
         },
@@ -548,7 +560,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 48,
             "scale": 1.75,
@@ -582,7 +595,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 52,
             "params": {
@@ -610,7 +624,8 @@
                 "stage2",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 56
         },
@@ -2658,7 +2673,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 360,
             "scale": 1.75,
@@ -2691,7 +2707,8 @@
             "behavior": "charge",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 364,
             "params": {
@@ -2721,7 +2738,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 368,
             "params": {
@@ -2752,7 +2770,8 @@
             "behavior": "charge",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 372,
             "params": {
@@ -2783,7 +2802,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 376,
             "scale": 1.75,
@@ -2816,7 +2836,8 @@
             "behavior": "charge",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 380,
             "params": {
@@ -2846,7 +2867,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 384,
             "params": {
@@ -2877,7 +2899,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 388,
             "params": {
@@ -2908,7 +2931,8 @@
             "behavior": "charge",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 392,
             "params": {
@@ -2938,7 +2962,8 @@
             "behavior": "charge",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 396,
             "params": {
@@ -2969,7 +2994,8 @@
             "behavior": "shockwave",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 400,
             "scale": 2.1,
@@ -2998,7 +3024,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 404,
             "params": {
@@ -3029,7 +3056,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 408,
             "params": {
@@ -3060,7 +3088,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 412,
             "params": {
@@ -3091,7 +3120,8 @@
             "behavior": "charge",
             "stageAffinity": [
                 "stage2",
-                "stage4"
+                "stage4",
+                "stage6"
             ],
             "frameStart": 416,
             "params": {
@@ -3122,7 +3152,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 420,
             "params": {
@@ -3154,7 +3185,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 424,
             "scale": 1.75,
@@ -3197,7 +3229,8 @@
                 "stage1",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 428
         },
@@ -3229,7 +3262,8 @@
                 "stage1",
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 432
         },
@@ -3251,7 +3285,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 436,
             "params": {
@@ -3282,7 +3317,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 440,
             "params": {
@@ -3308,7 +3344,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 444,
             "params": {
@@ -3339,7 +3376,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 448,
             "params": {
@@ -3370,7 +3408,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 452,
             "params": {
@@ -3402,7 +3441,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 456,
             "scale": 2.1,
@@ -3432,7 +3472,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 460,
             "params": {
@@ -3463,7 +3504,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 464,
             "params": {
@@ -3494,7 +3536,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 468,
             "params": {
@@ -3525,7 +3568,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 472,
             "params": {
@@ -3556,7 +3600,8 @@
             "stageAffinity": [
                 "stage3",
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 476,
             "params": {
@@ -3588,7 +3633,8 @@
             "behavior": "shockwave",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 480,
             "scale": 1.75,
@@ -3619,7 +3665,8 @@
             "behavior": "shockwave",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 484,
             "scale": 2.1,
@@ -3648,7 +3695,8 @@
             "behavior": "zigzag",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 488,
             "params": {
@@ -3673,7 +3721,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 492,
             "params": {
@@ -3704,7 +3753,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 496,
             "params": {
@@ -3735,7 +3785,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 500,
             "params": {
@@ -3766,7 +3817,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 504,
             "params": {
@@ -3797,7 +3849,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 508,
             "params": {
@@ -3829,7 +3882,8 @@
             "behavior": "shockwave",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 512,
             "scale": 1.75,
@@ -3859,7 +3913,8 @@
             "behavior": "zigzag",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 516,
             "params": {
@@ -3884,7 +3939,8 @@
             "behavior": "zigzag",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 520,
             "params": {
@@ -3909,7 +3965,8 @@
             "behavior": "zigzag",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 524,
             "params": {
@@ -3934,7 +3991,8 @@
             "behavior": "zigzag",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 528,
             "params": {
@@ -3959,7 +4017,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 532,
             "params": {
@@ -3990,7 +4049,8 @@
             "behavior": "ranged",
             "stageAffinity": [
                 "stage4",
-                "stage5"
+                "stage5",
+                "stage6"
             ],
             "frameStart": 536,
             "params": {
