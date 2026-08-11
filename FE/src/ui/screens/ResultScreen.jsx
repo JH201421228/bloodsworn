@@ -14,6 +14,7 @@ import { useStore } from "@/state/store";
 import { SCREENS } from "@/state/uiSlice";
 import { requestStartRun } from "@/state/bridge";
 import { fmtTime, awakenLabel, pickEnding } from "@/ui/screens/screenUtils";
+import RunLootSummary from "@/ui/inventory/RunLootSummary";
 
 /**
  * 골드 카운트업 700ms. 화면 아무 데나 탭하면 즉시 최종값으로 건너뛴다(2회 탭을 요구하지 않는다).
@@ -76,7 +77,7 @@ export default function ResultScreen() {
             <div className="result__rule" />
             <p className="result__line">{ending.line}</p>
 
-            <div className="result__panels">
+            <div className="result__panels has-loot">
                 <section>
                     <Row k="생존 시간" v={fmtTime(r?.time ?? 0) + (ending.win ? " (클리어)" : "")} />
                     <Row k="최종 레벨" v={"Lv." + (r?.level ?? 1)} />
@@ -100,7 +101,10 @@ export default function ResultScreen() {
                         획득 골드 ⬤ {shownGold.toLocaleString("ko-KR")}
                     </div>
                 </section>
-            </div>
+                {/* 이번 판 전리품. result__panels 가 1fr 1fr 격자라 세 번째 칸을 그냥 넣으면
+                        2행이 되어 360px 를 넘는다 — has-loot 토큰이 3열로 바꾼다 */}
+                    <RunLootSummary />
+                </div>
 
             {/* ★ 순서를 바꾸지 말 것. 최좌측 = 사망 직후 엄지가 이미 놓여 있는 자리다(T531) */}
             <div className="result__actions">

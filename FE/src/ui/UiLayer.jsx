@@ -15,6 +15,8 @@ import { EVENTS } from "@/game/constants";
 import PactOverlay from "@/ui/pact/PactOverlay";
 import AwakeningBanner from "@/ui/awakening/AwakeningBanner";
 import HumanityHearts from "@/ui/hud/HumanityHearts";
+import EquipSlots from "@/ui/inventory/EquipSlots";
+import ItemToasts from "@/ui/inventory/ItemToasts";
 import TitleScreen from "@/ui/screens/TitleScreen";
 import SanctumScreen from "@/ui/screens/SanctumScreen";
 import OptionsScreen from "@/ui/screens/OptionsScreen";
@@ -148,6 +150,12 @@ export default function UiLayer() {
                     <div className="hud-humanity">
                         <HumanityHearts value={humanity} ascended={ascended} />
                     </div>
+                    {/* 장착 3슬롯 + 유물(상시) / 획득 토스트.
+                        둘 다 pointer-events:none 이라 조작을 하나도 늘리지 않는다.
+                        ★ .ui-stage 안이어야 한다 — .ui-layer 에 넣으면 --u 기준 절대좌표가
+                        Phaser 캔버스와 어긋난다. */}
+                    <EquipSlots />
+                    <ItemToasts />
                 </div>
             )}
 
