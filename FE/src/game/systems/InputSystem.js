@@ -57,6 +57,12 @@ class InputSystemImpl {
         this.dashQueued = false;
         /** 조이스틱을 잡고 있는 포인터 id. 멀티터치에서 대시와 섞이지 않게 한다 */
         this.joyPointerId = null;
+        /**
+         * 대시 버튼을 누르고 있는 포인터 id.
+         * ★ dashQueued(1프레임짜리 요청)와 다르다. 이건 "지금 손가락이 버튼 위에 얹혀 있는가"이고
+         *   HUD 가 눌린 판(btn-pressed)을 그릴지 정하는 데만 쓴다. 게임 로직은 보지 않는다.
+         */
+        this.dashPointerId = null;
         this.keys = null;
     }
 
@@ -104,6 +110,11 @@ class InputSystemImpl {
         });
     }
 
+    /** 대시 버튼이 눌려 있는가 — HUD 렌더 전용. 키보드 SPACE 도 같이 본다 */
+    get dashHeld() {
+        return this.dashPointerId !== null || !!this.spaceHeld;
+    }
+
     detach() {
         if (!this.scene) return;
         this.scene.input.off("pointerdown", this.onDown);
@@ -111,6 +122,8 @@ class InputSystemImpl {
         this.scene.input.off("pointerup", this.onUp);
         this.scene.input.off("pointerupoutside", this.onUp);
         if (this.onResize) this.scene.scale.off("resize", this.onResize);
+        // 씬이 죽는 순간 누르고 있었으면 pointerup 이 안 온다. 다음 런에 눌린 채로 시작한다.
+        this.dashPointerId = null;
         this.scene = null;
     }
 
@@ -124,6 +137,7 @@ class InputSystemImpl {
     handleDown(p) {
         if (this.inDashButton(p)) {
             this.dashQueued = true;
+            this.dashPointerId = p.id;
             return;
         }
         if (this.joyPointerId !== null) return;
@@ -174,6 +188,9 @@ class InputSystemImpl {
     }
 
     handleUp(p) {
+        // ★ 조이스틱 검사보다 먼저다. 대시 포인터는 joyPointerId 가 아니라서
+        //   아래 return 에 걸리면 눌린 상태가 영원히 안 풀린다.
+        if (p.id === this.dashPointerId) this.dashPointerId = null;
         if (p.id !== this.joyPointerId) return;
         this.joyPointerId = null;
         this.active = false;

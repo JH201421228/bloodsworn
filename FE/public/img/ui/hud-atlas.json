@@ -79,6 +79,86 @@
         "w": 66,
         "h": 10
       }
+    },
+    "btn-normal": {
+      "frame": {
+        "x": 102,
+        "y": 72,
+        "w": 96,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 28
+      }
+    },
+    "btn-pressed": {
+      "frame": {
+        "x": 102,
+        "y": 104,
+        "w": 96,
+        "h": 28
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 96,
+        "h": 28
+      },
+      "sourceSize": {
+        "w": 96,
+        "h": 28
+      }
+    },
+    "bar-fill": {
+      "frame": {
+        "x": 2,
+        "y": 102,
+        "w": 8,
+        "h": 8
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 8,
+        "h": 8
+      },
+      "sourceSize": {
+        "w": 8,
+        "h": 8
+      }
+    },
+    "px": {
+      "frame": {
+        "x": 14,
+        "y": 102,
+        "w": 4,
+        "h": 4
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 4,
+        "h": 4
+      },
+      "sourceSize": {
+        "w": 4,
+        "h": 4
+      }
     }
   },
   "meta": {
@@ -87,7 +167,7 @@
     "format": "RGBA8888",
     "size": {
       "w": 256,
-      "h": 128
+      "h": 160
     },
     "scale": "1",
     "note": "손으로 고치지 말 것. npm run build:ui 로 다시 굽는다."

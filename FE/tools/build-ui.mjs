@@ -20,6 +20,13 @@
  *   HP 120px / EXP 640px / 보스 400px 는 길이가 제각각인데 프레임의 양끝 브래킷은
  *   늘어나면 안 된다. 그래서 자연 비율(원본 601x89)로만 굽고, 길이는 Phaser NineSlice 가
  *   가운데 레일만 늘려서 맞춘다. 브래킷 폭을 CAP 상수로 함께 내보낸다.
+ *
+ * ★ 게이지 "채움"용 칩 2장(bar-fill / px)을 여기서 함께 굽는다.
+ *   HudScene 이 채움을 Graphics.fillRect 로 그리면 그 순간 배치가 끊긴다 —
+ *   Graphics 는 아틀라스 쿼드 사이에 끼어들어 앞뒤 배치를 둘로 쪼갠다.
+ *   채움을 아틀라스 안의 작은 칩으로 바꾸고 길이는 displayWidth, 색은 tint 로 주면
+ *   프레임·조이스틱·대시 버튼과 같은 배치에 들어간다.
+ *   칩이 흑백인 이유가 그것이다 — 색은 코드가 tint 로 정한다.
  */
 import { execFileSync } from "node:child_process";
 import { mkdirSync, existsSync, writeFileSync, readFileSync } from "node:fs";
@@ -90,7 +97,7 @@ const SHEET_CUTS = [
 ];
 
 function buildSheetCuts() {
-    console.log("[1/4] UI 시트 재단");
+    console.log("[1/5] UI 시트 재단");
     const sheet = src("ui-sheet-1536x1024.png");
     for (const c of SHEET_CUTS) {
         const out = resolve(IMG, c.out);
@@ -134,7 +141,7 @@ const RESIZED = [
 ];
 
 function buildResized() {
-    console.log("[2/4] 낱장 축소");
+    console.log("[2/5] 낱장 축소");
     for (const e of RESIZED) {
         const from = src(e.from);
         const i = png(from);
@@ -152,28 +159,69 @@ function buildResized() {
     }
 }
 
-// ── 3. HUD 아틀라스 ────────────────────────────────────────────────────────
+// ── 3. 게이지 칩 ───────────────────────────────────────────────────────────
+/**
+ * ★ 왜 흑백 8x8 / 4x4 인가
+ *   bar-fill 은 세로 그라디언트다. 게이지의 "속이 빛나는" 단면을 1장으로 만들고,
+ *   HP(빨강)·EXP(청록)·보스(핏빛)는 같은 칩에 tint 만 달리 걸어 쓴다.
+ *   px 는 완전 단색이다 — 트랙 바닥과 보스 페이즈 눈금처럼 그라디언트가
+ *   오히려 방해되는 2px 폭 요소에 쓴다.
+ * ★ 세로만 8px 인 이유: 게이지 높이는 4(EXP)~10(HP)px 이라 8행이면 충분하고,
+ *   가로는 늘려 쓰므로 폭이 클 이유가 없다(아틀라스 자리 낭비).
+ */
+const CHIPS = [
+    {
+        out: "ui/bar-fill.png",
+        args: ["-size", "8x8", "gradient:#ffffff-#5e5e5e"],
+        why: "게이지 채움 칩. tint 로 색을 입힌다",
+    },
+    {
+        out: "ui/px.png",
+        args: ["-size", "4x4", "xc:#ffffff"],
+        why: "단색 칩. 트랙 바닥 / 보스 페이즈 눈금",
+    },
+];
+
+function buildChips() {
+    console.log("[3/5] 게이지 칩");
+    for (const c of CHIPS) {
+        const out = resolve(IMG, c.out);
+        ensure(dirname(out));
+        run([...c.args, "-strip", out]);
+        note(out, c.why);
+    }
+}
+
+// ── 4. HUD 아틀라스 ────────────────────────────────────────────────────────
 /**
  * ★ 왜 아틀라스인가
- *   HudScene 은 매 프레임 조이스틱 2장 + 바 프레임 3개를 그린다.
- *   각각이 별도 텍스처면 프레임마다 텍스처 바인딩이 5번 갈리고, 그 사이에 낀
- *   Graphics 배치까지 끊긴다. 한 장으로 묶으면 전부 한 배치에 들어간다.
+ *   HudScene 은 매 프레임 조이스틱 2장 + 바 프레임 3개 + 대시 버튼 + 게이지 채움 5개를 그린다.
+ *   각각이 별도 텍스처면 Phaser MultiPipeline 의 텍스처 유닛(실측 16칸)을 그만큼 잡아먹고,
+ *   17번째 텍스처가 필요해지는 순간 배치가 강제로 flush 된다. 한 장으로 묶으면
+ *   HUD 전체가 유닛 1칸만 쓰고 전부 한 배치에 들어간다.
  *   DOM(React)이 그리는 배경·카드·인장은 여기에 넣지 않는다 — GPU 에 올릴 이유가 없다.
  *
  * ★ 2px 간격을 두는 이유: NineSlice 는 가운데를 비정수 배율로 늘리므로
  *   프레임 경계에서 옆 칸 픽셀을 한 줄 물어올 수 있다(텍스처 블리딩).
  */
 const ATLAS_W = 256;
-const ATLAS_H = 128;
+const ATLAS_H = 160;
 const ATLAS_PLACE = [
     { key: "joy-base", file: "ui/joystick-base.png", x: 2, y: 2 },
     { key: "joy-knob", file: "ui/joystick-knob.png", x: 102, y: 2 },
     { key: "bar-hp", file: "ui/bar-hp-frame.png", x: 102, y: 38 },
     { key: "bar-exp", file: "ui/bar-exp-frame.png", x: 102, y: 58 },
+    // ★ 대시 버튼 — 여태 아트가 없어 HudScene 이 도형(fillCircle)으로 그리던 유일한 조작계다.
+    //   btn-normal/btn-pressed 는 React 버튼이 CSS border-image 로 쓰던 것과 같은 파일이다.
+    //   같은 그림을 캔버스가 쓰려면 GPU 텍스처가 필요하므로 여기 아틀라스에 넣는다.
+    { key: "btn-normal", file: "ui/btn-normal.png", x: 102, y: 72 },
+    { key: "btn-pressed", file: "ui/btn-pressed.png", x: 102, y: 104 },
+    { key: "bar-fill", file: "ui/bar-fill.png", x: 2, y: 102 },
+    { key: "px", file: "ui/px.png", x: 14, y: 102 },
 ];
 
 function buildAtlas() {
-    console.log("[3/4] HUD 아틀라스");
+    console.log("[4/5] HUD 아틀라스");
     const outPng = resolve(IMG, "ui/hud-atlas.png");
     const outJson = resolve(IMG, "ui/hud-atlas.json");
 
@@ -226,7 +274,7 @@ function buildAtlas() {
  * (상수는 HudScene 에 박아 둔다 — 매 프레임 도는 코드가 JSON 을 파싱할 이유는 없다.)
  */
 function measureCaps() {
-    console.log("[4/4] NineSlice 캡 실측");
+    console.log("[5/5] NineSlice 캡 실측");
     for (const name of ["bar-hp-frame", "bar-exp-frame"]) {
         const f = resolve(IMG, `ui/${name}.png`);
         const { w, h } = png(f);
@@ -248,6 +296,7 @@ function measureCaps() {
 
 buildSheetCuts();
 buildResized();
+buildChips();
 buildAtlas();
 measureCaps();
 console.log("\n생성:");

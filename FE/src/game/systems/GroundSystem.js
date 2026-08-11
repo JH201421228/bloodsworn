@@ -24,6 +24,22 @@ const CHUNK = 256;
 const RADIUS = 2;
 const MAX_PROPS = 360;
 
+/**
+ * 불 켜진 소품 (T132 — 09-ART 2.6 촛불A/촛불B/횃불).
+ *
+ * ★ 왜 props-grave 시트가 아니라 따로인가
+ *   묘비·나무는 정지 이미지 한 장이면 끝이지만 불꽃은 4프레임 애니다. Phaser 에서
+ *   애니는 Sprite 만 재생할 수 있고 Image 는 못 한다. 그래서 풀을 따로 둔다.
+ *
+ * ★ 왜 개수를 16 으로 묶는가
+ *   불꽃은 매 프레임 프레임 번호가 바뀌는 유일한 배경 요소다. 밀도를 올리면
+ *   묘지가 축제처럼 보이기도 하고(정본 2.1 "묘실의 어둠"), 애니 갱신 비용도 개수에 비례한다.
+ *   청크당 0.5개면 반경 2청크(25칸)에 12개 안팎이 깔린다 — 16 이면 상한에 안 걸린다.
+ */
+const LIGHT_ANIMS = ["deco.candleA", "deco.candleB", "deco.torch"];
+const LIGHT_DENSITY = 0.5;
+const MAX_LIGHTS = 16;
+
 /** 등급별 청크당 개수 — 밀도는 이미지를 다시 받지 않고 여기서 조절한다 */
 const DENSITY = { large: 0.35, tree: 0.9, medium: 1.6, fence: 0.3, small: 2.2, fog: 0.25 };
 
@@ -60,6 +76,29 @@ export class GroundSystem {
             .setDepth(DEPTH.GROUND);
 
         this.registerFrames();
+        this.buildLightPool();
+    }
+
+    /**
+     * 불 켜진 소품 풀. ★ 런 중에는 new 하지 않는다 — 생성자에서 다 만들고 보이기/숨기기만 한다.
+     *   애니가 하나도 등록 안 됐으면(에셋 누락) 풀 자체를 안 만든다. 초록 체크무늬보다 없는 게 낫다.
+     */
+    buildLightPool() {
+        const scene = this.scene;
+        this.lightDefs = LIGHT_ANIMS.filter((k) => scene.anims.exists(k));
+        this.freeLights = [];
+        if (!this.lightDefs.length) return;
+        const tex = scene.anims.get(this.lightDefs[0]).frames[0].textureKey;
+        for (let i = 0; i < MAX_LIGHTS; i++) {
+            const s = scene.add
+                .sprite(-9999, -9999, tex)
+                .setOrigin(0.5, 0.9)
+                .setDepth(DEPTH.DECO)
+                .setVisible(false)
+                .setActive(false);
+            s.__light = true;
+            this.freeLights.push(s);
+        }
     }
 
     /** props-grave.json의 바운딩 박스를 Phaser 프레임으로 등록한다 */
@@ -87,9 +126,22 @@ export class GroundSystem {
         return s.setVisible(true).setActive(true);
     }
 
+    /** 불 켜진 소품 1개. 풀이 비면 null — 청크는 그냥 촛불 없이 만들어진다 */
+    obtainLight() {
+        const s = this.freeLights?.pop();
+        return s ? s.setVisible(true).setActive(true) : null;
+    }
+
     release(s) {
         s.setVisible(false).setActive(false).setPosition(-9999, -9999);
-        this.freeSprites.push(s);
+        // ★ 두 풀을 섞으면 안 된다. Image 풀로 돌아간 Sprite 는 setTexture(propsKey, 'p12') 를
+        //   맞아 묘비가 되고, 그 순간 촛불 풀은 영영 줄어든다.
+        if (s.__light) {
+            s.anims.stop();
+            this.freeLights.push(s);
+        } else {
+            this.freeSprites.push(s);
+        }
     }
 
     buildChunk(cx, cy) {
@@ -118,6 +170,22 @@ export class GroundSystem {
                 list.push(s);
             }
         }
+
+        // 불 켜진 소품 — 청크당 0.5개. salt 는 위 kind 들과 겹치지 않는 값이면 된다
+        if (this.lightDefs?.length) {
+            const rng = chunkRng(cx, cy, 97);
+            if (rng() < LIGHT_DENSITY) {
+                const s = this.obtainLight();
+                if (s) {
+                    const anim = this.lightDefs[(rng() * this.lightDefs.length) | 0];
+                    s.setPosition(Math.round(cx * CHUNK + rng() * CHUNK), Math.round(cy * CHUNK + rng() * CHUNK));
+                    // ★ 시작 프레임을 흩는다. 안 그러면 화면의 모든 불꽃이 한 몸처럼 같이 깜빡인다.
+                    s.play(anim, true);
+                    s.anims.setProgress(rng());
+                    list.push(s);
+                }
+            }
+        }
         return list;
     }
     /**
@@ -133,8 +201,10 @@ export class GroundSystem {
         if (propsTex && propsTex !== this.propsKey && this.scene.textures.exists(propsTex)) {
             this.propsKey = propsTex;
             this.registerFrames();
-            this.chunks?.clear?.();
-            for (const s2 of this.props?.active ?? []) this.release(s2);
+            // ★ 반납이 먼저다. Map 만 비우면 이전 테마의 스프라이트가 화면에 남은 채
+            //   풀에서도 사라져 회수할 방법이 없어진다(MAX_PROPS 에 걸려 새 소품이 안 나온다).
+            for (const list of this.chunks.values()) for (const s2 of list) this.release(s2);
+            this.chunks.clear();
         }
     }
 
