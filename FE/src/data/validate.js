@@ -902,6 +902,22 @@ function ruleEncounters(R, D) {
         else cw += r.weight;
     }
     if (cw <= 0) R.err("encounters.chest.rewards 가중치 합이 0 이다 — 30 §3.7 이 고치려던 '열 때마다 같다'로 되돌아간다");
+    // ★ 폴백 순서 (30 §3.7). rollChestReward 는 이 배열을 그대로 순회한다 —
+    //   비면 뽑힌 보상을 못 줄 때 곧바로 축복으로 떨어져 "룬 25%"가 다시 허상이 된다.
+    const CF = C.fallback ?? [];
+    if (!CF.length) {
+        R.err("encounters.chest.fallback 이 비었다 — 룬을 못 줄 때 폴백이 없어 전부 축복이 된다 (30 §3.7)");
+    } else {
+        for (const k of CF) {
+            if (!has(CHEST_REWARD_KINDS, k)) R.err(`encounters.chest.fallback "${k}" 를 rollChestReward 가 모른다`);
+        }
+        for (const r of C.rewards ?? []) {
+            if (!has(CF, r.kind)) R.err(`encounters.chest.rewards "${r.kind}" 가 fallback 에 없다 — 그 몫이 통째로 축복으로 샌다`);
+        }
+        if (CF[CF.length - 1] !== "blessing") {
+            R.err("encounters.chest.fallback 의 마지막이 blessing 이 아니다 — 마지막은 반드시 줄 수 있는 것이어야 한다");
+        }
+    }
     if (!isStr(C.texture) || !isStr(C.frameClosed)) {
         R.err("encounters.chest.texture/frameClosed 누락 — SpawnSystem 이 옛 노란 사각형으로 내려간다 (30 §3.7)");
     } else {
@@ -928,6 +944,14 @@ function ruleEncounters(R, D) {
         R.err(`encounters.fieldboss.leashRadius ${F.leashRadius} — 0 이하면 리시가 꺼져 필드보스가 끝까지 추적한다. 30 §3.6 회피 장치 1이 사라진다`);
     }
     if (!isNum(F.hpMult) || F.hpMult <= 0) R.err("encounters.fieldboss.hpMult 누락/0 이하");
+    // ★ 교전 중 퇴장 타이머 정지 (30 §3.6). engageGrace 가 0 이면 장치가 통째로 꺼져
+    //   "싸우기 시작했는데 다 못 잡고 뺏긴다"로 되돌아간다.
+    if (!isNum(F.engageGrace) || F.engageGrace <= 0) {
+        R.err(`encounters.fieldboss.engageGrace ${F.engageGrace} — 0 이하면 교전 중에도 60초 퇴장 타이머가 흘러 EC-11 이전 상태로 돌아간다`);
+    }
+    if (!isNum(F.leaveBeforeBoss) || F.leaveBeforeBoss <= 0) {
+        R.err(`encounters.fieldboss.leaveBeforeBoss ${F.leaveBeforeBoss} — 0 이하면 교전으로 타이머가 멈춘 필드보스가 최종 보스전까지 따라 들어간다 (30 §3.6 각주)`);
+    }
     if (!isNum(F.rewardChests) || !isNum(F.rewardRunes)) R.err("encounters.fieldboss.rewardChests/rewardRunes 누락");
     const fbStay = (E.encounters ?? []).find((e) => e.kind === "fieldboss")?.stay;
     if (isNum(fbStay) && fbStay < 20) {

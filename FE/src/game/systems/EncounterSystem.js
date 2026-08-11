@@ -186,8 +186,11 @@ export class EncounterSystem {
         this.witchPick = null;
         /** 제단 채널링(30 §3.5 — 3초간 서 있어야 발동. 실수로 밟는 사고를 막는다) */
         this.channel = 0;
-        /** 필드보스. 적 풀의 스프라이트를 빌려 쓰므로 토큰으로 동일성을 확인한다 */
-        this.fb = { on: false, e: null, token: 0, life: 0 };
+        /**
+         * 필드보스. 적 풀의 스프라이트를 빌려 쓰므로 토큰으로 동일성을 확인한다.
+         * lastHp/engaged 는 교전 판정용이다 — tickFieldBoss 주석 참조.
+         */
+        this.fb = { on: false, e: null, token: 0, life: 0, lastHp: 0, engaged: 0 };
         this.fbToken = 0;
         /** 창 스케줄. bossAt 을 알아야 만들 수 있어 첫 update 에서 굽는다 */
         this.schedule = null;
@@ -765,6 +768,19 @@ export class EncounterSystem {
     /**
      * 「피의 제단」 — 큰 축복 1개(epic 고정) + 대가 1개 (30 §3.5).
      * ★ 대가는 태그 중첩에 그대로 들어간다. 그래서 제단은 **각성을 앞당기는 유일한 조우**다.
+     *
+     * ★ 인간성을 받는다 (2026-08-11 수정 / 30 §2.3 · §3.5)
+     *   고치기 전의 제단은 PACT epic 카드의 **순수 상위 호환**이었다. 같은 것(epic 축복 + 대가 1개)을
+     *   주면서 체력도 인간성도 받지 않았고, 비용은 "포위된 채 3초 서 있기"뿐이며 런당 2회다.
+     *   30 §2.3 「왜 인간성이 아닌가」와 부딪치지 않는다 — 그 절이 거부한 것은
+     *   **구매 화폐로서의 인간성**(= 좌판에서 물건을 산다)이다. "대가를 받으면 인간성이 깎인다"는
+     *   04-PACT §3 이 이미 정한 **기존 규칙**이고, 제단은 물건을 사는 게 아니라
+     *   **PACT 를 스스로 찾아가는 것**이다. 새 소비처가 아니라 원래 있던 소비처다.
+     *   그래서 마녀는 그대로 두었다 — 마녀는 산다(applyToll 주석).
+     *   그래도 제단은 갈 값이 있다: 3장 무작위가 아니라 **epic 확정**이고 **스스로 고른 것**이다.
+     * ★ 제단 전용 계산식을 만들지 않는다. 축복·대가·인간성을 카드 하나에 실어 pact.choose() 에
+     *   넘긴다 — PactSystem.choose 의 `humanity = Math.max(0, humanity - card.humanityCost)` 그 줄이
+     *   레벨업 카드가 지나는 바로 그 줄이다. 값도 tolls.json 의 humanityCost 를 그대로 쓴다.
      */
     grantAltar() {
         const d = this.act.def;
@@ -774,60 +790,98 @@ export class EncounterSystem {
         const pool = pact.candidates();
         if (!pool.length) { this.expire(true); return; }
         const b = pool[(Math.random() * pool.length) | 0];
-        const bl = pact.describeBlessing(b, d.blessingRarity ?? "epic");
-        // 축복만 카드 경로로 적용한다 — owned 레벨과 op:"weapon" 처리가 거기 있다.
-        // humanityCost 는 0 이다(아래 applyToll 주석 참조).
-        const r = pact.choose({ index: -1, rarity: d.blessingRarity ?? "epic", blessing: bl, toll: null, humanityCost: 0 });
+        const rarity = d.blessingRarity ?? "epic";
+        const tollRarity = d.tollRarity ?? "rare";
+        // 대가를 먼저 고른다. 각성 상한 등으로 후보가 없으면 null 이고 그러면 인간성도 0 이다 —
+        // "아무것도 안 잃었는데 인간성만 잃는다"를 막는 PactSystem.generate 의 규약과 같다.
+        const toll = this.rollToll(tollRarity);
+        // tollHumanity 는 데이터가 켠다(encounters.json). 마녀에게는 없다 — 마녀는 산다.
+        const cost = toll && d.tollHumanity ? (pact.cfg.humanityCost[tollRarity] ?? 0) : 0;
+        const card = {
+            index: -1, rarity, blessing: pact.describeBlessing(b, rarity), toll, humanityCost: cost,
+        };
+        const r = pact.choose(card);
         if (r.weapon) combat.addWeapon(r.weapon.target, r.weapon.level);
-        const toll = this.applyToll(d.tollRarity ?? "rare");
+        this.afterPact(toll, "altar", cost);
         EventBus.emit(EVENTS.ENCOUNTER_RESOLVED, {
             id: this.act.id, kind: "altar", choice: "altar",
-            label: bl.name + (toll ? " + " + toll.name : ""),
+            label: card.blessing.name + (toll ? " + " + toll.name : ""),
         });
         this.scene.cameras.main.flash(220, 190, 20, 45, false);
         this.expire(true);
     }
 
     /**
-     * 대가 1개를 붙인다. PACT 카드와 **같은 문법**이다(30 §3.2/§3.5) — 태그 6종을 그대로 쓰고,
-     * 3중첩이면 각성까지 그대로 터진다.
-     *
-     * ⚠ 인간성은 깎지 않는다. 정본과 다른 판단이라 근거를 적어 둔다 —
-     *   30 §5 는 조우의 지불을 「체력」 하나로 정의했고(§2 전체가 그 논증이다), 마녀는 그 위에
-     *   대가를 얹는다. 여기서 인간성까지 가져가면 한 좌판에 지불 수단이 셋이 되고,
-     *   무엇보다 04-PACT 가 인간성의 유일한 소비처로 잡아 둔 설계(§2.3)가 흔들린다.
-     *   제단은 아예 무료라고 §5 가 못 박았으므로 더 명확하다.
+     * 대가 1개를 고르고 서술한다. PACT 카드와 **같은 문법**이다(30 §3.2/§3.5) —
+     * pickToll -> describeToll 을 그대로 부르므로 태그 6종·등급 배율·중첩 수가 전부 같다.
+     * ★ allowOverflow 는 false 로 고정한다. 각성 상한(2)을 넘겨 인간성만 −20 맞는 대가는
+     *   04-PACT §6 이 "마지막 장에만" 허용한 것이고, 조우에는 마지막 장이 없다.
+     *   그래서 제단이 아무리 여러 번 발동해도 상한이 깨지지 않는다.
      */
-    applyToll(rarityId) {
+    rollToll(rarityId) {
         const pact = this.pact;
         if (!pact) return null;
         const t = pact.pickToll(Math.random, EMPTY_SET, rarityId, false);
-        if (!t) return null;   // 각성 상한 등으로 후보가 없으면 대가 없이 지나간다
-        const d = pact.describeToll(t, rarityId);
-        pact.tagCounts[d.tag] = d.stacksAfter;
-        for (let i = 0; i < d.stacks; i++) {
-            pact.stats.add(d.stat, d.stat === "drain" ? "tollAdd" : "toll", d.amount, "toll:" + d.tag);
-        }
+        return t ? pact.describeToll(t, rarityId) : null;   // 후보가 없으면 대가 없이 지나간다
+    }
+
+    /**
+     * 대가/축복을 적용한 뒤의 뒷정리. ★ CombatSystem.applyCard 와 **같은 순서**다 —
+     * 현재 체력 클램프 → PACT_APPLIED → 각성 → 인간성 0 「완전 흡혈귀화」.
+     * 순서를 바꾸면 HUD 가 한 박자 옛 값을 보여주거나 각성이 조용히 사라진다.
+     * @param {object|null} toll describeToll 결과. 없으면 축복만 적용된 것이다
+     * @param {number} humanityCharged 실제로 깎은 인간성. 0 이면 인간성 0 판정을 하지 않는다
+     */
+    afterPact(toll, source, humanityCharged) {
+        const pact = this.pact;
         const combat = this.combat;
         // 최대 체력이 깎였으면 현재 체력도 따라 내려야 한다(CombatSystem.applyCard 와 같은 자리)
         if (combat) combat.hp = Math.min(combat.hp, combat.maxHp);
         EventBus.emit(EVENTS.PACT_APPLIED, {
             level: combat?.level ?? 1,
-            humanity: pact.humanity,
-            tagCounts: { ...pact.tagCounts },
-            ownedBlessings: { ...pact.owned },
-            source: "encounter",
+            humanity: pact?.humanity ?? 100,
+            tagCounts: { ...(pact?.tagCounts ?? {}) },
+            ownedBlessings: { ...(pact?.owned ?? {}) },
+            source,
         });
         // 각성은 PACT 와 같은 경로로 터뜨린다. 대가를 쌓는 문이 둘인데 각성 문이 하나면
         // "조우로 3중첩을 채웠는데 각성이 안 온다"는 조용한 버그가 된다.
-        if (d.triggersAwakening && combat?.awakening?.trigger(d.tag)) {
-            const def = combat.awakening.defs?.[d.tag];
+        if (toll?.triggersAwakening && combat?.awakening?.trigger(toll.tag)) {
+            const def = combat.awakening.defs?.[toll.tag];
             EventBus.emit(EVENTS.AWAKENING_TRIGGERED, {
-                tag: d.tag, list: [...combat.awakening.list], awakeningId: def?.id,
+                tag: toll.tag, list: [...combat.awakening.list], awakeningId: def?.id,
                 name: def?.name, quote: def?.quote, desc: def?.desc, sigil: def?.sigil,
                 atLevel: combat.level,
             });
         }
+        // ★ 인간성 0 「완전 흡혈귀화」 — CombatSystem.applyCard 의 T511 과 같은 자리다.
+        //   여기서 안 쏘면 제단으로 인간성이 0 이 됐는데 각성도 엔딩 분기도 안 바뀐다.
+        //   0 은 죽는 것이 아니라 최종 각성이다(04-PACT §5.4) — 제단이 플레이어를 죽이지 않는다.
+        if (humanityCharged > 0 && (pact?.humanity ?? 1) <= 0 && combat && !combat.ascended) {
+            combat.ascended = true;
+            EventBus.emit(EVENTS.HUMANITY_ZERO, { humanity: 0 });
+            combat.awakening?.triggerAscension?.();
+        }
+    }
+
+    /**
+     * 대가만 붙인다(마녀). ★ 여기서는 인간성을 깎지 않는다 —
+     *   마녀는 **물건을 판다**. 30 §2.3 이 거부한 「구매 화폐로서의 인간성」이 정확히 이 자리다.
+     *   값은 이미 체력으로 치렀고(30 §5 의 15/22/32%), 대가는 그 위에 얹히는 문법이다.
+     *   인간성을 받는 것은 제단뿐이다(grantAltar 주석) — 제단은 사는 게 아니라 PACT 를
+     *   스스로 찾아가는 것이고, 값을 치르는 수단이 대가 하나뿐이다.
+     * ⚠ tagCounts/스탯 적용이 PactSystem.choose 와 겹쳐 보이지만 재사용할 수 없다 —
+     *   choose 는 축복이 반드시 있어야 하고(owned 갱신), 마녀는 축복을 주지 않는다.
+     */
+    applyToll(rarityId) {
+        const pact = this.pact;
+        const d = this.rollToll(rarityId);
+        if (!pact || !d) return null;
+        pact.tagCounts[d.tag] = d.stacksAfter;
+        for (let i = 0; i < d.stacks; i++) {
+            pact.stats.add(d.stat, d.stat === "drain" ? "tollAdd" : "toll", d.amount, "toll:" + d.tag);
+        }
+        this.afterPact(d, "encounter", 0);
         return d;
     }
 
@@ -868,6 +922,8 @@ export class EncounterSystem {
         this.fb.e = e;
         this.fb.token = e.__encToken;
         this.fb.life = this.act.def.stay ?? 60;
+        this.fb.lastHp = e.hp;
+        this.fb.engaged = 0;
         // 죽은 이벤트를 살려 쓴다 — ELITE_SPAWNED 는 emit 되는데 구독자가 0이었다(30 §6)
         EventBus.emit(EVENTS.ELITE_SPAWNED, {
             id: def.id, name: this.act.def.name, hp: e.maxHp, x: e.x, y: e.y,
@@ -885,8 +941,29 @@ export class EncounterSystem {
         if (this.act.on && this.act.kind === "fieldboss") { this.act.x = e.x; this.act.y = e.y; }
         // 회피 장치 3 — 60초 후 떠난다. 언제까지나 기다려주면 "나중에 강해지고 온다"가
         // 최적해가 되어 선택이 사라진다(30 §3.6)
-        this.fb.life -= dt;
-        if (this.fb.life > 0) return;
+        //
+        // ★ 단, **교전 중이면 이 카운트다운이 멈춘다** (2026-08-11 수정)
+        //   SpawnSystem.reset 이 이미 seg.hpMult 를 곱하고 있어(W3 x2.37 / W4 x3.30) 필드보스는
+        //   그 시점 빌드로 60초 안에 못 잡는 개체가 있다. 그러면 "무시할 수 있다"를 만들려던
+        //   60초가 "싸우기 시작했는데 다 못 잡고 뺏긴다"가 되어, 교전 자체가 손해가 된다.
+        //   두 성질을 갈라 둘 다 지킨다 —
+        //     안 가면  : 아무도 안 때리므로 60초가 그대로 흘러 떠난다 (E-5 회피 가능성 유지)
+        //     가면     : 최근 engageGrace 초 안에 HP 가 줄었으면 타이머가 멈춘다. 끝까지 싸운다
+        //   ★ HP 감소로 판정하는 이유: CombatSystem.flushDamage 는 매 프레임 수십 번 도는
+        //     핫패스라 거기에 훅을 심으면 조우 하나 때문에 전투 전체가 느려진다.
+        //     여기서 지난 프레임 HP 와 비교하면 비용이 0 이고, 무기·룬·각성 어느 경로로 때렸든
+        //     빠짐없이 잡힌다(장판·도트 포함).
+        const c = this.cfg.fieldboss;
+        if (e.hp < this.fb.lastHp) this.fb.engaged = c.engageGrace ?? 5;
+        this.fb.lastHp = e.hp;
+        if (this.fb.engaged > 0) this.fb.engaged -= dt;
+        else this.fb.life -= dt;
+        // ★ 하드 상한 — 교전 중이어도 최종 보스 등장 직전에는 반드시 떠난다.
+        //   타이머가 멈추는 이상 상한이 없으면 필드보스가 보스전까지 따라 들어와 연전이 된다.
+        //   30 §3.6 각주가 "필드보스는 bossAt 이전에만 산다"고 정한 것과 같은 선이다.
+        const mustLeave = (this.spawn?.elapsed ?? 0)
+            >= (this.spawn?.bossAt ?? 360) - (c.leaveBeforeBoss ?? 15);
+        if (this.fb.life > 0 && !mustLeave) return;
         e.__leashR = 0;
         this.spawn?.kill(e, false);   // counted=false — 처치가 아니라 퇴장이다
         this.endFieldBoss();
@@ -931,28 +1008,46 @@ export class EncounterSystem {
      * @returns {{kind: string, label: string, blessing: object|null}}
      */
     rollChestReward(x, y) {
-        const table = this.cfg.chest.rewards ?? EMPTY;
-        const pick = rollWeighted(table);
+        const pick = rollWeighted(this.cfg.chest.rewards ?? EMPTY);
         const kind = pick?.kind ?? "blessing";
+        // ★ 폴백 **순서**가 확률표만큼 중요하다 (2026-08-11 수정 / 30 §3.7).
+        //   고치기 전에는 룬을 못 주면 곧바로 축복으로 떨어졌다. 초반에는 룬 트리 게이트(31 §4)를
+        //   통과하는 룬이 하나도 없어 룬 몫 25% 가 통째로 축복에 얹혔고, 400회 시뮬에서
+        //   축복 313 / 아이템 82 / 룬 5 — 축복이 78% 였다. "룬 25%"는 표기만 있는 값이었다.
+        //   이제 룬 → 아이템 → 축복 순으로 내려간다. 축복이 아니라 아이템이 먼저인 이유는
+        //   축복이 이미 55% 로 가장 두껍기 때문이다. 흘러넘친 몫을 또 그쪽에 부으면
+        //   상자가 "축복 자판기"가 되고, 세 종을 나눈 의미가 사라진다.
+        const order = this.cfg.chest.fallback ?? EMPTY;
+        for (let i = Math.max(0, order.indexOf(kind)); i < order.length; i++) {
+            const r = this.grantChest(order[i], x, y);
+            if (r) return r;
+        }
+        // 전부 실패했거나 order 에 없는 kind(데이터 오타)면 축복으로 내려간다.
+        // 상자를 열었는데 아무 일도 안 일어나는 것이 가장 나쁜 결과다.
+        return this.grantChest("blessing", x, y) ?? { kind: "blessing", label: "축복", blessing: null };
+    }
 
+    /** 궤 보상 한 종을 실제로 준다. 줄 수 없으면 null 을 돌려 폴백을 태운다 */
+    grantChest(kind, x, y) {
         if (kind === "rune") {
             const r = this.runes?.pick(1)?.[0];
-            // 제시할 룬이 없으면(게이트 미통과) 조용히 축복으로 내려간다.
-            // 상자를 열었는데 아무 일도 안 일어나는 것이 가장 나쁜 결과다.
-            if (r && this.runes.engrave(r.id)) return { kind: "rune", label: r.name, blessing: null };
+            return r && this.runes.engrave(r.id) ? { kind: "rune", label: r.name, blessing: null } : null;
         }
         if (kind === "items") {
-            const n = pick.count ?? 3;
             const t = this.items?.normalTable?.();
+            if (!t) return null;
+            // 개수는 확률표 쪽에 적혀 있다. 상자는 런당 몇 번뿐이라 여기서 찾아도 된다 —
+            // 매 프레임 경로가 아니고, 표를 두 곳에 적으면 반드시 어긋난다.
+            const n = (this.cfg.chest.rewards ?? EMPTY).find((o) => o.kind === "items")?.count ?? 3;
             let made = 0;
-            for (let i = 0; i < n && t; i++) {
+            for (let i = 0; i < n; i++) {
                 const a = (Math.PI * 2 * i) / n;
                 if (this.items.spawnOne(t, x + Math.cos(a) * 16, y + Math.sin(a) * 16)) made++;
             }
-            if (made) return { kind: "items", label: "아이템 " + made, blessing: null };
+            return made ? { kind: "items", label: "아이템 " + made, blessing: null } : null;
         }
         const bl = this.spawn?.grantFreeBlessing?.() ?? null;
-        return { kind: "blessing", label: bl?.name ?? "축복", blessing: bl };
+        return bl ? { kind: "blessing", label: bl.name, blessing: bl } : null;
     }
 
     /** 궤는 소멸하지 않는다(30 §4.4) — 배치만 하고 조우 자체는 곧바로 닫는다 */

@@ -88,7 +88,12 @@ export function installCheats(scene) {
             return {
                 paused: scene.scene.isPaused(),   // ★ E-1 — 조우 중에도 항상 false 여야 한다
                 act: a ? { id: a.id, kind: a.kind, life: +a.life.toFixed(1), x: Math.round(a.x), y: Math.round(a.y) } : null,
-                fieldBoss: es.fb.on ? { hp: es.fb.e?.hp, maxHp: es.fb.e?.maxHp, life: +es.fb.life.toFixed(1), leashR: es.fb.e?.__leashR } : null,
+                // ★ engaged 는 "교전 중이라 퇴장 타이머가 멈춰 있다"는 뜻이다(30 §3.6 / EC-11·EC-12).
+                //   0 이면 life 가 흐르고, 0 보다 크면 그 초만큼 더 멈춰 있다.
+                fieldBoss: es.fb.on ? {
+                    hp: es.fb.e?.hp, maxHp: es.fb.e?.maxHp, life: +es.fb.life.toFixed(1),
+                    engaged: +es.fb.engaged.toFixed(1), leashR: es.fb.e?.__leashR,
+                } : null,
                 suppressed: scene.spawnSystem.suppressed,  // ★ E-4 — 필드보스는 이걸 켜지 않는다
                 slots: es.slots.filter((s) => s.on).map((s) => ({
                     kind: s.kind, label: s.label, pricePct: Math.round(s.price * 100),

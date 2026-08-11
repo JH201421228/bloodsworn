@@ -119,6 +119,17 @@ export class AwakeningSystem {
         }
 
         this.list.push(tag);
+        // ★ PactSystem 의 장부에도 적는다. 이 한 줄이 없어서 pact.awakened 는 **저장소 전체에서
+        //   한 번도 채워진 적이 없었다**(awakened.add 검색 결과 0건). 그 결과 PactSystem 의
+        //   각성 관련 그물 두 개가 통째로 죽어 있었다:
+        //     pickToll:148  atCap = awakened.size >= AWAKEN_CAP   -> 영원히 false
+        //     pickToll:158  awakened.has(t.tag) 로 제외            -> 영원히 통과
+        //   즉 **이미 각성한 태그의 대가가 계속 다시 제시**됐다. 그 중첩은 각성을 더 만들지
+        //   못하면서 페널티만 쌓는다. 상한 2 자체는 위 MAX_AWAKENINGS 검사가 지키고 있어
+        //   각성 개수는 정상이었기 때문에 겉으로 드러나지 않았다.
+        //   여기서 적는 이유: trigger() 가 각성의 유일한 권위자라 호출 경로(레벨업 카드 /
+        //   제단)마다 따로 적으면 또 어긋난다.
+        this.pact?.awakened?.add(tag);
 
         this.scene.fxSystem?.hitStop(200);   // 정본 04-PACT 5.2 ① 필수 연출
 
