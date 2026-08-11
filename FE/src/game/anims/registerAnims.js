@@ -9,21 +9,41 @@
  *   "애니메이션이 안 바뀐다"를 몇 시간 쫓게 된다.
  */
 
+import monsterCatalog from "../../data/monster-catalog.json";
+import enemiesData from "../../data/enemies.json";
+
 const DIRS = ["up", "down", "left", "right"];
 
-/** 적 프레임 배정 — tools/build-assets.mjs 의 ENEMY_ORDER와 반드시 일치한다. */
-const ENEMY_ANIMS = [
-    { key: "e1", start: 0, fps: 10 },
-    { key: "e2", start: 4, fps: 6 },
-    { key: "e3", start: 8, fps: 14 },
-    { key: "e4", start: 12, fps: 8 },
-    { key: "e5", start: 16, fps: 8 },
-    { key: "e6", start: 20, fps: 8 },
-    { key: "e7", start: 24, fps: 12 },
-    { key: "e8", start: 28, fps: 10 },
-    { key: "el1", start: 32, fps: 8 },
-    { key: "el2", start: 36, fps: 6 },
-];
+/**
+ * 적 150종 — 프레임 배정은 monster-catalog.json 이 유일한 출처다.
+ *
+ * ★ 여기에 150줄을 적지 않는 이유는 위 "키를 한 곳에서만 만든다"와 같은 규약의 반대편이다.
+ *   프레임 인덱스를 손으로 옮겨 적으면 아틀라스를 다시 구울 때마다 두 곳이 어긋나고,
+ *   어긋나도 예외가 안 난다 — 150종이 조용히 남의 그림으로 나온다.
+ *   카탈로그는 tools/build-monsters.mjs 가 아틀라스와 같은 루프에서 찍는다.
+ *   frameStart = 종 인덱스 x 4, 한 행 32칸(= 8종). 실측 검증: 아틀라스 셀의 알파 bbox
+ *   중앙값과 카탈로그 bodyW/bodyH 가 150종 중 144종에서 정확히 일치했다
+ *   (나머지 6종은 원본이 셀보다 커서 축소된 것들 — 인덱스가 아니라 크기 차이다).
+ *
+ * ★ 구 enemies 시트(10종)의 enemy.e1~el2 등록을 지운 이유
+ *   카탈로그가 E1~E8/EL1/EL2 를 같은 키(enemy.e1 …)로 이미 갖고 있는데 프레임은 다르다
+ *   (예: E1 은 구 시트 0번, monsters 아틀라스 56번). 둘 다 등록하면 make() 의 중복 가드가
+ *   "먼저 등록한 쪽"을 남겨 10종만 옛 그림으로 재생된다. 프레임 출처는 카탈로그 하나여야 한다.
+ */
+const clampFps = (v) => (v < 5 ? 5 : v > 14 ? 14 : v);
+
+/** 정본 10종 fps — 09-ART 2 의 실측표. 유도식에 태우지 않는다 */
+const LEGACY_FPS = { e1: 10, e2: 6, e3: 14, e4: 8, e5: 8, e6: 8, e7: 12, e8: 10, el1: 8, el2: 6 };
+
+/** id -> moveSpeed. 빠른 놈이 빨리 움직여야 속도가 눈에 읽힌다 */
+const SPEED_BY_ID = new Map(enemiesData.enemies.map((e) => [e.id, e.moveSpeed]));
+
+/** 종 하나의 애니 fps. 정본 10종은 실측값, 나머지는 이동속도에서 유도한다 */
+function speciesFps(id) {
+    const legacy = LEGACY_FPS[id.toLowerCase()];
+    if (legacy) return legacy;
+    return clampFps(Math.round(4 + (SPEED_BY_ID.get(id) ?? 60) / 12));
+}
 
 /** 보스 8x8=64칸 선형 배치. 09-ART 2.3 실측표. */
 const BOSS_ANIMS = [
@@ -78,14 +98,17 @@ export function registerAnims(scene) {
         }
     }
 
-    // ── 적 10종: 합본 시트에서 4프레임씩
-    for (const e of ENEMY_ANIMS) {
-        make("enemy." + e.key, "enemies", {
-            frames: scene.anims.generateFrameNumbers("enemies", {
-                start: e.start,
-                end: e.start + 3,
+    // ── 적 150종: monsters 아틀라스에서 종별 4프레임씩
+    //   키는 enemies.json 의 anim 필드와 같은 규칙(enemy.<id 소문자>)으로 만든다.
+    //   SpawnSystem.reset() 의 anims.exists(def.anim) 가드가 여기서 만든 키를 그대로 찾는다.
+    const tex = monsterCatalog.texture;
+    for (const sp of monsterCatalog.species) {
+        make("enemy." + sp.id.toLowerCase(), tex, {
+            frames: scene.anims.generateFrameNumbers(tex, {
+                start: sp.frameStart,
+                end: sp.frameStart + sp.frames - 1,
             }),
-            frameRate: e.fps,
+            frameRate: speciesFps(sp.id),
             repeat: -1,
         });
     }

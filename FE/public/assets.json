@@ -7,8 +7,19 @@
         "assets/ 아래 파일은 tools/build-assets.mjs 가 asset/ 원본에서 생성한다.",
         "손으로 고치지 말고 스크립트를 고친 뒤 npm run build:assets 를 돌린다.",
         "",
-        "★ 카드 프레임 / 각성 인장 / 로고 / 배경 / 녹턴 초상은 React(DOM)가 CSS로 렌더하므로",
-        "  여기에 넣지 않는다. 넣으면 같은 이미지를 GPU에 두 번 올리게 된다.",
+        "★ 카드 프레임 / 각성 인장 / 로고 / 패널 / 버튼 / 하트 / 배경 / 녹턴 초상은 여기에 없다.",
+        "  React(DOM)가 src/ui/art.css 의 url(../img/...) 로 직접 렌더하기 때문이다.",
+        "  넣으면 브라우저 이미지 캐시와 별개로 같은 그림을 GPU 텍스처로 한 번 더 올린다.",
+        "  실측(T0811): 이 21개 키를 빼서 로드 텍스처 65장 -> 45장, GPU 20.07MB -> 15.65MB.",
+        "  (뺀 21장 5.01MB - 새로 넣은 monsters 0.59MB = 순감 4.42MB. 다운로드는 1,586KB -> 76KB)",
+        "  ⚠ 매니페스트에서 뺐다고 파일을 지우면 안 된다. public/img/ 의 png 는 CSS가 그대로 쓴다.",
+        "  ⚠ 반대로 ui-bar-hp / ui-bar-exp 는 HudScene 이 nineslice 로, joystick_base / joystick_knob 은",
+        "     HudScene 이 image 로 실제 사용한다. CSS 전용처럼 보이지만 빼면 HUD가 사라진다.",
+        "",
+        "★ 적 150종은 monsters 한 장(512x304, 16x16 격자 32열 = 608칸)이 전부다.",
+        "  프레임 배정은 src/data/monster-catalog.json 이 갖고 registerAnims 가 읽어 애니를 만든다.",
+        "  구 enemies 시트(64x160, 10종)는 SpawnSystem 이 풀 스프라이트를 생성할 때의",
+        "  초기 텍스처로만 남아 있다(SpawnSystem.js 의 add.sprite(...,\"enemies\",0)). 지우면 초록 체크무늬가 뜬다.",
         "",
         "맵은 Tiled 타일맵이 아니라 단일 이미지 + 충돌 배열이다(docs/18-MAP-IMAGE-PROMPT.md)."
     ],
@@ -30,96 +41,12 @@
             "url": "assets/map/props-grave.png"
         },
         {
-            "key": "bg-title",
-            "url": "img/bg/title.png"
-        },
-        {
-            "key": "bg-sanctum",
-            "url": "img/bg/sanctum.png"
-        },
-        {
-            "key": "bg-win",
-            "url": "img/bg/result-win.png"
-        },
-        {
-            "key": "bg-lose",
-            "url": "img/bg/result-lose.png"
-        },
-        {
-            "key": "ui-logo",
-            "url": "img/ui/logo.png"
-        },
-        {
-            "key": "ui-panel",
-            "url": "img/ui/panel.png"
-        },
-        {
-            "key": "ui-btn",
-            "url": "img/ui/btn-normal.png"
-        },
-        {
-            "key": "ui-btn-pressed",
-            "url": "img/ui/btn-pressed.png"
-        },
-        {
             "key": "ui-bar-hp",
             "url": "img/ui/bar-hp-frame.png"
         },
         {
             "key": "ui-bar-exp",
             "url": "img/ui/bar-exp-frame.png"
-        },
-        {
-            "key": "ui-card-common",
-            "url": "img/ui/card-common.png"
-        },
-        {
-            "key": "ui-card-rare",
-            "url": "img/ui/card-rare.png"
-        },
-        {
-            "key": "ui-card-epic",
-            "url": "img/ui/card-epic.png"
-        },
-        {
-            "key": "ui-heart-full",
-            "url": "img/ui/heart-full.png"
-        },
-        {
-            "key": "ui-heart-empty",
-            "url": "img/ui/heart-empty.png"
-        },
-        {
-            "key": "portrait-nocturne",
-            "url": "img/portrait/nocturne.png"
-        },
-        {
-            "key": "seal-frail",
-            "url": "img/seal/seal-frail.png"
-        },
-        {
-            "key": "seal-slow",
-            "url": "img/seal/seal-slow.png"
-        },
-        {
-            "key": "seal-myopia",
-            "url": "img/seal/seal-myopia.png"
-        },
-        {
-            "key": "seal-greed",
-            "url": "img/seal/seal-greed.png"
-        },
-        {
-            "key": "seal-blind",
-            "url": "img/seal/seal-blind.png"
-        },
-        {
-            "key": "seal-hunger",
-            "url": "img/seal/seal-hunger.png"
-        },
-        {
-            "key": "seal-ascension",
-            "url": "img/seal/seal-ascension.png"
         }
     ],
     "spritesheets": [
@@ -222,6 +149,12 @@
         {
             "key": "enemies",
             "url": "assets/enemies/enemies.png",
+            "frameWidth": 16,
+            "frameHeight": 16
+        },
+        {
+            "key": "monsters",
+            "url": "assets/enemies/monsters.png",
             "frameWidth": 16,
             "frameHeight": 16
         },
