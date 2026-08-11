@@ -194,6 +194,21 @@ export class BossSystem {
     }
 
     /**
+     * 애니메이션 키. 스테이지 보스는 전용 시트를 쓰므로 접두가 다르다.
+     * ★ this.animKey("attack") 처럼 하드코딩하면 BOSS2~6 은 idle 외에 아무것도 재생하지 않는다.
+     *   에러도 안 난다 — anims.exists() 가드에 조용히 걸려 넘어간다. 그래서 눈치채기 어렵다.
+     * ★ 전용 시트에 그 동작이 없으면 기존 boss.* 로 떨어진다(없는 것보다 낫다).
+     */
+    animKey(name) {
+        const sheet = this.def.sheet;
+        if (sheet) {
+            const k = sheet + "." + name;
+            if (this.scene.anims.exists(k)) return k;
+        }
+        return "boss." + name;
+    }
+
+    /**
      * 보스 애니메이션을 등장 직전에 한 번만 등록한다.
      * ★ 부팅 시 6종을 전부 등록하면 쓰지 않을 애니메이션 30여 개가 상주한다.
      *   보스는 런당 하나뿐이라 지연 등록이 명백히 싸다.
@@ -435,7 +450,7 @@ export class BossSystem {
         } else if (this.recoverT > 0) {
             this.recoverT -= dt;
             // 경직이 풀리는 프레임에만 idle로 되돌린다. delayedCall을 쓰면 런 중 TimerEvent가 쌓인다
-            if (this.recoverT <= 0 && this.scene.anims.exists("boss.idle")) this.boss.play("boss.idle", true);
+            if (this.recoverT <= 0 && this.scene.anims.exists(this.animKey("idle"))) this.boss.play(this.animKey("idle"), true);
         } else if (main) {
             this.startCast(main);
         }
@@ -474,7 +489,7 @@ export class BossSystem {
         // 예고에 그릴 좌표를 지금 확정한다. 예고와 실제가 1px이라도 다르면 플레이어는 학습할 수 없다.
         if (p.def.type === "summon") this.planRing(p);
 
-        if (this.scene.anims.exists("boss.cast")) b.play("boss.cast", true);
+        if (this.scene.anims.exists(this.animKey("cast"))) b.play(this.animKey("cast"), true);
     }
 
     cancelCast() {
@@ -501,7 +516,7 @@ export class BossSystem {
 
     fire(p) {
         const b = this.boss;
-        const anim = p.def.type === "cone" ? "boss.attack" : "boss.spell";
+        const anim = p.def.type === "cone" ? this.animKey("attack") : this.animKey("spell");
         if (this.scene.anims.exists(anim)) b.play(anim, true);
         switch (p.def.type) {
             case "cone": this.fireScythe(p); break;
@@ -774,7 +789,7 @@ export class BossSystem {
         this.combat.gold += this.def.goldOnClear;
 
         this.corpse.setPosition(this.lastX, this.lastY).setVisible(true).setAlpha(1);
-        if (this.scene.anims.exists("boss.death")) this.corpse.play("boss.death");
+        if (this.scene.anims.exists(this.animKey("death"))) this.corpse.play(this.animKey("death"));
         this.combat?.fx?.hitStop(300);              // 09-ART 보스 처치 히트스톱 300ms
         this.scene.cameras.main.shake(500, 0.010);
         EventBus.emit(EVENTS.BOSS_HP, { hp: 0, maxHp: this.def.baseHp, phase: this.phase });

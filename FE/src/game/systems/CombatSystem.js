@@ -17,6 +17,7 @@ import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
 import { dist2 } from "../utils/math";
 import weaponsData from "@/data/weapons.json";
+import { resolveAdPlacement } from "@/monetization";
 
 const MAX_PROJECTILES = 200;
 /** W3 유골 / W4 장판에 쓰는 투사체 아틀라스 시트. data/projectiles.json 의 키와 같아야 한다.
@@ -413,6 +414,60 @@ export class CombatSystem {
     }
 
     die() {
+        this.dead = true;
+        // ★ 조건을 만족하면 RUN_ENDED 를 보류하고 결정을 기다린다.
+        //   어떤 실패·무응답이든 8초 안에 endRunDead() 로 떨어진다 —
+        //   광고는 보상을 줄 수는 있어도 진행을 막아서는 안 된다.
+        if (this.tryOfferRevive()) return;
+        this.endRunDead();
+    }
+
+    /** @returns {boolean} 제안을 띄웠으면 true */
+    tryOfferRevive() {
+        if (this.reviveOffered) return false;            // 런당 1회
+        // ★ 각성 「불사의 껍질」과 카운터를 공유한다. 나누면 한 런에 두 번 살아난다.
+        if (this.awakening?.reviveUsed) return false;
+        let p = null;
+        try { p = resolveAdPlacement("revive"); } catch { p = null; }
+        if (!p?.ready) return false;
+        const cost = p.cost?.humanity ?? 0;
+        if ((this.pact?.humanity ?? 0) < cost) return false;
+
+        this.reviveOffered = true;
+        this.scene.scene.pause();
+        this.reviveTimer = setTimeout(() => this.resolveRevive(false), 8000);
+        EventBus.emit(EVENTS.REVIVE_OFFER, {
+            humanityCost: cost, humanity: this.pact?.humanity ?? 0,
+            hpPct: p.reward?.hpPct ?? 0.5, timeoutMs: 8000,
+        });
+        return true;
+    }
+
+    /** CMD_REVIVE 응답. 두 번 불려도 안전하다 */
+    resolveRevive(accepted) {
+        if (!this.reviveOffered || this.reviveDone) return;
+        this.reviveDone = true;
+        clearTimeout(this.reviveTimer);
+        if (!accepted) { this.endRunDead(); return; }
+
+        let p = null;
+        try { p = resolveAdPlacement("revive"); } catch { p = null; }
+        const cost = p?.cost?.humanity ?? 0;
+        // PactSystem 이 자기 안에서 쓰는 것과 같은 방식이다(직접 대입 + 0 하한)
+        if (this.pact) this.pact.humanity = Math.max(0, (this.pact.humanity ?? 0) - cost);
+        this.hp = Math.max(1, Math.floor(this.maxHp * (p?.reward?.hpPct ?? 0.5)));
+        this.hurtUntil = this.scene.time.now + (p?.reward?.invulnSec ?? 2) * 1000;
+        this.dead = false;
+        this.scene.scene.resume();
+        EventBus.emit(EVENTS.RUN_RESUMED, {});
+        if ((this.pact?.humanity ?? 1) <= 0 && !this.ascended) {
+            this.ascended = true;
+            EventBus.emit(EVENTS.HUMANITY_ZERO, { humanity: 0 });
+            this.awakening?.triggerAscension?.();
+        }
+    }
+
+    endRunDead() {
         this.dead = true;
         EventBus.emit(EVENTS.RUN_ENDED, {
             reason: "death",

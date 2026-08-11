@@ -11,7 +11,20 @@ import GameCanvas from "@/ui/GameCanvas";
 import UiLayer from "@/ui/UiLayer";
 import { installBridge } from "@/state/bridge";
 import { installPlatform } from "@/state/platform";
-import { hydrateStore } from "@/state/store";
+import { useStore, hydrateStore, persistSave } from "@/state/store";
+import { initMonetization } from "@/monetization";
+import { initAnalytics } from "@/analytics";
+
+/**
+ * 보류 지급을 스토어에 반영한다.
+ * ★ 반드시 true 를 반환해야 ack 된다. false/예외면 다음 부팅에 다시 흘러나온다 —
+ *   구매 도중 앱이 죽어도 결제한 것을 잃지 않게 하는 장치다.
+ */
+async function onGrant(g) {
+    const s = useStore.getState();
+    if (g.type === "gold") { s.addGold(g.amount ?? 0); persistSave(); return true; }
+    return g.type === "entitlement" || g.type === "cosmetic"; // 원장이 이미 정본이다
+}
 
 export default function App() {
     useEffect(() => {
@@ -27,7 +40,31 @@ export default function App() {
     useEffect(() => {
         // ★ 세이브 로드는 비동기(Preferences)라 부팅을 막지 않는다. 로딩 화면이 떠 있는 동안 끝난다.
         //   실패해도 throw 하지 않는다 — 세이브 하나 때문에 게임이 안 켜지면 그게 최악의 사고다(T551).
-        hydrateStore();
+        //
+        // ★ 순서가 중요하다: 하이드레이트 -> 분석 -> 수익화.
+        //   수익화의 보류 지급(drainGrants)이 하이드레이트보다 먼저 끝나면
+        //   metaSlice.hydrate() 의 하드 set() 이 방금 지급한 골드를 덮어쓴다.
+        let cancelled = false;
+        hydrateStore().then(async () => {
+            if (cancelled) return;
+            // 둘 다 실패해도 게임은 그대로 돈다. 광고·분석이 진행을 막아서는 안 된다.
+            try {
+                await initAnalytics({
+                    endpoint: import.meta.env.VITE_ANALYTICS_ENDPOINT ?? "",
+                    sampleRate: 1,
+                });
+            } catch (e) { console.warn("[App] 분석 초기화 실패 — 무시하고 계속한다", e); }
+            if (cancelled) return;
+            try {
+                await initMonetization({
+                    onGrant,
+                    rewardedUnitId: import.meta.env.VITE_ADMOB_REWARDED_ANDROID ?? "",
+                    revenueCatApiKey: import.meta.env.VITE_RC_ANDROID_KEY ?? "",
+                    remoteConfigUrl: import.meta.env.VITE_RC_URL ?? "",
+                });
+            } catch (e) { console.warn("[App] 수익화 초기화 실패 — 무료로 계속한다", e); }
+        });
+        return () => { cancelled = true; };
     }, []);
 
     return (

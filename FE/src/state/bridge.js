@@ -13,6 +13,8 @@
  */
 import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
+import { onRunStart } from "@/monetization";
+import { track, flush, ANALYTICS_EVENTS as A } from "@/analytics";
 import { useStore, persistSave } from "./store";
 import { SCREENS } from "./uiSlice";
 
@@ -55,6 +57,8 @@ export function installBridge() {
     );
 
     sub(EVENTS.RUN_STARTED, (p) => {
+        onRunStart();  // 런 스코프 광고 상한 리셋 + 프리로드
+        track(A.RUN_START, { stage_id: p?.stageId ?? "stage1" });
         // rerollLeft는 성소 업그레이드로 늘어날 수 있으므로 Phaser가 계산해 실어 보낸다.
         s().resetRun(p?.rerollLeft);
         s().setScreen(SCREENS.PLAYING);
@@ -116,6 +120,15 @@ export function installBridge() {
         s().setScreen(SCREENS.RESULT);
         // 저장 시점 3곳 중 하나(08-DATA-SCHEMA 4.1). 런 중에는 절대 쓰지 않는다.
         persistSave();
+        track(A.RUN_END, {
+            reason: result?.reason ?? "", duration_s: result?.time ?? 0,
+            level: result?.level ?? 0, kills: result?.kills ?? 0,
+            gold: result?.gold ?? 0, humanity: result?.humanity ?? 0,
+            stage_id: result?.stageId ?? "",
+            // ★ 배열은 sanitize 가 버린다. 개수로 보낸다.
+            awakenings: (result?.awakenings ?? []).length,
+        });
+        flush();
     }, "bridge:run-ended");
 
     sub(EVENTS.RUN_PAUSED, () => s().setModal("pause"), "bridge:paused");

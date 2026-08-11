@@ -129,13 +129,20 @@ export class StageSystem {
         const out = new Array(n);
         for (let i = 0; i < n; i++) {
             const p = n === 1 ? 0 : i / (n - 1);   // 0..1 진행도
+            const t = i * sec;
+            // ★ 지수의 밑은 구간 인덱스가 아니라 **분(minute)** 이다.
+            //   인덱스를 쓰면 segmentSec 에 따라 곡선이 통째로 달라진다 —
+            //   실제로 stage2(25초 구간)에서 마지막 hpMult 가 15.59 로,
+            //   정본 stage1 의 5.64(330초)보다 3배 가까이 높았다.
+            //   같은 시각에는 같은 배율이어야 스테이지 간 난이도를 비교할 수 있다.
+            const min = t / 60;
             out[i] = {
-                t: i * sec,
-                hpMult: 1 + (c.hpK ?? 0.4) * Math.pow(i, c.hpExp ?? 1.5),
-                dmgMult: 1 + (c.dmgK ?? 0.12) * Math.pow(i, c.dmgExp ?? 1.3),
+                t,
+                hpMult: 1 + (c.hpK ?? 0.4) * Math.pow(min, c.hpExp ?? 1.5),
+                dmgMult: 1 + (c.dmgK ?? 0.12) * Math.pow(min, c.dmgExp ?? 1.3),
                 interval: lerp(c.intervalFrom ?? 1.2, c.intervalTo ?? 0.25, p),
                 cap: Math.round(lerp(c.capFrom ?? 18, c.capTo ?? 120, p)),
-                weights: this.weightsAt(st, w.mix, i * sec),
+                weights: this.weightsAt(st, w.mix, t),
             };
         }
         return out;

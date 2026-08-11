@@ -107,6 +107,7 @@ export default class GameScene extends Phaser.Scene {
                     this.scene.resume();
                     EventBus.emit(EVENTS.RUN_RESUMED, {});
                 }, { key: "game:resume" }),
+                EventBus.on(EVENTS.CMD_REVIVE, (p) => this.combatSystem.resolveRevive(Boolean(p?.accepted)), { key: "game:revive" }),
                 EventBus.on(EVENTS.CMD_ABANDON, () => this.combatSystem.abandon(), { key: "game:abandon" }),
             ];
             this.events.once("shutdown", () => this.offCmds?.forEach((f) => f()));

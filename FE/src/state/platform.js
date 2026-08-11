@@ -1,4 +1,13 @@
 /**
+ * ★ 광고가 뜨면 안드로이드에서 WebView 가 백그라운드로 간다. 그대로 두면
+ *   "앱이 백그라운드로 갔다"고 판단해 엉뚱한 일시정지 모달이 뜨고, 광고를 닫아도 남는다.
+ *   광고 표시 구간에만 이 플래그를 세워 그 판정을 건너뛴다.
+ */
+let adInFlight = false;
+export function setAdInFlight(v) { adInFlight = Boolean(v); }
+export function isAdInFlight() { return adInFlight; }
+
+/**
  * platform — Capacitor 네이티브 연동. 안드로이드 뒤로가기(T632)와 백그라운드 자동 일시정지(T633).
  *
  * ★ `@capacitor/app` 을 정적 import 하지 않는다. 아직 설치되어 있지 않아 번들러가 즉시 깨진다.
@@ -68,6 +77,8 @@ export function handleBack() {
 
 /** 앱이 백그라운드로 갔다. 런 중이면 무조건 멈춘다 — 안 멈추면 돌아왔을 때 죽어 있다(T633). */
 export function handleBackground() {
+    // 광고 표시 중은 백그라운드가 아니다. 그대로 두면 광고를 닫아도 일시정지 모달이 남는다.
+    if (adInFlight) return;
     const s = useStore.getState();
     if (s.screen !== SCREENS.PLAYING || s.pact.open || s.modal) return;
     EventBus.emit(EVENTS.CMD_PAUSE);

@@ -24,6 +24,8 @@ export const EVENTS = {
     RUN_PAUSED: "run:paused",
     RUN_RESUMED: "run:resumed",
     RUN_ENDED: "run:ended",
+    /** M-1 사망 시 부활 제안. React 가 CMD_REVIVE 로 반드시 응답한다(8초 타임아웃 존재) */
+    REVIVE_OFFER: "revive:offer",
     PERF_SAMPLE: "perf:sample",
     QUALITY_CHANGED: "quality:changed",
     FATAL_ERROR: "error:fatal",
@@ -37,6 +39,7 @@ export const EVENTS = {
     CMD_PAUSE: "cmd:pause",
     CMD_RESUME: "cmd:resume",
     CMD_ABANDON: "cmd:abandon",
+    CMD_REVIVE: "cmd:revive", // { accepted: boolean }
     CMD_SETTINGS: "cmd:settings",
     CMD_DEBUG: "cmd:debug",
 };
