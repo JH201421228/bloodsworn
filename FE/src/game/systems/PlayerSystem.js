@@ -59,6 +59,17 @@ export class PlayerSystem {
         this.externalVy = 0;
         this.invulnUntil = 0;
         this.currentAnim = null;
+        /**
+         * ★ 공격 모션 (T850)
+         *   player-atk1/atk2 x 4방향 8종이 registerAnims 에 등록돼 있고 스프라이트시트도
+         *   매니페스트에 있었는데 **재생하는 코드가 한 줄도 없었다.** 96x80 시트 8장을
+         *   GPU 에 올려 두고 쓰지 않는 상태였다.
+         *   attackUntil 이 지날 때까지 run/idle 이 이 모션을 덮지 않는다.
+         *   시간으로 재는 이유: animationcomplete 리스너는 W1 이 쿨보다 빨리 재발사될 때
+         *   (haste + 룬 「되받아치기」로 쿨 0.48초까지 내려간다) 중첩 해제가 꼬인다.
+         */
+        this.attackUntil = 0;
+        this.attackAlt = 0; // atk1 / atk2 를 번갈아 — 두 모션이 이어지면 연격으로 읽힌다
     }
 
     get dashReady() {
@@ -101,11 +112,38 @@ export class PlayerSystem {
     }
 
     playAnim(kind) {
+        // 공격 모션이 도는 동안에는 이동/대기 모션이 덮지 않는다.
+        if (this.scene.time.now < this.attackUntil) return;
         const key = "player." + kind + "." + this.facing;
         if (this.currentAnim === key) return;
         if (!this.scene.anims.exists(key)) return;
         this.player.play(key, true);
         this.currentAnim = key;
+    }
+
+    /**
+     * W1 「피의 송곳니」가 벨 때 호출한다 (CombatSystem.fireArc).
+     *
+     * ★ 방향을 발사 시점의 facing 으로 **고정**한다. 휘두르는 중에 방향을 바꿔도 모션은
+     *   그대로다 — fireArc 의 판정 부채꼴도 발사 시점 facing 으로 계산되므로, 모션이
+     *   따라 돌면 "맞은 방향"과 "휘두른 방향"이 어긋나 보인다.
+     * ★ 근접 무기에만 붙인다. atk 시트는 무기를 휘두르는 그림이라 원거리 W2 나 상시
+     *   궤도 W3 에 붙이면 쏘지도 않은 칼을 계속 휘두르게 된다.
+     */
+    playAttack() {
+        if (!this.player?.anims) return;
+        this.attackAlt ^= 1;
+        const key = "player.atk" + (this.attackAlt + 1) + "." + this.facing;
+        if (!this.scene.anims.exists(key)) return;
+        // ignoreIfPlaying = false — 쿨이 모션보다 짧아지면 처음부터 다시 휘두른다.
+        this.player.play(key);
+        this.currentAnim = key;
+        const a = this.player.anims.currentAnim;
+        this.attackUntil = this.scene.time.now + (a ? a.duration : 500);
+        // ★ 여기서 setTint 를 부르지 않는다. 궤적 색은 이미 시트에 구워져 있다
+        //   (tools/build-player-atk.mjs). 런타임 틴트는 스프라이트 전체에 곱해져서
+        //   궤적을 적당히 어둡게 하면 캐릭터까지 단색 덩어리가 된다 — 실제로 시도해 봤다.
+        //   궤적과 캐릭터가 같은 텍스처에 있는 한 런타임에는 분리할 수 없어 굽는 쪽을 택했다.
     }
 
     tryDash() {

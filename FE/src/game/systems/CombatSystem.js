@@ -22,6 +22,20 @@ import weaponsData from "@/data/weapons.json";
 import { resolveAdPlacement } from "@/monetization";
 
 const MAX_PROJECTILES = 200;
+
+// ── W1 참격 이펙트 (drawArcFx 주석 참조) ──────────────────────────────
+/** 표시 시간(ms). 예전 100 에서 늘렸다 — 사그라드는 걸 보여주려면 100 은 너무 짧다 */
+const ARC_FX_MS = 140;
+/** 안쪽을 비우는 비율. 발밑까지 채우면 벤 자국이 아니라 바닥 데칼로 읽힌다 */
+const ARC_FX_INNER = 0.45;
+const ARC_FX_FILL = 0xc4182b;
+/** 바깥 호에 얹는 밝은 선 — 이 실루엣이 "칼이 지나간 선"이다 */
+const ARC_FX_EDGE = 0xff6b6b;
+/**
+ * 띠를 이루는 점의 개수(안/밖 각각). 12 면 160도 부채꼴에서 한 조각이 13도라 곡선이 매끄럽다.
+ * ★ 고정값인 이유: 점 배열을 생성자에서 한 번만 만들고 좌표만 덮어쓰기 위해서다(런 중 new 금지).
+ */
+const ARC_FX_SEG = 12;
 /** W3 유골 / W4 장판에 쓰는 투사체 아틀라스 시트. data/projectiles.json 의 키와 같아야 한다.
  *  ★ 텍스처가 없으면(에셋 미빌드) 예전 도형으로 조용히 되돌아간다 —
  *    무기가 안 보이는 것보다 못생긴 게 낫다. */
@@ -202,6 +216,14 @@ export class CombatSystem {
         });
 
         this.arcFx = scene.add.graphics().setDepth(DEPTH.FX);
+        /**
+         * 참격 띠를 그릴 점 배열. 길이가 고정이라 매 프레임 x/y 만 덮어쓴다.
+         * ★ Phaser Graphics 의 arc() 로 "구멍 뚫린 고리"를 만들 수 없다 — 바깥 호와 안쪽 호를
+         *   이어 붙이면 하위 경로가 하나로 합쳐져 fillStyle 이 안 먹고 흰 덩어리가 나온다.
+         *   실측으로 확인했다. 그래서 점을 직접 찍어 fillPoints 로 채운다.
+         */
+        this.arcPts = [];
+        for (let i = 0; i < ARC_FX_SEG * 2; i++) this.arcPts.push({ x: 0, y: 0 });
         this.arcFxUntil = 0;
         this.arcBase = 0;
         this.arcHalf = 0;
@@ -303,6 +325,9 @@ export class CombatSystem {
         const w = wp.s;
         const m = wp.mods;
         const facing = this.playerSystem?.facing ?? "down";
+        // 무기를 휘두르는 모션. facing 을 읽은 **뒤**에 부른다 — playAttack 이 그 시점의
+        // facing 으로 모션 방향을 고정하므로, 판정 부채꼴과 그림이 같은 방향을 본다.
+        this.playerSystem?.playAttack();
         const base = { up: -Math.PI / 2, down: Math.PI / 2, left: Math.PI, right: 0 }[facing];
         // 룬 「선혈의 원」 — half 가 PI 면 어떤 각도든 통과한다. 조준이 사라진다.
         // 「벌어진 아가리」는 각도를 넓히되 360도를 넘지 못하게 자른다(넘으면 부채꼴이 겹쳐 그려진다).
@@ -330,7 +355,7 @@ export class CombatSystem {
         this.arcBase = base;
         this.arcHalf = half;
         this.arcRadius = radius;
-        this.arcFxUntil = this.scene.time.now + 100;
+        this.arcFxUntil = this.scene.time.now + ARC_FX_MS;
         this.scene.audio?.sfx("slash");
     }
 
@@ -735,7 +760,15 @@ export class CombatSystem {
             }
 
             // T511 — 인간성 0 「완전 흡혈귀화」. 여기서만 쏜다(스킵으로는 인간성이 줄지 않는다).
-            if (r.humanity <= 0 && !this.ascended) {
+            // ★ r.humanity 가 아니라 pact.humanity 를 본다 (2026-08-12 수정).
+            //   r 은 choose() 시점의 스냅샷이라 그 위에서 일어난 감소를 모른다. 바로 위
+            //   awakening.trigger() 가 상한 초과에서 overflow() 를 타고 인간성을 −20 하는데,
+            //   그 −20 으로 0 이 되면 r.humanity 는 아직 양수라 「완전 흡혈귀화」가 조용히 빠진다.
+            //   실측: 각성 2개 + 인간성 15 에서 Common 카드(−3)로 세 번째 태그 3중첩 →
+            //   인간성 0 인데 ascended=false 였다. 04-PACT §8 이 잡아 둔 표준 런
+            //   (총 −97.5 에 상한 초과 −20 포함)이 정확히 이 경로라 예외가 아니라 기본값에 가깝다.
+            //   EncounterSystem.afterPact 도 살아 있는 pact.humanity 를 본다 — 두 문이 같아야 한다.
+            if ((this.pact?.humanity ?? r.humanity) <= 0 && !this.ascended) {
                 this.ascended = true;
                 EventBus.emit(EVENTS.HUMANITY_ZERO, { humanity: 0 });
                 this.awakening?.triggerAscension?.();
@@ -919,20 +952,67 @@ export class CombatSystem {
         }
     }
 
+    /**
+     * W1 참격 이펙트.
+     *
+     * ★ 예전에는 발밑부터 꽉 찬 파이 조각(alpha 0.18 고정)이었다. 플레이어 스프라이트가
+     *   무기를 휘두르는 모션을 갖게 된 뒤로는(T850) 그 도형이 연출을 두 번 하는 셈이 되어
+     *   과했고, 발밑까지 채워진 부채꼴은 벤 자국이 아니라 **바닥 데칼**로 읽혔다.
+     *   지금은 셋을 바꿨다:
+     *     1. 칼끝이 지나간 **바깥 띠**만 그린다 (안쪽 45% 를 비운다)
+     *     2. 남은 시간에 비례해 **옅어진다** — 예전에는 상수 알파로 있다가 툭 사라졌다
+     *     3. 바깥 호에 밝은 실선을 얹는다. 실루엣이 곧 "칼이 지나간 선"이다
+     *   모션이 연출을 맡고, 이 도형은 **사거리를 알리는 역할만** 남는다.
+     */
     drawArcFx() {
         const g = this.arcFx;
         g.clear();
-        if (this.scene.time.now > this.arcFxUntil) return;
-        g.fillStyle(0xc4182b, 0.18);
-        // ★ 룬 「선혈의 원」(반각 = PI) 은 slice 로 그릴 수 없다 — 시작각과 끝각이 2PI 차이라
-        //   Phaser 가 각도를 감으면서 시작 == 끝이 되어 **아무것도 안 그려진다**.
-        //   피해는 정상으로 들어가는데 화면에만 아무 일도 안 일어나는, 가장 찾기 나쁜 종류다.
-        //   전방위일 때는 원을 그대로 채운다.
+        const left = this.arcFxUntil - this.scene.time.now;
+        if (left <= 0) return;
+        const t = Math.max(0, Math.min(1, left / ARC_FX_MS)); // 1 -> 0 으로 사그라든다
+        const px = this.player.x;
+        const py = this.player.y;
+        const rOut = this.arcRadius;
+
+        // ★ 룬 「선혈의 원」(반각 = PI). 예전에는 slice 로 그리려다 아무것도 안 그려졌다 —
+        //   시작각과 끝각이 2PI 차이라 Phaser 가 각도를 감으면서 시작 == 끝이 되기 때문이다.
+        //   여기서는 띠를 만들지 않고 옅은 원 + 바깥 테두리로 간다. 360도짜리 고리는
+        //   자기 자신과 겹치는 다각형이라 fillPoints 로도 안전하게 못 채운다.
         if (this.arcHalf >= Math.PI - 1e-6) {
-            g.fillCircle(this.player.x, this.player.y, this.arcRadius);
+            g.fillStyle(ARC_FX_FILL, 0.08 * t);
+            g.fillCircle(px, py, rOut);
+            g.lineStyle(1.5, ARC_FX_EDGE, 0.5 * t);
+            g.strokeCircle(px, py, rOut);
             return;
         }
-        g.slice(this.player.x, this.player.y, this.arcRadius, this.arcBase - this.arcHalf, this.arcBase + this.arcHalf, false);
-        g.fillPath();
+
+        const a0 = this.arcBase - this.arcHalf;
+        const a1 = this.arcBase + this.arcHalf;
+        const step = (a1 - a0) / (ARC_FX_SEG - 1);
+        const rIn = rOut * ARC_FX_INNER;
+        const pts = this.arcPts;
+        // 바깥 호를 정방향으로, 안쪽 호를 역방향으로 이어 붙이면 자기 자신과 겹치지 않는
+        // 단순 다각형이 된다. fillPoints 는 이런 모양을 정확히 채운다.
+        for (let i = 0; i < ARC_FX_SEG; i++) {
+            const a = a0 + step * i;
+            const c = Math.cos(a);
+            const sn = Math.sin(a);
+            const o = pts[i];
+            o.x = px + c * rOut;
+            o.y = py + sn * rOut;
+            const b = a1 - step * i;
+            const cb = Math.cos(b);
+            const sb = Math.sin(b);
+            const q = pts[ARC_FX_SEG + i];
+            q.x = px + cb * rIn;
+            q.y = py + sb * rIn;
+        }
+        g.fillStyle(ARC_FX_FILL, 0.12 * t);
+        g.fillPoints(pts, true);
+        // 바깥 호만 밝게 — 이 선이 "칼이 지나간 자리"다
+        g.lineStyle(1.5, ARC_FX_EDGE, 0.5 * t);
+        g.beginPath();
+        g.arc(px, py, rOut, a0, a1, false);
+        g.strokePath();
     }
 }
