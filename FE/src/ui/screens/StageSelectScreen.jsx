@@ -27,6 +27,7 @@ import stagesData from "@/data/stages.json";
 import bossData from "@/data/boss.json";
 import { fmtTime } from "@/ui/screens/screenUtils";
 import "@/ui/screens/stageSelect.css";
+import GoldIcon from "@/ui/inventory/GoldIcon";
 
 const STAGES = stagesData.stages ?? [];
 const BY_ID = Object.fromEntries(STAGES.map((s) => [s.id, s]));
@@ -128,6 +129,22 @@ function describeUnlock(u, prog) {
 const MODE_LABEL = { all: "아래를 모두 만족하면 열린다", any: "아래 중 하나만 만족하면 열린다" };
 
 /**
+ * 자물쇠 표식. ★ 이모지 🔒 를 쓰지 않는다.
+ *
+ * 🔒 는 컬러 이모지라 **기기 서체가 그린다** — 삼성·구글·애플이 각자 다른 자물쇠를 내놓고,
+ * 셋 다 이 게임의 피·재·검정 팔레트(09-ART)와 무관한 색을 들고 온다. 같은 화면이 폰마다
+ * 다르게 보이는 것 자체가 결함이다.
+ *
+ * ★ 그런데 items 아틀라스(71프레임)에는 자물쇠도 열쇠도 없다. 전수 확인했다.
+ *   억지로 다른 프레임을 끼우면 "저게 왜 여기 있지"가 되므로, CSS 도형 두 개로 직접 그린다.
+ *   고리(위 반원 테두리) + 몸통(아래 사각). currentColor 를 쓰므로 조건이 붉은 곳에서는
+ *   붉게, 흐린 곳에서는 흐리게 따라간다 — 색 규칙을 새로 만들지 않는다.
+ */
+function LockMark() {
+    return <i className="lockmark" aria-hidden="true" />;
+}
+
+/**
  * 카드 1장. 카드 자체가 버튼이다 — 잠긴 카드도 누를 수 있게 둔다.
  * ★ 잠긴 것을 disabled 로 만들면 탭이 아무 반응도 없어 "고장난 화면"으로 읽힌다.
  *   누르면 선택되어 하단 띠에 조건 전문이 뜨고, [출정]만 막힌다.
@@ -183,7 +200,8 @@ function StageCard({ st, prog, unlocked, active, onSelect }) {
                             key={i}
                             className={"stagesel__cond" + (c.done ? " is-done" : "")}
                         >
-                            {(c.done ? "✔ " : "🔒 ") + c.short}
+                            {c.done ? "✔ " : <LockMark />}
+                            {c.short}
                         </span>
                     ))}
                 </span>
@@ -259,7 +277,9 @@ export default function StageSelectScreen() {
                     ◀ 뒤로
                 </button>
                 <h2 className="topbar__title">✦ 출 정 지</h2>
-                <span className="topbar__gold">⬤ {gold.toLocaleString("ko-KR")}</span>
+                <span className="topbar__gold">
+                    <GoldIcon /> {gold.toLocaleString("ko-KR")}
+                </span>
             </div>
 
             {/* 5장을 flex:1 로 나눠 갖는다 — 가로 화면에서 세로 스크롤은 엄지 이동이 길고 오조작이 많다 */}
@@ -292,13 +312,17 @@ export default function StageSelectScreen() {
                                 {"보스 " + bossName(cur.bossId) +
                                     " · " + fmtTime(cur.runSec ?? 0) +
                                     " · 기믹 " + (cur.gimmick?.name ?? "없음") +
-                                    " · 클리어 보상 ⬤ " + (cur.goldOnClear ?? 0)}
+                                    " · 클리어 보상 "}
+                                <GoldIcon />
+                                {" " + (cur.goldOnClear ?? 0)}
                             </span>
                         </>
                     ) : (
                         <>
                             <span>
-                                <b className="stagesel__warn">🔒 {cur.name}</b>
+                                <b className="stagesel__warn">
+                                    <LockMark /> {cur.name}
+                                </b>
                                 <span className="stagesel__dim">
                                     {" — " +
                                         (curInfo.items.length > 1

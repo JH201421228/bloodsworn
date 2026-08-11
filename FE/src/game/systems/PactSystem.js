@@ -9,11 +9,27 @@
 import tollsData from "@/data/tolls.json";
 import blessingsData from "@/data/blessings.json";
 import nocturneData from "@/data/nocturneLines.json";
+import awakeningsData from "@/data/awakenings.json";
 
 export const AWAKEN_STACKS = 3;
 /** 각성 상한. AwakeningSystem 의 MAX_AWAKENINGS 와 같은 값이다(정본 04-PACT §5). */
 const AWAKEN_CAP = 2;
 const RARITIES = ["common", "rare", "epic"];
+
+/**
+ * 각성한 **뒤에도 스탯 페널티가 남는** 태그. 실제 값은 awakenings.json 이 갖는다
+ * (2026-08-12 확인: FRAIL / HUNGER / BLIND 가 removePenalty:false, SLOW / MYOPIA / GREED 가 true).
+ *
+ * ★ 왜 이 집합이 필요한가 — pickToll 의 폴백 후보가 정확히 이것이다.
+ *   removePenalty:true 인 태그는 각성이 그 대가의 모디파이어를 통째로 걷어냈으므로
+ *   (AwakeningSystem.trigger 의 stats.removeBySrc("toll:" + tag)) 다시 쌓아도 **아프지 않다**.
+ *   이름만 대가인 공짜 축복이라 폴백에서도 뺀다.
+ * ★ 표를 코드에 손으로 적지 않는다. 밸런싱은 JSON 에서 한다는 규약(awakenings.json 머리 주석)이
+ *   여기서도 그대로여야, removePenalty 를 뒤집었을 때 두 곳이 어긋나지 않는다.
+ */
+const PENALTY_KEPT = new Set(
+    awakeningsData.awakenings.filter((a) => a.tag && !a.removePenalty).map((a) => a.tag),
+);
 
 export class PactSystem {
     constructor(stats) {
@@ -143,6 +159,8 @@ export class PactSystem {
      *   플레이가 존재하기 때문이다 — 막지 않고 드물게만 만든다.
      * ★ 하한(floor)에 닿은 태그는 x0.3. 더 깎여도 수치가 안 변하는 대가는
      *   "공짜 축복"이 되어 선택의 무게가 사라진다.
+     * ★ 후보가 **완전히 비면** 폴백으로 이미 각성한 태그를 더 깊게 판다(deepen 주석).
+     *   null 은 그 폴백까지 비었을 때만 나온다.
      */
     pickToll(rng, usedTags, rarity = "common", allowOverflow = false) {
         const atCap = this.awakened.size >= AWAKEN_CAP;
@@ -154,8 +172,30 @@ export class PactSystem {
         const pool = [];
         const weights = [];
         let total = 0;
+        /**
+         * ★ 폴백 후보 (2026-08-12) — 본 후보(pool)가 **완전히 비었을 때만** 쓴다.
+         *
+         *   위 규칙대로 각성 2개가 영구 제외되고 남은 4태그가 전부 2중첩에 닿으면 후보가 0이 된다.
+         *   그 자체는 의도된 동작이지만("녹턴이 더 가져갈 게 없다"), 실측은 그 상태가 후반의
+         *   기본값임을 보여줬다 — 800런 x2 에서 Lv16 21% / Lv20 54% / Lv28~30 66% 의 카드가
+         *   **대가 없이** 나왔다. 대가 없는 축복이 후반의 3분의 2가 되면 PACT 가 아니다.
+         *
+         *   그래서 **이미 각성한 태그를 더 깊게 판다**. 두 조건을 모두 만족하는 것만 쓴다:
+         *     ① PENALTY_KEPT — 각성 후에도 페널티가 남는 태그(FRAIL/HUNGER/BLIND).
+         *        removePenalty:true 인 태그는 모디파이어가 이미 제거됐으므로 더 쌓아도 안 아프다.
+         *     ② !isSaturated — 하한/상한에 닿지 않았다. 닿은 뒤에는 수치가 안 변해 역시 가짜 비용이다.
+         *   ★ 상한이 깨지지 않는 이유: AwakeningSystem.trigger 가 첫 줄에서 this.has(tag) 로 막는다.
+         *     같은 태그는 두 번 각성하지 않으므로 MAX_AWAKENINGS 검사에 아예 닿지 않고,
+         *     따라서 overflow() 의 인간성 −20 도 발생하지 않는다. describeToll 쪽도 마찬가지다 —
+         *     cur 이 이미 3 이상이라 triggersAwakening 이 false 로 굳는다.
+         */
+        const deepen = [];
         for (const t of this.tolls) {
-            if (this.awakened.has(t.tag) || usedTags.has(t.tag)) continue;
+            if (usedTags.has(t.tag)) continue;
+            if (this.awakened.has(t.tag)) {
+                if (PENALTY_KEPT.has(t.tag) && !this.isSaturated(t)) deepen.push(t);
+                continue;
+            }
             let w = 1;
             const cur = this.tagCounts[t.tag] ?? 0;
             // ★ 정본 §6.3 은 x0.2 로 "낮추라"고 하지만, 실측에서 그것으로는 못 막는다.
@@ -172,7 +212,11 @@ export class PactSystem {
             if (this.isAtFloor(t)) w *= 0.3;
             pool.push(t); weights.push(w); total += w;
         }
-        if (!pool.length) return null;
+        if (!pool.length) {
+            // 폴백조차 비었으면 그때는 정말로 가져갈 것이 없다. 대가 없는 카드가 그 자리에 남는다.
+            if (!deepen.length) return null;
+            return deepen[(rng() * deepen.length) | 0];
+        }
         let r = rng() * total;
         for (let i = 0; i < pool.length; i++) { if (r < weights[i]) return pool[i]; r -= weights[i]; }
         return pool[pool.length - 1];
@@ -186,6 +230,22 @@ export class PactSystem {
         if (floor == null || cur == null) return false;
         // 하한까지 1% 이내면 사실상 도달로 본다. 부동소수 오차로 영원히 false 가 되는 것을 막는다.
         return cur <= floor * 1.01;
+    }
+
+    /**
+     * 더 쌓아도 수치가 **실제로** 변하지 않는가. 폴백 후보를 거르는 기준이다.
+     * ★ isAtFloor 와 따로 두는 이유: StatSystem.floorOf 는 cap 형(HUNGER 의 drain)에 대해
+     *   null 을 돌려주므로 isAtFloor 가 영원히 false 다. 갈증은 하한이 아니라 **상한**(4.0/초)에
+     *   막히는데, 그 지점을 넘긴 뒤로도 계속 폴백에 남으면 무한 공짜 대가가 된다.
+     *   상한 값의 출처는 tolls.json 의 floor/floorType 이다(StatSystem.FLOORS 와 같은 표).
+     */
+    isSaturated(t) {
+        if (!this.stats) return false;
+        if (t.floorType === "cap") {
+            const cur = this.stats.get(t.stat);
+            return cur != null && cur >= t.floor * 0.99;
+        }
+        return this.isAtFloor(t);
     }
 
     describeBlessing(b, rarity) {

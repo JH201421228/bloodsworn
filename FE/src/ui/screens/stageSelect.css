@@ -189,3 +189,40 @@
     flex: 0 0 auto;
     width: calc(112 * var(--u));
 }
+
+/* ── 자물쇠 표식 ─────────────────────────────────────────────
+   ★ 컬러 이모지 🔒 를 대체한다. 이모지는 기기 서체가 그려서 폰마다 다른 그림이 나오고,
+     팔레트 밖의 색을 끌고 들어온다. 도형 둘로 직접 그리면 어디서나 같은 그림이 나온다.
+   ★ currentColor 만 쓴다 — 잠긴 조건은 흐린 색, 하단 띠의 경고는 --blood-light 로
+     이미 색이 정해져 있고 자물쇠가 그 색을 그대로 따라가야 한 덩어리로 읽힌다.
+   ★ 크기는 조건 글자(9~10논리px)에 맞춘 7x9 다. 글자보다 크면 줄 높이가 밀린다. */
+.lockmark {
+    position: relative;
+    display: inline-block;
+    width: calc(7 * var(--u));
+    height: calc(9 * var(--u));
+    margin-right: calc(3 * var(--u));
+    vertical-align: calc(-1 * var(--u));
+}
+/* 고리 — 위쪽만 남긴 둥근 테두리 */
+.lockmark::before {
+    content: "";
+    position: absolute;
+    left: calc(1.5 * var(--u));
+    top: 0;
+    width: calc(2 * var(--u));
+    height: calc(3 * var(--u));
+    border: calc(1 * var(--u)) solid currentColor;
+    border-bottom: 0;
+    border-radius: calc(2 * var(--u)) calc(2 * var(--u)) 0 0;
+}
+/* 몸통 — 꽉 찬 사각. 채움이 있어야 9px 에서 "자물쇠"로 읽힌다 */
+.lockmark::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: calc(7 * var(--u));
+    height: calc(5 * var(--u));
+    background: currentColor;
+}

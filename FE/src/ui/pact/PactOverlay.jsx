@@ -12,6 +12,7 @@ import { useStore } from "@/state/store";
 import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
 import "./nocturne.css";
+import GoldIcon from "@/ui/inventory/GoldIcon";
 
 const pct = (v, total) => (v / total) * 100 + "%";
 
@@ -109,7 +110,7 @@ export default function PactOverlay() {
                 style={{ left: pct(344, 640), top: pct(300, 360), width: pct(160, 640) }}
                 onClick={() => EventBus.emit(EVENTS.CMD_PACT_SKIP)}
             >
-                거절 (HP +25% · ⬤30)
+                거절 (HP +25% · <GoldIcon />30)
             </button>
         </div>
     );

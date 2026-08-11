@@ -15,6 +15,7 @@ import { SCREENS } from "@/state/uiSlice";
 import { requestStartRun } from "@/state/bridge";
 import { fmtTime, awakenLabel, pickEnding } from "@/ui/screens/screenUtils";
 import RunLootSummary from "@/ui/inventory/RunLootSummary";
+import GoldIcon from "@/ui/inventory/GoldIcon";
 import { resolveAdPlacement, showRewarded } from "@/monetization";
 import { persistSave } from "@/state/store";
 
@@ -116,7 +117,7 @@ export default function ResultScreen() {
                         ))}
                     </ul>
                     <div className="result__gold">
-                        획득 골드 ⬤ {shownGold.toLocaleString("ko-KR")}
+                        획득 골드 <GoldIcon /> {shownGold.toLocaleString("ko-KR")}
                     </div>
                     {/* 보상형 광고 — 유저가 스스로 누른 것만 띄운다(shop.json _adRule).
                         ★ bridge 가 이미 addGold(result.gold) 를 했으므로 여기서는 **차액만** 더한다.

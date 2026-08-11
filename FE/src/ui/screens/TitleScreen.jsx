@@ -15,6 +15,7 @@ import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
 import { APP_VERSION, fmtTime } from "@/ui/screens/screenUtils";
 import StageSelectScreen from "@/ui/screens/StageSelectScreen";
+import GoldIcon from "@/ui/inventory/GoldIcon";
 
 export default function TitleScreen() {
     const gold = useStore((s) => s.gold);
@@ -62,7 +63,9 @@ export default function TitleScreen() {
                     최고 기록 {best > 0 ? fmtTime(best) : "—"}
                     {cleared ? " 클리어" : ""}
                 </span>
-                <span className="title__gold">보유 골드 ⬤ {gold.toLocaleString("ko-KR")}</span>
+                <span className="title__gold">
+                    보유 골드 <GoldIcon /> {gold.toLocaleString("ko-KR")}
+                </span>
                 <span>v{APP_VERSION}</span>
             </div>
         </div>

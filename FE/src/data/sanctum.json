@@ -1,6 +1,13 @@
 {
     "schemaVersion": 1,
     "_note": "성소 영구 업그레이드 6종. 정본 03-GDD-CORE 9.1 / 스키마 08-DATA-SCHEMA 3.8. 비용·효과를 여기서 임의로 바꾸지 말 것.",
+    "_iconNote": [
+        "iconFrame = public/assets/items/items.png 아틀라스의 프레임 이름. 좌표 사본은 src/ui/inventory/itemFrames.json.",
+        "icon      = 폴백 글리프. iconFrame 이 아틀라스에 없을 때만 그려진다 — 지우지 말 것.",
+        "★ 컬러 이모지(🛡 ⚔ 👟 📜)는 삼성·구글·애플이 각자 다른 서체를 써서 같은 게임이 폰마다 다르게 보였다.",
+        "  전용 아이콘(docs/32 칸 32~37)이 오면 그쪽으로 갈아탄다. 이번 값은 그때까지의 개선이다.",
+        "iconKey   = Phaser 쪽 예약 키. 지금은 아무 데서도 로드하지 않는다."
+    ],
     "goldFormula": { "perKill": 1, "perSurvivedSecond": 0.5, "bossClear": 200 },
     "upgrades": [
         {
@@ -8,6 +15,7 @@
             "name": "강인함",
             "desc": "최대 체력 +10 / 단계",
             "icon": "🛡",
+            "iconFrame": "itm_charm_01",
             "maxLevel": 5,
             "costs": [50, 120, 250, 500, 900],
             "effectPerLevel": { "stat": "maxHp", "op": "add", "value": 10 },
@@ -19,6 +27,7 @@
             "name": "예리함",
             "desc": "공격력 +4% / 단계",
             "icon": "⚔",
+            "iconFrame": "itm_fang_05",
             "maxLevel": 5,
             "costs": [60, 140, 280, 550, 1000],
             "effectPerLevel": { "stat": "damageMult", "op": "add", "value": 0.04 },
@@ -30,6 +39,7 @@
             "name": "신속",
             "desc": "이동속도 +3% / 단계",
             "icon": "👟",
+            "iconFrame": "itm_relic_boot",
             "maxLevel": 5,
             "costs": [50, 120, 250, 500, 900],
             "effectPerLevel": { "stat": "moveSpeed", "op": "add", "value": 2.1 },
@@ -41,6 +51,7 @@
             "name": "탐욕",
             "desc": "골드 획득 +10% / 단계",
             "icon": "⬤",
+            "iconFrame": "itm_pouch",
             "maxLevel": 5,
             "costs": [80, 180, 350, 650, 1200],
             "effectPerLevel": { "stat": "goldMult", "op": "add", "value": 0.1 },
@@ -52,6 +63,7 @@
             "name": "각성 촉진",
             "desc": "각성 필요 중첩 −0.2 / 단계",
             "icon": "✦",
+            "iconFrame": "itm_relic_spark",
             "maxLevel": 2,
             "costs": [300, 800],
             "effectPerLevel": { "op": "special", "id": "awaken_threshold_reduce", "params": { "delta": -0.2 } },
@@ -63,6 +75,7 @@
             "name": "재계약",
             "desc": "런당 리롤 +1 / 단계",
             "icon": "📜",
+            "iconFrame": "itm_relic_book",
             "maxLevel": 3,
             "costs": [200, 500, 1000],
             "effectPerLevel": { "op": "special", "id": "reroll_plus", "params": { "delta": 1 } },

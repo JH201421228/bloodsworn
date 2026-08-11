@@ -376,3 +376,15 @@
     max-height: calc(210 * var(--u));
     overflow: hidden;
 }
+
+/* ── 4. 글줄 안에 박히는 아이콘 ───────────────────────────────
+   ★ .inv-ico 는 HUD 용이라 display:grid(블록)다. 글자 사이에 넣으면 줄이 하나 더 생긴다.
+     골드 표식은 "보유 골드 ⬤ 1,200" 처럼 **글줄 안**에 들어가므로 inline-grid 로 바꾸고
+     베이스라인을 2px 내려 숫자의 밑선과 원의 중심이 맞게 한다.
+   ★ 크기는 GoldIcon 이 인라인 스타일로 정한다. 여기서 width/height 를 다시 쓰지 않는다. */
+.inv-ico.gold-ico {
+    display: inline-grid;
+    vertical-align: calc(-2 * var(--u));
+}
+/* 아틀라스에 프레임이 없을 때의 폴백 글리프. 색은 다른 골드 표기와 같은 --gold 다. */
+.gold-mark { color: var(--gold); }

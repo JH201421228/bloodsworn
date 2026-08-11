@@ -990,25 +990,63 @@ export class EncounterSystem {
         this.endFieldBoss();
     }
 
-    /** 보상: 룬 확정 1개 + 「봉인된 궤」 2개. 조우 중 최대 보상이다(30 §3.6) */
+    /**
+     * 보상: 룬 확정 1개 + 「봉인된 궤」 2개. 조우 중 최대 보상이다(30 §3.6).
+     *
+     * ★ 「룬 확정 1개」가 조용히 0개가 되지 않는다 (2026-08-12 수정 / 30 §3.6).
+     *   룬은 게이트 G-1~G-4(31 §4)를 전부 통과해야 나온다 — 그 무기를 안 들었거나, 무기 레벨이
+     *   모자라거나, 선행 단계가 없거나, 슬롯이 이미 찼으면 runes.pick(1) 이 빈 배열이다.
+     *   그러면 "확정 1개"가 말없이 사라져 조우 중 최대 보상이 궤 2개로 줄었다. 「봉인된 궤」는
+     *   같은 문제를 이미 chest.fallback 으로 풀었는데(rollChestReward) 필드보스에만 없었다.
+     *   순서는 encounters.json 의 fieldboss.rewardFallback 이 갖는다 — 표를 코드에 적으면
+     *   궤와 필드보스가 서로 다른 곳에서 밸런싱된다.
+     */
     defeatFieldBoss(e) {
         const c = this.cfg.fieldboss;
         const x = e?.x ?? this.act.x, y = e?.y ?? this.act.y;
         const labels = [];
+        let chests = c.rewardChests ?? 2;
         for (let i = 0; i < (c.rewardRunes ?? 1); i++) {
-            const r = this.runes?.pick(1)?.[0];
-            if (r && this.runes.engrave(r.id)) labels.push(r.name);
+            const got = this.grantFieldReward(x, y);
+            // "궤 하나 더"는 아래 배치 루프가 그대로 떨군다. 여기서 따로 떨구면 좌표 배치가 두 벌이 된다
+            if (got?.kind === "chest") chests++;
+            else if (got) labels.push(got.label);
         }
         const spread = c.chestSpread ?? 26;
-        for (let i = 0; i < (c.rewardChests ?? 2); i++) {
-            const a = (Math.PI * 2 * i) / Math.max(1, c.rewardChests ?? 2) + Math.random();
+        for (let i = 0; i < chests; i++) {
+            const a = (Math.PI * 2 * i) / Math.max(1, chests) + Math.random();
             this.spawn?.dropChest(x + Math.cos(a) * spread, y + Math.sin(a) * spread, "fieldboss");
         }
+        const tail = "봉인된 궤 " + chests;
         EventBus.emit(EVENTS.ENCOUNTER_RESOLVED, {
             id: "enc_fieldboss", kind: "fieldboss", choice: "kill",
-            label: labels.length ? labels.join(" · ") + " + 봉인된 궤 2" : "봉인된 궤 2",
+            label: labels.length ? labels.join(" · ") + " + " + tail : tail,
         });
         this.endFieldBoss();
+    }
+
+    /**
+     * 필드보스 보상 한 칸. rewardFallback 순서대로 시도해 **처음 성공한 것**을 돌려준다.
+     * ★ 사슬의 끝이 chest 인 것이 이 함수의 요점이다 — 궤는 rollChestReward 가 룬→아이템→축복으로
+     *   내려가며 마지막에 반드시 무언가를 주므로, 여기서 null 이 나올 수 없다.
+     * @returns {{kind: string, label: string}|null}
+     */
+    grantFieldReward(x, y) {
+        for (const kind of this.cfg.fieldboss.rewardFallback ?? EMPTY) {
+            if (kind === "rune") {
+                const r = this.runes?.pick(1)?.[0];
+                if (r && this.runes.engrave(r.id)) return { kind, label: r.name };
+            } else if (kind === "relic") {
+                // 등급이 동나면 한 칸 아래로. grantShady 의 대박과 같은 규약이다
+                const id = this.cfg.fieldboss.fallbackRelicRarity ?? "legendary";
+                const got = this.items?.spawnRelic(x, y, id) ? id
+                    : (this.items?.spawnRelic(x, y, "epic") ? "epic" : null);
+                if (got) return { kind, label: (this.items.rarities.find((v) => v.id === got)?.name ?? "") + " 유물" };
+            } else if (kind === "chest") {
+                return { kind, label: "" };
+            }
+        }
+        return null;
     }
 
     endFieldBoss() {
