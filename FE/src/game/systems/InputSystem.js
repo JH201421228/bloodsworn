@@ -6,6 +6,12 @@
  * ★ 싱글턴인 이유
  *   입력 UI는 HudScene이 그리고, 그 값을 쓰는 것은 GameScene이다.
  *   씬끼리 서로를 참조하면 결합이 생기므로 두 씬이 이 모듈만 본다. (EventBus와 같은 이유)
+ *
+ * ★ 좌표는 640 고정이 아니다 (config.js 좌표계 주석)
+ *   논리 세로만 360 으로 고정이고 가로는 기기 비율을 따라 640~864 로 늘어난다.
+ *   대시 버튼은 "x=556"이 아니라 "우측에서 84"이고, 조이스틱 영역은 "x<320"이 아니라
+ *   "화면 좌측 절반"이다. 폭을 그대로 두면 20:9 기기에서 대시 버튼이 화면 한가운데쯤에
+ *   떠 있게 된다. 실제 폭이 바뀔 때마다 layout() 이 다시 계산한다.
  */
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
 import { EventBus } from "../EventBus";
@@ -15,11 +21,15 @@ import { EVENTS } from "../constants";
 export const JOY_RADIUS = 48;
 export const JOY_DEADZONE = 8;
 
-/** HUD 좌표 (10-UIUX 4) */
-export const DASH_BTN = { x: 556, y: 292, hit: 72 };
+/** 대시 버튼 가장자리 여백 — 640x360 원안의 (556, 292) 를 앵커로 환산한 값이다 (10-UIUX 4) */
+const DASH_MARGIN_R = LOGICAL_WIDTH - 556;   // 84
+const DASH_MARGIN_B = LOGICAL_HEIGHT - 292;  // 68
 
-/** 조이스틱 활성 영역 — 좌측 절반. 레터박스까지 확장한다(10-UIUX 3.2) */
-const JOY_ZONE_RIGHT = 320;
+/**
+ * HUD 좌표 (10-UIUX 4).
+ * ★ 값이 실행 중에 바뀐다. import 한 쪽에서 구조분해로 복사하지 말고 항상 DASH_BTN.x 로 읽어라.
+ */
+export const DASH_BTN = { x: LOGICAL_WIDTH - DASH_MARGIN_R, y: LOGICAL_HEIGHT - DASH_MARGIN_B, hit: 72 };
 
 class InputSystemImpl {
     constructor() {
@@ -34,6 +44,11 @@ class InputSystemImpl {
          */
         this.floating = true;
         this.fixedOrigin = { x: 84, y: LOGICAL_HEIGHT - 76 };
+        /** 현재 논리 화면 크기. layout() 이 채운다 */
+        this.screenW = LOGICAL_WIDTH;
+        this.screenH = LOGICAL_HEIGHT;
+        /** 조이스틱 활성 영역 — 좌측 절반. 레터박스까지 확장한다(10-UIUX 3.2) */
+        this.joyZoneRight = LOGICAL_WIDTH / 2;
         EventBus.on(EVENTS.CMD_SETTINGS, (st) => {
             if (typeof st?.joystickFloating === "boolean") this.floating = st.joystickFloating;
         }, { key: "input:settings" });
@@ -45,10 +60,26 @@ class InputSystemImpl {
         this.keys = null;
     }
 
+    /**
+     * 화면 폭이 바뀔 때마다 앵커를 다시 잡는다.
+     * ★ 세로(360)는 불변이라 y 는 사실상 상수지만, 폭만 인자로 받으면 나중에
+     *   누가 세로를 건드렸을 때 조용히 어긋난다. 둘 다 받아 둔다.
+     */
+    layout(w = LOGICAL_WIDTH, h = LOGICAL_HEIGHT) {
+        this.screenW = w;
+        this.screenH = h;
+        DASH_BTN.x = w - DASH_MARGIN_R;
+        DASH_BTN.y = h - DASH_MARGIN_B;
+        // 좌하단 고정 조이스틱 — 좌측 앵커라 x 는 그대로, 바닥에서 76 만 유지한다.
+        this.fixedOrigin.y = h - 76;
+        this.joyZoneRight = w / 2;
+    }
+
     /** HudScene에서 1회 호출 */
     attach(scene) {
         this.detach();
         this.scene = scene;
+        this.layout(scene.scale.width, scene.scale.height);
 
         // 조이스틱 + 대시를 동시에 누를 수 있어야 한다
         scene.input.addPointer(2);
@@ -60,6 +91,10 @@ class InputSystemImpl {
         scene.input.on("pointermove", this.onMove);
         scene.input.on("pointerup", this.onUp);
         scene.input.on("pointerupoutside", this.onUp);
+
+        // 회전·폴더블 펼침으로 논리 폭이 바뀌면 버튼 앵커도 따라가야 한다.
+        this.onResize = (size) => this.layout(size.width, size.height);
+        scene.scale.on("resize", this.onResize);
 
         // 키보드 — 개발 중 PC 브라우저 확인 전용 (정본 3.2)
         this.keys = scene.input.keyboard?.addKeys({
@@ -75,13 +110,14 @@ class InputSystemImpl {
         this.scene.input.off("pointermove", this.onMove);
         this.scene.input.off("pointerup", this.onUp);
         this.scene.input.off("pointerupoutside", this.onUp);
+        if (this.onResize) this.scene.scale.off("resize", this.onResize);
         this.scene = null;
     }
 
     inDashButton(p) {
         const h = DASH_BTN.hit / 2;
         // 우측 레터박스까지 확장 — 화면 끝을 눌러도 먹히게 한다(10-UIUX 3.2)
-        const px = Math.min(p.x, LOGICAL_WIDTH);
+        const px = Math.min(p.x, this.screenW);
         return Math.abs(px - DASH_BTN.x) <= h && Math.abs(p.y - DASH_BTN.y) <= h;
     }
 
@@ -92,7 +128,7 @@ class InputSystemImpl {
         }
         if (this.joyPointerId !== null) return;
         // 좌측 절반. x<0(레터박스)도 0으로 클램프해 받는다
-        if (p.x > JOY_ZONE_RIGHT || p.y < 0 || p.y > LOGICAL_HEIGHT) return;
+        if (p.x > this.joyZoneRight || p.y < 0 || p.y > this.screenH) return;
         this.joyPointerId = p.id;
         this.active = true;
         // 고정 모드면 손가락 위치와 무관하게 항상 같은 자리를 원점으로 쓴다.

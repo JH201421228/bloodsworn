@@ -3,7 +3,7 @@
  * (T202/T203/T204/T205 → T501/T502/T503/T504/T507)
  *
  * 규격: 05-COMBAT-AND-BALANCE 5.2(12구간 마스터) 5.3(구간별 가중치) 4.4(엘리트) / 06-TECH 5.1(풀)
- *   링 스폰: 카메라 밖 반경 400px 원주
+ *   링 스폰: 카메라 밖 원주. 반경은 400 이 하한이고 화면이 넓으면 ringRadius() 가 늘린다
  *   디스폰: 900px 초과 시 풀 반환
  *   상한 도달 시 신규 스폰 대신 가장 먼 적을 텔레포트 재활용 (정본 7.1)
  *
@@ -16,7 +16,7 @@
 import { Pool } from "../pools/Pool";
 import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { LOGICAL_HEIGHT, MAX_LOGICAL_WIDTH } from "../config";
 import { dist2 } from "../utils/math";
 import enemiesData from "@/data/enemies.json";
 import phasesData from "@/data/phases.json";
@@ -89,7 +89,13 @@ function applyTuning(data) {
         if (typeof p.separation === "number") p.separation *= ENEMY_SIZE_SCALE;
     }
 }
+/**
+ * 링 스폰 반경(정본 5.2 기준값). 640x360 화면의 반대각선은 367px 이라 33px 의 여유가 있었다 —
+ * 즉 "적은 언제나 화면 밖에서 나타난다"가 이 33px 위에 서 있는 규약이었다.
+ */
 const SPAWN_RADIUS = 400;
+/** 위 33px 여유. 화면이 넓어져도 이 값만큼은 화면 밖에 두어야 규약이 유지된다 */
+const SPAWN_CLEARANCE = SPAWN_RADIUS - Math.hypot(640 / 2, 360 / 2); // ≈ 32.8
 const DESPAWN_RADIUS = 900;
 const DESPAWN_R2 = DESPAWN_RADIUS * DESPAWN_RADIUS;
 
@@ -145,8 +151,11 @@ export class SpawnSystem {
         // ★ Phaser 카메라에는 지속 틴트가 없다(flash/fade/shake 뿐).
         //   그래서 순간 연출은 cameras.main.flash 로, 지속 색조는 스크롤 고정 사각형으로 나눈다.
         //   포스트 FX 파이프라인은 WebGL 전용이라 Canvas 폴백에서 색조가 사라진다.
+        // ★ 좌상단 원점 + 논리 가로 상한(864). 화면 폭은 기기 비율마다 다르다
+        //   (config.js 좌표계 주석). 넘치는 부분은 카메라가 잘라낸다.
         this.tintRect = scene.add
-            .rectangle(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_WIDTH, LOGICAL_HEIGHT, 0x900b1d, 0)
+            .rectangle(0, 0, MAX_LOGICAL_WIDTH, LOGICAL_HEIGHT, 0x900b1d, 0)
+            .setOrigin(0, 0)
             .setScrollFactor(0)
             .setDepth(DEPTH.FX + 5);
         this.tintAlpha = 0;
@@ -312,7 +321,7 @@ export class SpawnSystem {
         for (let i = 0; i < count; i++) {
             const a = base + (count > 1 ? (i / (count - 1) - 0.5) * SWARM_ARC : 0);
             // 앞뒤 두 줄로 어긋나게 — 한 줄이면 겹쳐서 8체가 3체처럼 보인다
-            const r = SPAWN_RADIUS + (i % 2 ? 22 : 0);
+            const r = this.ringRadius() + (i % 2 ? 22 : 0);
             const e = this.obtainOrRecycle();
             if (!e) break;
             this.reset(e, def, { x: this.player.x + Math.cos(a) * r, y: this.player.y + Math.sin(a) * r });
@@ -330,10 +339,30 @@ export class SpawnSystem {
         }
     }
 
+    /**
+     * 링 반경. 화면이 넓어지면 400 으로는 부족하다.
+     *
+     * ★ 이 함수가 없으면 20:9 기기에서 적이 눈앞에 튀어나온다.
+     *   논리 가로가 800 이면 화면 반대각선이 √(400²+180²)=439 라 반경 400 원주가
+     *   좌우 끝에서 화면 **안쪽**으로 들어온다. "적은 화면 밖에서 온다"는 공정성
+     *   규약이 비율 하나 때문에 깨지는 것이고, 좁은 화면 유저만 손해를 보는 것도 아니라
+     *   넓은 화면 유저가 반응 불가 스폰을 맞는다.
+     *
+     * ★ 대신 반경이 늘면 이동 시간도 늘어 압박이 약해진다. 그래서 여유(33px)는
+     *   640x360 과 **똑같이** 유지한다 — 화면 가장자리에서 적이 나타나기까지의
+     *   거리가 모든 비율에서 동일해지고, 체감 압박은 폭과 무관해진다.
+     *   16:9 에서는 max() 가 그대로 400 을 돌려주므로 기존 밸런스가 1px 도 안 바뀐다.
+     */
+    ringRadius() {
+        const cam = this.scene.cameras.main;
+        return Math.max(SPAWN_RADIUS, Math.hypot(cam.width / 2, cam.height / 2) + SPAWN_CLEARANCE);
+    }
+
     /** 카메라 밖 원주에 스폰. 화면 안에서 튀어나오면 부당하게 느껴진다 */
     ringPoint() {
         const a = Math.random() * Math.PI * 2;
-        return { x: this.player.x + Math.cos(a) * SPAWN_RADIUS, y: this.player.y + Math.sin(a) * SPAWN_RADIUS };
+        const r = this.ringRadius();
+        return { x: this.player.x + Math.cos(a) * r, y: this.player.y + Math.sin(a) * r };
     }
 
     spawn(defOverride = null, at = null) {

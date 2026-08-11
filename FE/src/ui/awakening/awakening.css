@@ -24,10 +24,16 @@
 .awaken-stage[data-tag="BLIND"] { --awaken-accent: #8fa6d8; }
 .awaken-stage[data-tag="HUNGER"] { --awaken-accent: #e2456b; }
 
-/* 중앙만 열리는 어둠. 전면 불투명으로 덮으면 각성 직후 적 위치를 못 읽는다 */
+/* 중앙만 열리는 어둠. 전면 불투명으로 덮으면 각성 직후 적 위치를 못 읽는다
+   ★ inset:0 이면 16:9 스테이지만 덮는다. 캔버스는 그보다 넓다(index.css .pact-stage::before 주석).
+     transform 이 걸린 부모 안이라 position:fixed 가 안 먹으므로 뷰포트 단위로 직접 잰다. */
 .awaken-veil {
     position: absolute;
-    inset: 0;
+    left: 50%;
+    top: 50%;
+    width: 100vw;
+    height: 100dvh;
+    transform: translate(-50%, -50%);
     background: radial-gradient(ellipse at 50% 46%,
             rgba(11, 7, 16, 0.05) 0%,
             rgba(11, 7, 16, 0.72) 45%,

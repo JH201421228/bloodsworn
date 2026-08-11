@@ -30,6 +30,7 @@ import Phaser from "phaser"; // BlendModes.DIFFERENCE (흑백 반전)만 쓴다
 import { AWAKEN_STACKS, DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
 import { dist2 } from "../utils/math";
+import { LOGICAL_HEIGHT, MAX_LOGICAL_WIDTH } from "../config";
 import awakeningsData from "@/data/awakenings.json";
 
 export const MAX_AWAKENINGS = 2; // 초과 시 인간성 −20 (T402 / 04-PACT 5.4)
@@ -732,8 +733,10 @@ export class AwakeningSystem {
 
     getInvertRect() {
         if (this.invertRect) return this.invertRect;
-        const cam = this.scene.cameras.main;
-        const r = this.scene.add.rectangle(cam.width / 2, cam.height / 2, cam.width, cam.height, 0xffffff);
+        // ★ 한 번 만들고 캐시하므로 그 뒤 회전으로 폭이 바뀌면 크기가 어긋난다.
+        //   카메라 실측 대신 논리 가로 상한(864)으로 깔고 넘치는 부분은 잘리게 둔다.
+        const r = this.scene.add.rectangle(0, 0, MAX_LOGICAL_WIDTH, LOGICAL_HEIGHT, 0xffffff);
+        r.setOrigin(0, 0);
         r.setScrollFactor(0).setDepth(DEPTH.HUD + 900).setVisible(false);
         r.setBlendMode(Phaser.BlendModes.DIFFERENCE);
         this.invertRect = r;

@@ -7,7 +7,6 @@
 import Phaser from "phaser";
 import { EventBus } from "../EventBus";
 import { EVENTS, SCENES } from "../constants";
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
 
 /** 매니페스트 경로. base:"./" 이므로 상대경로여야 한다 — 절대경로는 Capacitor에서 깨진다. */
 const MANIFEST_URL = "assets.json";
@@ -32,7 +31,7 @@ export default class BootScene extends Phaser.Scene {
     create() {
         // "검은 화면에서 멈춘 것"과 "부팅 중"을 눈으로 구분할 수 있게 한다.
         this.add
-            .text(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, "BLOODSWORN", {
+            .text(this.scale.width / 2, this.scale.height / 2, "BLOODSWORN", {
                 fontFamily: "monospace",
                 fontSize: "16px",
                 color: "#4a4454",

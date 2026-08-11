@@ -13,10 +13,14 @@
  *   소품은 전술적 이득 0에 카이팅 걸림만 만든다.
  */
 import { DEPTH } from "../constants";
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { LOGICAL_HEIGHT, MAX_LOGICAL_WIDTH } from "../config";
 
 const CHUNK = 256;
-/** 카메라 주변 몇 청크까지 채울 것인가 (640x360 화면 + 여유) */
+/**
+ * 카메라 주변 몇 청크까지 채울 것인가.
+ * ★ 2 면 256*5 = 1280px 격자가 깔린다. 논리 가로 상한 864 에서도 카메라 반폭 432 를
+ *   최악의 정렬(중심이 청크 끝)에서까지 덮는다 — 넓은 화면 때문에 늘릴 필요가 없다.
+ */
 const RADIUS = 2;
 const MAX_PROPS = 360;
 
@@ -44,8 +48,13 @@ export class GroundSystem {
 
         // ── 바닥: 화면 크기 TileSprite를 카메라에 고정하고 tilePosition만 굴린다.
         //    월드 크기만 한 TileSprite를 만들면 텍스처 메모리가 폭증한다.
+        // ★ 폭을 640 이 아니라 논리 가로 상한(864)으로 잡는다 (config.js 좌표계 주석).
+        //   화면 폭은 기기 비율마다 다르고 회전으로도 바뀐다. 640 으로 굳히면 20:9 에서
+        //   우측 160px 가 바닥 없는 검은 띠가 된다. 매번 setSize 로 따라가게 하는 대신
+        //   처음부터 상한만큼 깔고 넘치는 부분은 카메라가 잘라내게 한다 —
+        //   쿼드 1장이라 초과분의 렌더 비용은 측정되지 않는 수준이고, 리사이즈 훅이 사라진다.
         this.ground = scene.add
-            .tileSprite(0, 0, LOGICAL_WIDTH, LOGICAL_HEIGHT, "ground_grave")
+            .tileSprite(0, 0, MAX_LOGICAL_WIDTH, LOGICAL_HEIGHT, "ground_grave")
             .setOrigin(0, 0)
             .setScrollFactor(0)
             .setDepth(DEPTH.GROUND);
@@ -136,8 +145,10 @@ export class GroundSystem {
         this.ground.tilePositionX = cam.scrollX;
         this.ground.tilePositionY = cam.scrollY;
 
-        const ccx = Math.floor((cam.scrollX + LOGICAL_WIDTH / 2) / CHUNK);
-        const ccy = Math.floor((cam.scrollY + LOGICAL_HEIGHT / 2) / CHUNK);
+        // ★ 640 이 아니라 cam.width 다. 카메라 폭은 기기 비율을 따라간다(config.js 좌표계).
+        //   굳혀 두면 넓은 화면에서 청크 중심이 왼쪽으로 치우쳐 우측 소품이 늦게 뜬다.
+        const ccx = Math.floor((cam.scrollX + cam.width / 2) / CHUNK);
+        const ccy = Math.floor((cam.scrollY + cam.height / 2) / CHUNK);
 
         // 멀어진 청크 회수
         for (const [key, list] of this.chunks) {

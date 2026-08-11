@@ -26,7 +26,7 @@ import Phaser from "phaser";
 import { Pool } from "../pools/Pool";
 import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
-import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
+import { LOGICAL_HEIGHT, MAX_LOGICAL_WIDTH } from "../config";
 
 /** 폭발 스프라이트. 매니페스트 키와 같아야 한다 */
 const BURST_KEY = "fx-slash";
@@ -189,8 +189,12 @@ export class FxSystem {
         });
 
         // 전체 화면 플래시. 카메라에 고정하므로 scrollFactor 0.
+        // ★ 논리 가로는 기기 비율마다 640~864 로 다르다 (config.js 좌표계 주석).
+        //   좌상단 원점 + 상한 폭으로 깔아 어떤 비율에서도 화면을 남김없이 덮는다.
+        //   넘치는 부분은 카메라가 잘라낸다 — 리사이즈마다 크기를 고치는 것보다 안전하다.
         this.flashRect = scene.add
-            .rectangle(LOGICAL_WIDTH / 2, LOGICAL_HEIGHT / 2, LOGICAL_WIDTH, LOGICAL_HEIGHT, CRIMSON, 1)
+            .rectangle(0, 0, MAX_LOGICAL_WIDTH, LOGICAL_HEIGHT, CRIMSON, 1)
+            .setOrigin(0, 0)
             .setScrollFactor(0)
             .setDepth(DEPTH.HUD - 5)
             .setAlpha(0)

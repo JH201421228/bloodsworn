@@ -11,7 +11,7 @@
  */
 import Phaser from "phaser";
 import { SCENES, DEPTH } from "../constants";
-import { WORLD_WIDTH, WORLD_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT, TILE_SIZE } from "../config";
+import { WORLD_WIDTH, WORLD_HEIGHT, TILE_SIZE } from "../config";
 import { DEBUG, isOverlayOn } from "../debug";
 import { PlayerSystem } from "../systems/PlayerSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
@@ -49,6 +49,11 @@ export default class GameScene extends Phaser.Scene {
 
         // 끝없는 맵이라 카메라·월드 경계를 두지 않는다
         if (this.player) {
+            // ★ 카메라 zoom 은 건드리지 않는다. 화면이 넓은 기기는 zoom 이 아니라
+            //   **캔버스 자체가 커져서**(config.js fitCanvasToViewport) 더 넓게 본다.
+            //   여기서 zoom 을 1 이 아닌 값으로 바꾸면 setScrollFactor(0) 인 HUD 전체가
+            //   논리 좌표를 잃는다 — Phaser 가 카메라 원점 기준으로 zoom 을 곱하기 때문이다.
+            //   논리 세로는 어떤 기기에서도 360 이고, 가로만 640~864 로 변한다.
             // 플레이어는 항상 화면 중앙에 둔다 — 조이스틱(좌하단)과 손가락이 겹치지 않는다(10-UIUX 5.2 원칙 3)
             this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
             this.playerSystem = new PlayerSystem(this, this.player, this.wallLayer);
@@ -127,7 +132,7 @@ export default class GameScene extends Phaser.Scene {
 
         // ?overview=1 — 맵 전체를 한 화면에 담아 구조를 검수한다. 개발 전용.
         if (new URLSearchParams(location.search).get("overview") === "1") {
-            const z = Math.min(LOGICAL_WIDTH / WORLD_WIDTH, LOGICAL_HEIGHT / WORLD_HEIGHT);
+            const z = Math.min(this.scale.width / WORLD_WIDTH, this.scale.height / WORLD_HEIGHT);
             this.cameras.main.setZoom(z).centerOn(WORLD_WIDTH / 2, WORLD_HEIGHT / 2);
         }
 

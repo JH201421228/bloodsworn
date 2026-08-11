@@ -430,6 +430,8 @@ export class StageSystem {
         const gfx = this.gfx;
         gfx.clear();
         if (k <= 0.01) return;
+        // ★ 640 이 아니라 scale.width 다. 논리 가로는 기기 비율마다 640~864 로 다르다
+        //   (config.js 좌표계 주석). 굳히면 넓은 화면에서 우측 비네트가 화면 중간에 선다.
         const w = this.scene.scale.width, h = this.scene.scale.height;
         const total = (p.bandWidth ?? 18) * k * 2;
         // ★ bands 는 "가장자리 어둠을 몇 겹으로 나눌 것인가"다. 한 겹으로 칠하면 경계가
@@ -623,6 +625,7 @@ export class StageSystem {
         // 불길 머리 길이 = 띠 두께. 240px/s 로 지나가면 노출 56/240 = 0.23s → 정확히 1틱이다.
         // 지나간 자리까지 계속 아프면 되돌아갈 길이 막혀 "피하는 패턴"이 "가두는 패턴"이 된다.
         b.burn = b.half * 2;
+        // ★ 불길이 화면을 관통해야 한다. 폭이 기기마다 다르므로 실측값을 쓴다(config.js 좌표계).
         const w = this.scene.scale.width, h = this.scene.scale.height;
         // 화면을 확실히 관통하는 길이. 각도에 따라 필요한 사거리가 달라진다.
         b.reach = (w * Math.abs(b.dx) + h * Math.abs(b.dy)) / 2 + b.burn;

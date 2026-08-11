@@ -13,9 +13,15 @@
     justify-content: center;
 }
 
+/* ★ inset:0 이면 16:9 스테이지만 덮는다. 캔버스는 그보다 넓다(index.css .pact-stage::before 주석).
+   transform 이 걸린 부모 안이라 position:fixed 가 안 먹으므로 뷰포트 단위로 직접 잰다. */
 .revive-veil {
     position: absolute;
-    inset: 0;
+    left: 50%;
+    top: 50%;
+    width: 100vw;
+    height: 100dvh;
+    transform: translate(-50%, -50%);
     background: radial-gradient(ellipse at center, rgba(20, 6, 10, 0.72), rgba(6, 4, 8, 0.92));
     animation: revive-in 180ms ease-out both;
 }
