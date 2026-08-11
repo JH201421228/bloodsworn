@@ -37,6 +37,29 @@ export default class HudScene extends Phaser.Scene {
         this.txtKills = t(632, 10, 10, "#9a94a3", 1);
         this.txtHp = t(18, 26, 9, "#c7c2ce", 0);
 
+        // ── 아트 껍데기 ─────────────────────────────────────
+        // ★ 채움(fillRect)은 그대로 두고 그 위에 프레임 이미지만 얹는다.
+        //   채움까지 이미지로 바꾸면 비율에 따라 텍스처를 매 프레임 크롭해야 해서
+        //   60fps 경로에 불필요한 비용이 든다. 프레임은 정적이라 한 번 두면 끝이다.
+        // ★ 원본이 108x16 / 66x10 이라 폭이 안 맞는다. nineslice 로 좌우 6px 만 남기고
+        //   가운데를 늘린다 — 통짜로 늘리면 리벳이 뭉개진다.
+        const nine = (key, x, y, w, h, l = 6, r = 6) =>
+            (this.textures.exists(key)
+                ? this.add.nineslice(x, y, key, undefined, w, h, l, r, 0, 0)
+                : null)?.setOrigin(0, 0).setDepth(DEPTH.HUD + 1).setScrollFactor(0) ?? null;
+
+        this.hpFrame = nine("ui-bar-hp", 14, 10, 124, 14);
+        this.expFrame = nine("ui-bar-exp", 0, 0, 640, 6, 4, 4);
+
+        // 조이스틱 — 도형 대신 실제 아트. 입력 판정은 InputSystem 이 그대로 갖는다.
+        const img = (key, r) => (this.textures.exists(key)
+            ? this.add.image(-999, -999, key).setDepth(DEPTH.HUD).setScrollFactor(0).setDisplaySize(r * 2, r * 2)
+            : null);
+        this.joyBase = img("joystick_base", JOY_RADIUS);
+        this.joyKnob = img("joystick_knob", 15);
+        if (this.joyBase) this.joyBase.setAlpha(0);
+        if (this.joyKnob) this.joyKnob.setAlpha(0);
+
         this.events.once("shutdown", () => input.detach());
     }
 
@@ -82,7 +105,12 @@ export default class HudScene extends Phaser.Scene {
         const target = input.active ? 1 : 0;
         const step = input.active ? 1 / 5 : 1 / 9; // 약 80ms / 150ms @60fps
         g.alpha = Phaser.Math.Linear(g.alpha, target, step);
-        if (g.alpha < 0.02 && !input.active) return;
+        if (g.alpha < 0.02 && !input.active) {
+            // 그래픽만 페이드시키고 이미지를 놔두면 조이스틱이 화면에 박힌 채 남는다
+            this.joyBase?.setAlpha(0);
+            this.joyKnob?.setAlpha(0);
+            return;
+        }
 
         const { origin, knob } = input;
 
@@ -92,7 +120,8 @@ export default class HudScene extends Phaser.Scene {
 
         // 8방향 눈금
         g.lineStyle(2, PARCHMENT, 0.15);
-        for (let i = 0; i < 8; i++) {
+        // 베이스 아트가 있으면 도형 링과 눈금은 건너뛴다 — 겹쳐 그리면 지저분하다
+        if (!this.joyBase) for (let i = 0; i < 8; i++) {
             const a = (Math.PI / 4) * i;
             const c = Math.cos(a), s = Math.sin(a);
             g.lineBetween(origin.x + c * 34, origin.y + s * 34, origin.x + c * 38, origin.y + s * 38);
@@ -102,11 +131,17 @@ export default class HudScene extends Phaser.Scene {
         g.lineStyle(1, PARCHMENT, 0.2);
         g.lineBetween(origin.x, origin.y, knob.x, knob.y);
 
-        // 노브는 작게(r14) — 손가락 밖으로 삐져나오면 시각적 노이즈다 (5.2 원칙 2)
-        g.fillStyle(CANDLE, 0.55);
-        g.fillCircle(knob.x, knob.y, 14);
-        g.lineStyle(1, CANDLE, 0.8);
-        g.strokeCircle(knob.x, knob.y, 14);
+        // 노브는 작게 — 손가락 밖으로 삐져나오면 시각적 노이즈다 (5.2 원칙 2)
+        // 아트가 있으면 도형 대신 이미지를 쓴다. 판정은 InputSystem 이 그대로 갖는다.
+        if (this.joyKnob) {
+            this.joyBase.setPosition(origin.x, origin.y).setAlpha(g.alpha * 0.85);
+            this.joyKnob.setPosition(knob.x, knob.y).setAlpha(g.alpha);
+        } else {
+            g.fillStyle(CANDLE, 0.55);
+            g.fillCircle(knob.x, knob.y, 14);
+            g.lineStyle(1, CANDLE, 0.8);
+            g.strokeCircle(knob.x, knob.y, 14);
+        }
 
         void JOY_RADIUS;
     }
