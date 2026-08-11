@@ -3,7 +3,9 @@
         "보스 「여명의 처형인」 데이터. 출처 05-COMBAT 6(HP 역산/페이즈별 패턴표) / 08-DATA-SCHEMA 3.3 BOSS 항목.",
         "★ 수치를 코드에 박지 않고 여기 두는 이유: Day 6 밸런싱은 '느낌'이 아니라 이 표를 고쳐서 한다.",
         "★ windup 은 전부 0.60 이상이어야 한다(T525 / 03-GDD 7.3). BossSystem 생성자가 이를 검사한다.",
-        "이름 주의 — 「녹턴」은 PACT 카드를 제시하는 흡혈귀(01-CONCEPT 4.4)이고, 6:00 보스는 「여명의 처형인」이다."
+        "이름 주의 — 「녹턴」은 PACT 카드를 제시하는 흡혈귀(01-CONCEPT 4.4)이고, 6:00 보스는 「여명의 처형인」이다.",
+        "bosses: 스테이지별 보스 6종. boss(단수)는 BOSS1 하위호환용으로 남긴다.",
+        "baseHp 는 목표 전투 시간 x 그 시점 기대 DPS 로 역산했다(_designNote 참조)."
     ],
     "schemaVersion": 1,
     "boss": {
@@ -13,7 +15,10 @@
         "baseHp": 11000,
         "contactDamage": 16,
         "moveSpeed": 46,
-        "hitbox": { "w": 56, "h": 80 },
+        "hitbox": {
+            "w": 56,
+            "h": 80
+        },
         "expValue": 0,
         "goldValue": 0,
         "goldOnClear": 200,
@@ -27,22 +32,1204 @@
         "flashDuration": 0.45,
         "phaseInvuln": 1.2,
         "phases": [
-            { "phase": 1, "hpFrom": 1.00, "hpTo": 0.66, "moveSpeedMult": 1.0 },
-            { "phase": 2, "hpFrom": 0.66, "hpTo": 0.33, "moveSpeedMult": 1.0 },
-            { "phase": 3, "hpFrom": 0.33, "hpTo": 0.00, "moveSpeedMult": 1.4 }
+            {
+                "phase": 1,
+                "hpFrom": 1,
+                "hpTo": 0.66,
+                "moveSpeedMult": 1
+            },
+            {
+                "phase": 2,
+                "hpFrom": 0.66,
+                "hpTo": 0.33,
+                "moveSpeedMult": 1
+            },
+            {
+                "phase": 3,
+                "hpFrom": 0.33,
+                "hpTo": 0,
+                "moveSpeedMult": 1.4
+            }
         ],
         "patterns": [
-            { "phase": 1, "id": "scythe",    "type": "cone",       "damage": 26, "cooldown": 3.20, "windup": 0.80, "params": { "angle": 130, "radius": 96, "knockback": 60 } },
-            { "phase": 1, "id": "soulbolt",  "type": "projectile", "damage": 18, "cooldown": 4.50, "windup": 0.60, "params": { "count": 3, "spread": 30, "speed": 150, "range": 400 } },
-
-            { "phase": 2, "id": "scythe",    "type": "cone",       "damage": 26, "cooldown": 2.80, "windup": 0.80, "params": { "angle": 130, "radius": 96, "knockback": 60 } },
-            { "phase": 2, "id": "soulbolt",  "type": "projectile", "damage": 18, "cooldown": 4.50, "windup": 0.60, "params": { "count": 5, "spread": 50, "speed": 150, "range": 400 } },
-            { "phase": 2, "id": "summon",    "type": "summon",     "damage": 0,  "cooldown": 12.0, "windup": 1.00, "params": { "enemyId": "E4", "count": 6, "ringRadius": 120, "hpMultOverride": 1.0 } },
-
-            { "phase": 3, "id": "scythe",    "type": "cone",       "damage": 26, "cooldown": 1.68, "windup": 0.80, "params": { "angle": 130, "radius": 96, "knockback": 60 } },
-            { "phase": 3, "id": "soulbolt",  "type": "projectile", "damage": 18, "cooldown": 4.00, "windup": 0.60, "params": { "count": 5, "spread": 50, "speed": 170, "range": 400 } },
-            { "phase": 3, "id": "summon",    "type": "summon",     "damage": 0,  "cooldown": 9.00, "windup": 1.00, "params": { "enemyId": "E4", "count": 6, "ringRadius": 120, "hpMultOverride": 1.0 } },
-            { "phase": 3, "id": "bloodpool", "type": "ground_aoe", "damage": 12, "cooldown": 5.00, "windup": 0.60, "params": { "radius": 70, "duration": 6.0, "tickInterval": 1.0, "maxActive": 4, "dropsPerCast": 2, "scatterMin": 70, "scatterMax": 150 } }
+            {
+                "phase": 1,
+                "id": "scythe",
+                "type": "cone",
+                "damage": 26,
+                "cooldown": 3.2,
+                "windup": 0.8,
+                "params": {
+                    "angle": 130,
+                    "radius": 96,
+                    "knockback": 60
+                }
+            },
+            {
+                "phase": 1,
+                "id": "soulbolt",
+                "type": "projectile",
+                "damage": 18,
+                "cooldown": 4.5,
+                "windup": 0.6,
+                "params": {
+                    "count": 3,
+                    "spread": 30,
+                    "speed": 150,
+                    "range": 400
+                }
+            },
+            {
+                "phase": 2,
+                "id": "scythe",
+                "type": "cone",
+                "damage": 26,
+                "cooldown": 2.8,
+                "windup": 0.8,
+                "params": {
+                    "angle": 130,
+                    "radius": 96,
+                    "knockback": 60
+                }
+            },
+            {
+                "phase": 2,
+                "id": "soulbolt",
+                "type": "projectile",
+                "damage": 18,
+                "cooldown": 4.5,
+                "windup": 0.6,
+                "params": {
+                    "count": 5,
+                    "spread": 50,
+                    "speed": 150,
+                    "range": 400
+                }
+            },
+            {
+                "phase": 2,
+                "id": "summon",
+                "type": "summon",
+                "damage": 0,
+                "cooldown": 12,
+                "windup": 1,
+                "params": {
+                    "enemyId": "E4",
+                    "count": 6,
+                    "ringRadius": 120,
+                    "hpMultOverride": 1
+                }
+            },
+            {
+                "phase": 3,
+                "id": "scythe",
+                "type": "cone",
+                "damage": 26,
+                "cooldown": 1.68,
+                "windup": 0.8,
+                "params": {
+                    "angle": 130,
+                    "radius": 96,
+                    "knockback": 60
+                }
+            },
+            {
+                "phase": 3,
+                "id": "soulbolt",
+                "type": "projectile",
+                "damage": 18,
+                "cooldown": 4,
+                "windup": 0.6,
+                "params": {
+                    "count": 5,
+                    "spread": 50,
+                    "speed": 170,
+                    "range": 400
+                }
+            },
+            {
+                "phase": 3,
+                "id": "summon",
+                "type": "summon",
+                "damage": 0,
+                "cooldown": 9,
+                "windup": 1,
+                "params": {
+                    "enemyId": "E4",
+                    "count": 6,
+                    "ringRadius": 120,
+                    "hpMultOverride": 1
+                }
+            },
+            {
+                "phase": 3,
+                "id": "bloodpool",
+                "type": "ground_aoe",
+                "damage": 12,
+                "cooldown": 5,
+                "windup": 0.6,
+                "params": {
+                    "radius": 70,
+                    "duration": 6,
+                    "tickInterval": 1,
+                    "maxActive": 4,
+                    "dropsPerCast": 2,
+                    "scatterMin": 70,
+                    "scatterMax": 150
+                }
+            }
         ]
+    },
+    "bosses": {
+        "BOSS1": {
+            "id": "BOSS1",
+            "name": "여명의 처형인",
+            "tier": "boss",
+            "baseHp": 11000,
+            "contactDamage": 26,
+            "moveSpeed": 46,
+            "hitbox": {
+                "w": 56,
+                "h": 80
+            },
+            "expValue": 0,
+            "goldValue": 0,
+            "goldOnClear": 200,
+            "knockbackResist": 1,
+            "ai": "chase",
+            "anim": "boss.idle",
+            "spawnAt": 360,
+            "purgeMinionsOnSpawn": true,
+            "stopSpawning": true,
+            "flashColor": 16723755,
+            "flashDuration": 0.45,
+            "phaseInvuln": 1.2,
+            "phases": [
+                {
+                    "phase": 1,
+                    "hpFrom": 1,
+                    "hpTo": 0.66,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 2,
+                    "hpFrom": 0.66,
+                    "hpTo": 0.33,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 3,
+                    "hpFrom": 0.33,
+                    "hpTo": 0,
+                    "moveSpeedMult": 1.4
+                }
+            ],
+            "patterns": [
+                {
+                    "phase": 1,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 3.2,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 1,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 3,
+                        "spread": 30,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 2.8,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 12,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 1.68,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 170,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 9,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "bloodpool",
+                    "type": "ground_aoe",
+                    "damage": 12,
+                    "cooldown": 5,
+                    "windup": 0.6,
+                    "params": {
+                        "radius": 70,
+                        "duration": 6,
+                        "tickInterval": 1,
+                        "maxActive": 4,
+                        "dropsPerCast": 2,
+                        "scatterMin": 70,
+                        "scatterMax": 150
+                    }
+                }
+            ],
+            "_designNote": "목표 전투 76초. 기대 DPS 152 x 76s = 약 11600. 패턴 축: 낫·사령탄",
+            "sheet": null,
+            "texture": "boss"
+        },
+        "BOSS2": {
+            "id": "BOSS2",
+            "name": "잿빛 성가대장",
+            "tier": "boss",
+            "baseHp": 14800,
+            "contactDamage": 24,
+            "moveSpeed": 52,
+            "hitbox": {
+                "w": 60,
+                "h": 80
+            },
+            "expValue": 0,
+            "goldValue": 0,
+            "goldOnClear": 240,
+            "knockbackResist": 1,
+            "ai": "chase",
+            "anim": "boss2.idle",
+            "spawnAt": 300,
+            "purgeMinionsOnSpawn": true,
+            "stopSpawning": true,
+            "flashColor": 16723755,
+            "flashDuration": 0.45,
+            "phaseInvuln": 1.2,
+            "phases": [
+                {
+                    "phase": 1,
+                    "hpFrom": 1,
+                    "hpTo": 0.66,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 2,
+                    "hpFrom": 0.66,
+                    "hpTo": 0.33,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 3,
+                    "hpFrom": 0.33,
+                    "hpTo": 0,
+                    "moveSpeedMult": 1.4
+                }
+            ],
+            "patterns": [
+                {
+                    "phase": 1,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 3.2,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 1,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 3,
+                        "spread": 30,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 2.8,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 12,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 1.68,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 170,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 9,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "bloodpool",
+                    "type": "ground_aoe",
+                    "damage": 12,
+                    "cooldown": 5,
+                    "windup": 0.6,
+                    "params": {
+                        "radius": 70,
+                        "duration": 6,
+                        "tickInterval": 1,
+                        "maxActive": 4,
+                        "dropsPerCast": 2,
+                        "scatterMin": 70,
+                        "scatterMax": 150
+                    }
+                }
+            ],
+            "_designNote": "목표 전투 72초. 기대 DPS 205 x 72s = 약 14800. 패턴 축: 성가·추적탄",
+            "sheet": "boss2",
+            "texture": "boss2"
+        },
+        "BOSS3": {
+            "id": "BOSS3",
+            "name": "역병의 어미",
+            "tier": "boss",
+            "baseHp": 19500,
+            "contactDamage": 28,
+            "moveSpeed": 40,
+            "hitbox": {
+                "w": 35,
+                "h": 54
+            },
+            "expValue": 0,
+            "goldValue": 0,
+            "goldOnClear": 300,
+            "knockbackResist": 1,
+            "ai": "chase",
+            "anim": "boss3.idle",
+            "spawnAt": 420,
+            "purgeMinionsOnSpawn": true,
+            "stopSpawning": true,
+            "flashColor": 16723755,
+            "flashDuration": 0.45,
+            "phaseInvuln": 1.2,
+            "phases": [
+                {
+                    "phase": 1,
+                    "hpFrom": 1,
+                    "hpTo": 0.66,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 2,
+                    "hpFrom": 0.66,
+                    "hpTo": 0.33,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 3,
+                    "hpFrom": 0.33,
+                    "hpTo": 0,
+                    "moveSpeedMult": 1.4
+                }
+            ],
+            "patterns": [
+                {
+                    "phase": 1,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 3.2,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 1,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 3,
+                        "spread": 30,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 2.8,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 12,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 1.68,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 170,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 9,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "bloodpool",
+                    "type": "ground_aoe",
+                    "damage": 12,
+                    "cooldown": 5,
+                    "windup": 0.6,
+                    "params": {
+                        "radius": 70,
+                        "duration": 6,
+                        "tickInterval": 1,
+                        "maxActive": 4,
+                        "dropsPerCast": 2,
+                        "scatterMin": 70,
+                        "scatterMax": 150
+                    }
+                }
+            ],
+            "_designNote": "목표 전투 78초. 기대 DPS 250 x 78s = 약 19500. 패턴 축: 독장판·소환",
+            "sheet": "boss3",
+            "texture": "boss3"
+        },
+        "BOSS4": {
+            "id": "BOSS4",
+            "name": "첨탑의 파수꾼",
+            "tier": "boss",
+            "baseHp": 22200,
+            "contactDamage": 30,
+            "moveSpeed": 44,
+            "hitbox": {
+                "w": 42,
+                "h": 75
+            },
+            "expValue": 0,
+            "goldValue": 0,
+            "goldOnClear": 340,
+            "knockbackResist": 1,
+            "ai": "chase",
+            "anim": "boss4.idle",
+            "spawnAt": 330,
+            "purgeMinionsOnSpawn": true,
+            "stopSpawning": true,
+            "flashColor": 16723755,
+            "flashDuration": 0.45,
+            "phaseInvuln": 1.2,
+            "phases": [
+                {
+                    "phase": 1,
+                    "hpFrom": 1,
+                    "hpTo": 0.66,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 2,
+                    "hpFrom": 0.66,
+                    "hpTo": 0.33,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 3,
+                    "hpFrom": 0.33,
+                    "hpTo": 0,
+                    "moveSpeedMult": 1.4
+                }
+            ],
+            "patterns": [
+                {
+                    "phase": 1,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 3.2,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 1,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 3,
+                        "spread": 30,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 2.8,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 12,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 1.68,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 170,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 9,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "bloodpool",
+                    "type": "ground_aoe",
+                    "damage": 12,
+                    "cooldown": 5,
+                    "windup": 0.6,
+                    "params": {
+                        "radius": 70,
+                        "duration": 6,
+                        "tickInterval": 1,
+                        "maxActive": 4,
+                        "dropsPerCast": 2,
+                        "scatterMin": 70,
+                        "scatterMax": 150
+                    }
+                }
+            ],
+            "_designNote": "목표 전투 74초. 기대 DPS 300 x 74s = 약 22200. 패턴 축: 돌진·낙석",
+            "sheet": "boss4",
+            "texture": "boss4"
+        },
+        "BOSS5": {
+            "id": "BOSS5",
+            "name": "지옥문의 간수",
+            "tier": "boss",
+            "baseHp": 29500,
+            "contactDamage": 32,
+            "moveSpeed": 48,
+            "hitbox": {
+                "w": 66,
+                "h": 53
+            },
+            "expValue": 0,
+            "goldValue": 0,
+            "goldOnClear": 420,
+            "knockbackResist": 1,
+            "ai": "chase",
+            "anim": "boss5.idle",
+            "spawnAt": 450,
+            "purgeMinionsOnSpawn": true,
+            "stopSpawning": true,
+            "flashColor": 16723755,
+            "flashDuration": 0.45,
+            "phaseInvuln": 1.2,
+            "phases": [
+                {
+                    "phase": 1,
+                    "hpFrom": 1,
+                    "hpTo": 0.66,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 2,
+                    "hpFrom": 0.66,
+                    "hpTo": 0.33,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 3,
+                    "hpFrom": 0.33,
+                    "hpTo": 0,
+                    "moveSpeedMult": 1.4
+                }
+            ],
+            "patterns": [
+                {
+                    "phase": 1,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 3.2,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 1,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 3,
+                        "spread": 30,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 2.8,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 12,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 1.68,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 170,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 9,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "bloodpool",
+                    "type": "ground_aoe",
+                    "damage": 12,
+                    "cooldown": 5,
+                    "windup": 0.6,
+                    "params": {
+                        "radius": 70,
+                        "duration": 6,
+                        "tickInterval": 1,
+                        "maxActive": 4,
+                        "dropsPerCast": 2,
+                        "scatterMin": 70,
+                        "scatterMax": 150
+                    }
+                }
+            ],
+            "_designNote": "목표 전투 82초. 기대 DPS 360 x 82s = 약 29500. 패턴 축: 화염·광폭화",
+            "sheet": "boss5",
+            "texture": "boss5"
+        },
+        "BOSS6": {
+            "id": "BOSS6",
+            "name": "봉인묘의 간수",
+            "tier": "boss",
+            "baseHp": 35700,
+            "contactDamage": 34,
+            "moveSpeed": 50,
+            "hitbox": {
+                "w": 83,
+                "h": 80
+            },
+            "expValue": 0,
+            "goldValue": 0,
+            "goldOnClear": 200,
+            "knockbackResist": 1,
+            "ai": "chase",
+            "anim": "boss6.idle",
+            "spawnAt": 360,
+            "purgeMinionsOnSpawn": true,
+            "stopSpawning": true,
+            "flashColor": 16723755,
+            "flashDuration": 0.45,
+            "phaseInvuln": 1.2,
+            "phases": [
+                {
+                    "phase": 1,
+                    "hpFrom": 1,
+                    "hpTo": 0.66,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 2,
+                    "hpFrom": 0.66,
+                    "hpTo": 0.33,
+                    "moveSpeedMult": 1
+                },
+                {
+                    "phase": 3,
+                    "hpFrom": 0.33,
+                    "hpTo": 0,
+                    "moveSpeedMult": 1.4
+                }
+            ],
+            "patterns": [
+                {
+                    "phase": 1,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 3.2,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 1,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 3,
+                        "spread": 30,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 2.8,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4.5,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 150,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 2,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 12,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "scythe",
+                    "type": "cone",
+                    "damage": 26,
+                    "cooldown": 1.68,
+                    "windup": 0.8,
+                    "params": {
+                        "angle": 130,
+                        "radius": 96,
+                        "knockback": 60
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "soulbolt",
+                    "type": "projectile",
+                    "damage": 18,
+                    "cooldown": 4,
+                    "windup": 0.6,
+                    "params": {
+                        "count": 5,
+                        "spread": 50,
+                        "speed": 170,
+                        "range": 400
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "summon",
+                    "type": "summon",
+                    "damage": 0,
+                    "cooldown": 9,
+                    "windup": 1,
+                    "params": {
+                        "enemyId": "E4",
+                        "count": 6,
+                        "ringRadius": 120,
+                        "hpMultOverride": 1
+                    }
+                },
+                {
+                    "phase": 3,
+                    "id": "bloodpool",
+                    "type": "ground_aoe",
+                    "damage": 12,
+                    "cooldown": 5,
+                    "windup": 0.6,
+                    "params": {
+                        "radius": 70,
+                        "duration": 6,
+                        "tickInterval": 1,
+                        "maxActive": 4,
+                        "dropsPerCast": 2,
+                        "scatterMin": 70,
+                        "scatterMax": 150
+                    }
+                }
+            ],
+            "_designNote": "목표 전투 85초. 기대 DPS 420 x 85s = 약 35700. 패턴 축: 전방위·분열",
+            "sheet": "boss6",
+            "texture": "boss6"
+        }
     }
 }

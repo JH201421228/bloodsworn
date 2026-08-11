@@ -83,6 +83,7 @@ export class StageSystem {
 
         const plan = this.compile(st);
         this.spawn?.applyStage?.(plan);
+        this.boss?.setBoss?.(st.bossId);
         this.applyGround(st);
         this.resetGimmick();
 

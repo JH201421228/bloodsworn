@@ -39,6 +39,7 @@ import { EventBus } from "../EventBus";
 import { Pool } from "../pools/Pool";
 import { dist2 } from "../utils/math";
 import bossData from "@/data/boss.json";
+import bossAtlas from "@/data/boss-atlas.json";
 
 /** 09-ART 1.1 #16 DANGER — 보스 텔레그래프 인디케이터 전용색. 다른 곳에 절대 쓰지 않는다 */
 const DANGER = 0xff3b30;
@@ -91,7 +92,8 @@ export class BossSystem {
         this.combat = ctx.combat;
         this.stats = ctx.stats;
 
-        this.def = bossData.boss;
+        this.defs = bossData.bosses ?? { BOSS1: bossData.boss };
+        this.def = this.defs.BOSS1 ?? bossData.boss;
         this.active = false;
         this.defeated = false;
         this.dying = false;
@@ -179,6 +181,41 @@ export class BossSystem {
      * 정화를 먼저 하는 이유가 연출만은 아니다. 6:00 구간 cap 은 150이라 풀이 꽉 차 있어
      * 정화 전에 obtain() 하면 null 이 돌아와 보스가 아예 등장하지 않는다.
      */
+    /**
+     * 스테이지가 어떤 보스를 쓸지 정한다. StageSystem.load 가 부른다.
+     * ★ 여기서 스프라이트를 만들지 않는다 — 보스는 등장 시점(6:00)에 적 풀에서 꺼낸다.
+     *   미리 만들면 런 내내 보이지 않는 스프라이트가 배칭에 끼어든다.
+     */
+    setBoss(bossId) {
+        const d = this.defs[bossId];
+        if (!d) { console.warn("[BossSystem] 알 수 없는 보스:", bossId); return false; }
+        this.def = d;
+        return true;
+    }
+
+    /**
+     * 보스 애니메이션을 등장 직전에 한 번만 등록한다.
+     * ★ 부팅 시 6종을 전부 등록하면 쓰지 않을 애니메이션 30여 개가 상주한다.
+     *   보스는 런당 하나뿐이라 지연 등록이 명백히 싸다.
+     */
+    ensureAnims() {
+        const key = this.def.sheet;
+        if (!key || this.animsReady === key) return;
+        const meta = bossAtlas?.bosses?.find((b) => b.key === key);
+        if (!meta || !this.scene.textures.exists(key)) return;
+        for (const a of meta.anims ?? []) {
+            const name = key + "." + a.key;   // 아틀라스의 필드명은 key 다(name 아님)
+            if (this.scene.anims.exists(name)) continue;
+            this.scene.anims.create({
+                key: name,
+                frames: this.scene.anims.generateFrameNumbers(key, { start: a.from, end: a.to }),
+                frameRate: a.fps ?? 8,
+                repeat: a.repeat ?? -1,
+            });
+        }
+        this.animsReady = key;
+    }
+
     spawn() {
         if (this.active || this.defeated) return this.boss;
 
@@ -213,6 +250,13 @@ export class BossSystem {
         //   리쉬가 508px에서 잡아주지만, 치트나 극단적 이동으로 한 번만 넘어가면
         //   보스가 소리 없이 사라지고 런이 끝나지 않는다. 표식으로 막는다.
         b.isBoss = true;
+        // 스테이지 보스는 전용 시트를 쓴다. 없으면 기존 텍스처를 유지한다.
+        this.ensureAnims();
+        if (this.def.sheet && this.scene.textures.exists(this.def.sheet)) {
+            b.setTexture(this.def.sheet, 0);
+            const idle = this.def.sheet + ".idle";
+            if (this.scene.anims.exists(idle)) b.play(idle, true);
+        }
         b.knockbackResist = 1;                   // 넉백 면역. 정본 09-ART 넉백표 "보스 0px"
         b.kbx = 0;
         b.kby = 0;

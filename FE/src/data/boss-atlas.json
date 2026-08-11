@@ -1,0 +1,460 @@
+{
+    "_comment": [
+        "tools/build-bosses.mjs 생성물. 손으로 고치지 말고 스크립트를 고친 뒤 다시 돌린다.",
+        "각 보스는 균일 격자 spritesheet 1장. frameWidth/frameHeight/columns 로 좌표가 산술로 나온다.",
+        "hitbox 는 idle 프레임 알파 bbox 중앙값 x 정규화 배율(실측). 캔버스 크기가 아니다.",
+        "anims[].from/to 는 프레임 인덱스. registerAnims 가 이 표로 <key>.<anim> 을 만든다.",
+        "license.gate 가 blocked 인 항목은 배포 금지다 — 17-LICENSES-AND-CREDITS 5.4 / LC-07."
+    ],
+    "schemaVersion": 1,
+    "bosses": [
+        {
+            "id": "BOSS2",
+            "key": "boss2",
+            "name": "재의 집행자",
+            "stage": "stage2",
+            "file": "assets/boss/boss2.png",
+            "frameWidth": 138,
+            "frameHeight": 110,
+            "columns": 8,
+            "frames": 60,
+            "sheet": {
+                "width": 1104,
+                "height": 880,
+                "bytes": 12443
+            },
+            "srcCell": 100,
+            "scale": 1.333,
+            "hitbox": {
+                "w": 60,
+                "h": 80
+            },
+            "body": {
+                "w": 45,
+                "h": 60
+            },
+            "trim": "91x74+5+10",
+            "anims": [
+                {
+                    "key": "idle",
+                    "from": 0,
+                    "to": 3,
+                    "frames": 4,
+                    "fps": 8,
+                    "repeat": -1
+                },
+                {
+                    "key": "walk",
+                    "from": 4,
+                    "to": 11,
+                    "frames": 8,
+                    "fps": 10,
+                    "repeat": -1
+                },
+                {
+                    "key": "attack",
+                    "from": 12,
+                    "to": 24,
+                    "frames": 13,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "cast",
+                    "from": 25,
+                    "to": 36,
+                    "frames": 12,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "spell",
+                    "from": 37,
+                    "to": 41,
+                    "frames": 5,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "death",
+                    "from": 42,
+                    "to": 59,
+                    "frames": 18,
+                    "fps": 10,
+                    "repeat": 0
+                }
+            ],
+            "license": {
+                "gate": "blocked",
+                "holder": "미상",
+                "file": null,
+                "terms": "동봉 근거 없음 (17-LICENSES LC-07)"
+            },
+            "src": "asset/bosses/Undead executioner/Undead executioner puppet/png"
+        },
+        {
+            "id": "BOSS3",
+            "key": "boss3",
+            "name": "늪의 낭인",
+            "stage": "stage3",
+            "file": "assets/boss/boss3.png",
+            "frameWidth": 160,
+            "frameHeight": 62,
+            "columns": 8,
+            "frames": 37,
+            "sheet": {
+                "width": 1280,
+                "height": 310,
+                "bytes": 9205
+            },
+            "srcCell": 96,
+            "scale": 1.684,
+            "hitbox": {
+                "w": 35,
+                "h": 54
+            },
+            "body": {
+                "w": 21,
+                "h": 32
+            },
+            "trim": "59x35+34+47",
+            "anims": [
+                {
+                    "key": "idle",
+                    "from": 0,
+                    "to": 9,
+                    "frames": 10,
+                    "fps": 8,
+                    "repeat": -1
+                },
+                {
+                    "key": "walk",
+                    "from": 10,
+                    "to": 25,
+                    "frames": 16,
+                    "fps": 10,
+                    "repeat": -1
+                },
+                {
+                    "key": "attack",
+                    "from": 26,
+                    "to": 32,
+                    "frames": 7,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "hurt",
+                    "from": 33,
+                    "to": 36,
+                    "frames": 4,
+                    "fps": 12,
+                    "repeat": 0
+                }
+            ],
+            "license": {
+                "gate": "clear",
+                "holder": "xzany",
+                "file": "License.txt",
+                "terms": "개인·상업 프로젝트 사용 가능 / 게임 에셋으로 재판매·재배포 금지 / 크레딧 권장 / NFT 금지"
+            },
+            "src": "asset/bosses/FREE_Samurai 2D Pixel Art v1.2/FREE_Samurai 2D Pixel Art v1.2/Sprites"
+        },
+        {
+            "id": "BOSS4",
+            "key": "boss4",
+            "name": "첨탑의 마도사",
+            "stage": "stage4",
+            "file": "assets/boss/boss4.png",
+            "frameWidth": 160,
+            "frameHeight": 138,
+            "columns": 8,
+            "frames": 42,
+            "sheet": {
+                "width": 1280,
+                "height": 828,
+                "bytes": 21988
+            },
+            "srcCell": 250,
+            "scale": 0.748,
+            "hitbox": {
+                "w": 42,
+                "h": 75
+            },
+            "body": {
+                "w": 56,
+                "h": 100
+            },
+            "trim": "169x154+74+26",
+            "anims": [
+                {
+                    "key": "idle",
+                    "from": 0,
+                    "to": 7,
+                    "frames": 8,
+                    "fps": 8,
+                    "repeat": -1
+                },
+                {
+                    "key": "walk",
+                    "from": 8,
+                    "to": 15,
+                    "frames": 8,
+                    "fps": 10,
+                    "repeat": -1
+                },
+                {
+                    "key": "attack",
+                    "from": 16,
+                    "to": 23,
+                    "frames": 8,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "cast",
+                    "from": 24,
+                    "to": 31,
+                    "frames": 8,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "hurt",
+                    "from": 32,
+                    "to": 34,
+                    "frames": 3,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "death",
+                    "from": 35,
+                    "to": 41,
+                    "frames": 7,
+                    "fps": 10,
+                    "repeat": 0
+                }
+            ],
+            "license": {
+                "gate": "clear",
+                "holder": "미상(팩 동봉)",
+                "file": "License.txt",
+                "terms": "CC0 — 상업·비상업 무제한"
+            },
+            "src": "asset/bosses/EVil Wizard 2/EVil Wizard 2/Sprites"
+        },
+        {
+            "id": "BOSS5",
+            "key": "boss5",
+            "name": "나이트본",
+            "stage": "stage5",
+            "file": "assets/boss/boss5.png",
+            "frameWidth": 160,
+            "frameHeight": 156,
+            "columns": 8,
+            "frames": 55,
+            "sheet": {
+                "width": 1280,
+                "height": 1092,
+                "bytes": 15706
+            },
+            "srcCell": 80,
+            "scale": 1.882,
+            "hitbox": {
+                "w": 66,
+                "h": 53
+            },
+            "body": {
+                "w": 35,
+                "h": 28
+            },
+            "trim": "77x69+2+9",
+            "anims": [
+                {
+                    "key": "idle",
+                    "from": 0,
+                    "to": 8,
+                    "frames": 9,
+                    "fps": 8,
+                    "repeat": -1
+                },
+                {
+                    "key": "walk",
+                    "from": 9,
+                    "to": 14,
+                    "frames": 6,
+                    "fps": 10,
+                    "repeat": -1
+                },
+                {
+                    "key": "attack",
+                    "from": 15,
+                    "to": 26,
+                    "frames": 12,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "hurt",
+                    "from": 27,
+                    "to": 31,
+                    "frames": 5,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "death",
+                    "from": 32,
+                    "to": 54,
+                    "frames": 23,
+                    "fps": 10,
+                    "repeat": 0
+                }
+            ],
+            "license": {
+                "gate": "blocked",
+                "holder": "미상",
+                "file": null,
+                "terms": "동봉 근거 없음 (17-LICENSES LC-07 / 정본 컷 후보 1순위)"
+            },
+            "src": "asset/bosses/NightBorne"
+        },
+        {
+            "id": "BOSS6",
+            "key": "boss6",
+            "name": "석조 수호자",
+            "stage": "stage6",
+            "file": "assets/boss/boss6.png",
+            "frameWidth": 160,
+            "frameHeight": 160,
+            "columns": 8,
+            "frames": 56,
+            "sheet": {
+                "width": 1280,
+                "height": 1120,
+                "bytes": 20340
+            },
+            "srcCell": 100,
+            "scale": 1.739,
+            "hitbox": {
+                "w": 83,
+                "h": 80
+            },
+            "body": {
+                "w": 48,
+                "h": 46
+            },
+            "trim": "71x70+24+23",
+            "anims": [
+                {
+                    "key": "idle",
+                    "from": 0,
+                    "to": 3,
+                    "frames": 4,
+                    "fps": 8,
+                    "repeat": -1
+                },
+                {
+                    "key": "walk",
+                    "from": 4,
+                    "to": 11,
+                    "frames": 8,
+                    "fps": 10,
+                    "repeat": -1
+                },
+                {
+                    "key": "attack",
+                    "from": 12,
+                    "to": 20,
+                    "frames": 9,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "cast",
+                    "from": 21,
+                    "to": 28,
+                    "frames": 8,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "hurt",
+                    "from": 29,
+                    "to": 35,
+                    "frames": 7,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "spell",
+                    "from": 36,
+                    "to": 45,
+                    "frames": 10,
+                    "fps": 12,
+                    "repeat": 0
+                },
+                {
+                    "key": "death",
+                    "from": 46,
+                    "to": 55,
+                    "frames": 10,
+                    "fps": 10,
+                    "repeat": 0
+                }
+            ],
+            "license": {
+                "gate": "blocked",
+                "holder": "미상",
+                "file": null,
+                "terms": "동봉 근거 없음 (17-LICENSES LC-07)"
+            },
+            "src": "asset/bosses/Mecha-stone Golem 0.1/Mecha-stone Golem 0.1/PNG sheet"
+        },
+        {
+            "id": "BOSS7",
+            "key": "boss7",
+            "name": "무명",
+            "stage": null,
+            "file": "assets/boss/boss7.png",
+            "frameWidth": 160,
+            "frameHeight": 58,
+            "columns": 8,
+            "frames": 10,
+            "sheet": {
+                "width": 1280,
+                "height": 116,
+                "bytes": 3313
+            },
+            "srcCell": 128,
+            "scale": 0.936,
+            "hitbox": {
+                "w": 40,
+                "h": 54
+            },
+            "body": {
+                "w": 43,
+                "h": 58
+            },
+            "trim": "107x59+12+37",
+            "anims": [
+                {
+                    "key": "idle",
+                    "from": 0,
+                    "to": 9,
+                    "frames": 10,
+                    "fps": 8,
+                    "repeat": -1
+                }
+            ],
+            "license": {
+                "gate": "conditional",
+                "holder": "KBPixelArt",
+                "file": "License.txt",
+                "terms": "개인·상업 사용 및 수정 허용 / 재판매·재배포 금지 / NFT·AI 학습 금지 / 크레딧 권장"
+            },
+            "src": "asset/bosses/MainCharacter(FreePack)/MainCharacter(FreePack)"
+        }
+    ]
+}
