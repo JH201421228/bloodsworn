@@ -17,6 +17,12 @@ const RUN_INIT = {
     tagCounts: emptyTagCounts(),
     awakenings: [], // [{ tag, awakeningId, name, atLevel }]
     ownedBlessings: {}, // { [blessingId]: level }
+    /**
+     * 무기별 룬 슬롯 조망 (31 §6.2). [{ weaponId, name, level, t1, t2, t3 }]
+     * ★ T112 기준을 통과하는 이유: 룬은 조우에서만, 무기 레벨은 레벨업에서만 바뀐다 —
+     *   둘 다 게임이 멈춰 있거나 수십 초에 한 번인 사건이다. DPS·쿨다운은 여기 절대 안 들어온다.
+     */
+    runes: [],
     rerollLeft: 2,
     /** T511 완전 흡혈귀화. 인간성 0에서 켜지고 런이 끝날 때까지 꺼지지 않는다(단방향). */
     ascended: false,
@@ -57,6 +63,8 @@ export const createRunSlice = (set) => ({
     consumeReroll: () => set((s) => ({ rerollLeft: Math.max(0, s.rerollLeft - 1) })),
 
     setRerollLeft: (rerollLeft) => set({ rerollLeft }),
+
+    setRunes: (runes) => set({ runes }),
 
     setBossHp: (bossHp) => set({ bossHp }),
 

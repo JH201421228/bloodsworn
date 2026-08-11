@@ -32,6 +32,50 @@ export function installCheats(scene) {
         weapon: (id, lv = 1) => { const w = scene.combatSystem.addWeapon(id, lv); return w ? { id: w.id, level: w.level, ...w.s } : 'unknown ' + id; },
         /** 보유 무기 목록 */
         weapons: () => scene.combatSystem.weaponList.map((w) => w.id + ' Lv' + w.level),
+        /** ★ R-1 검증용 — weapons.json 원본이 오염되지 않았는지 밖에서 대조하기 위한 창구.
+         *  룬은 w.s(=이 객체)를 절대 건드리지 않으므로 런 전후 값이 같아야 한다. */
+        weaponDefs: () => scene.combatSystem.wdef,
+
+        // ── 룬 (31-RUNE-EVOLUTION-TREE) ────────────────────────────────
+        // ★ 조우(EncounterSystem)가 아직 없어 인게임에서 룬을 얻을 방법이 없다.
+        //   T3 진화 6종을 눈으로 확인하려면 runeForce / runeMax 를 쓴다.
+        /** 무기별 룬 슬롯 상태 — 일시정지 화면이 그리는 것과 같은 데이터 */
+        runes: () => scene.runes?.snapshot() ?? '룬 시스템 없음',
+        /** 지금 제시 가능한 룬 (게이트 G-1~G-4 전부 적용) */
+        runeOffers: () => (scene.runes?.offerable() ?? []).map((r) => r.id + ' T' + r.tier + ' ' + r.name),
+        /** 좌판 추첨 시뮬 — 조우가 붙기 전에 pick() 의 분포를 눈으로 본다 */
+        runePick: (n = 3) => (scene.runes?.pick(n) ?? []).map((r) => r.weapon + ' ' + r.id),
+        /** 게이트를 지켜 새긴다. 조건이 안 맞으면 false — 게이트 검증(R-2/R-4)이 이걸로 된다 */
+        rune: (id) => scene.runes?.engrave(id) ?? false,
+        /**
+         * 게이트를 만족시킨 뒤 새긴다. 무기를 요건 레벨까지 올리고 선행 단계를 아무거나 채운다.
+         * BS.runeForce('rn_w1_circle') -> W1 Lv5 + T1 + T2 + 「선혈의 원」
+         */
+        runeForce: (id) => {
+            const rs = scene.runes;
+            const def = rs?.byId(id);
+            if (!def) return '알 수 없는 룬 ' + id;
+            const c = scene.combatSystem;
+            const need = def.requires?.weaponLevel ?? 1;
+            c.addWeapon(def.weapon, Math.max(need, c.weapons[def.weapon]?.level ?? 1));
+            for (let t = 1; t < def.tier; t++) {
+                if (c.weapons[def.weapon].runes['t' + t]) continue;
+                const pre = rs.offerable().find((r) => r.weapon === def.weapon && r.tier === t);
+                if (pre) rs.engrave(pre.id);
+            }
+            rs.engrave(id);
+            return rs.snapshot().find((s) => s.weaponId === def.weapon);
+        },
+        /** 무기 하나를 만렙 + T1~T3 로 완성한다(각 단계 첫 번째 룬). BS.runeMax('W2') */
+        runeMax: (wid, tierMax = 3) => {
+            const rs = scene.runes;
+            scene.combatSystem.addWeapon(wid, 5);
+            for (let t = 1; t <= tierMax; t++) {
+                const r = rs.offerable().find((x) => x.weapon === wid && x.tier === t);
+                if (r) rs.engrave(r.id);
+            }
+            return rs.snapshot().find((s) => s.weaponId === wid);
+        },
         /** 보스 즉시 소환 — 6분을 기다리지 않고 보스전을 검증한다 */
         boss: () => { scene.spawnSystem.elapsed = 360; return !!scene.bossSystem.spawn(); },
         /** 보스 HP 직접 설정 — 페이즈 전환/처치 연출을 10초 만에 본다 */
@@ -55,6 +99,7 @@ export function installCheats(scene) {
     if (typeof window !== "undefined") {
         window.BS = BS;
         console.log("[치트] BS.spawn(50) BS.god() BS.speed(3) BS.wave(6) BS.stat() BS.heal() BS.kill()");
+        console.log("[치트·룬] BS.runeOffers() BS.rune('rn_w2_twin') BS.runeForce('rn_w2_chain') BS.runeMax('W3') BS.runes()");
     }
     return BS;
 }

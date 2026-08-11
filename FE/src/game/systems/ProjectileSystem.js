@@ -151,8 +151,12 @@ export class ProjectileSystem {
     /**
      * @param {string|object} def projectiles.json 의 id 또는 항목 자체
      * @param {number} angle 라디안
-     * @param {{damage?:number,knockback?:number,speed?:number,range?:number,pierce?:number,scale?:number,gen?:number}} opts
+     * @param {{damage?:number,knockback?:number,speed?:number,range?:number,pierce?:number,scale?:number,
+     *          life?:number,gen?:number,exclude?:any,homing?:object,aoe?:object,bounce?:object}} opts
      *        수치는 호출자(CombatSystem)가 이미 stats 를 곱해 넘긴다 — 여기서 두 번 곱하지 않는다.
+     * ★ homing / aoe / bounce 는 **per-shot 오버라이드**다(31 §5.2 (4)). 룬이 같은 투사체 정의에
+     *   유도·작렬·연쇄를 얹을 때 쓴다. 넘기지 않으면 정의(behavior)의 값을 그대로 쓰므로
+     *   기존 무기·보스탄의 거동은 한 글자도 달라지지 않는다.
      */
     fire(def, x, y, angle, opts = EMPTY) {
         const d = typeof def === "string" ? this.defs[def] : def;
@@ -173,7 +177,12 @@ export class ProjectileSystem {
         p.__dmg = opts.damage ?? d.damage ?? 1;
         p.__kb = opts.knockback ?? d.knockback ?? 0;
         p.__pierce = opts.pierce ?? b.pierce ?? 0;
-        p.__bounce = b.bounce?.count ?? 0;
+        // per-shot 오버라이드. 룬이 없으면 셋 다 정의(behavior)의 값이라 거동이 그대로다
+        p.__homing = opts.homing ?? b.homing ?? null;
+        p.__aoe = opts.aoe ?? b.aoe ?? null;
+        p.__bounceDef = opts.bounce ?? b.bounce ?? null;
+        p.__bounce = p.__bounceDef?.count ?? 0;
+        // 세대. 룬이 쏘는 탄은 전부 1 로 태어난다 — gen 이 있는 탄은 다시 아무것도 만들지 않는다
         p.__gen = opts.gen ?? 0;
         p.__hitR = d.hitR ?? 4;
         p.__target = null;
@@ -250,7 +259,7 @@ export class ProjectileSystem {
             const p = list[i];
             const b = p.__def.behavior ?? EMPTY;
 
-            if (b.homing && canHit) this.steer(p, b.homing, dt);
+            if (p.__homing && canHit) this.steer(p, p.__homing, dt);
             if (b.accel) { p.__speed = Math.max(0, p.__speed + b.accel * dt); this.setHeading(p, p.__heading); }
 
             p.x += p.__vx * dt;
@@ -324,10 +333,12 @@ export class ProjectileSystem {
     onHit(p, e) {
         const b = p.__def.behavior ?? EMPTY;
         this.playImpact(p.__def.impact, e.x, e.y, p.__heading);
-        if (b.aoe) this.explode(p, e.x, e.y, b.aoe);
+        if (p.__aoe) this.explode(p, e.x, e.y, p.__aoe);
         if (b.split && (b.split.on ?? "hit") === "hit") this.split(p, b.split, e);
-        // 도탄이 남아 있으면 죽지 않고 다음 표적으로 튄다 — 관통 횟수를 소모하지 않는다
-        if (b.bounce && p.__bounce > 0 && this.rebound(p, b.bounce)) return;
+        // 도탄이 남아 있으면 죽지 않고 다음 표적으로 튄다 — 관통 횟수를 소모하지 않는다.
+        // ★ 룬 「연쇄 화염」이 쓰는 경로가 여기다. **탄을 만들지 않고 같은 탄을 꺾으므로**
+        //   분열할 세대 자체가 존재하지 않는다 — 화면 투사체 수가 늘 수 없다(검증 R-6).
+        if (p.__bounceDef && p.__bounce > 0 && this.rebound(p, p.__bounceDef)) return;
         if (p.__pierce-- <= 0) this.release(p);
     }
 
@@ -396,7 +407,7 @@ export class ProjectileSystem {
     /** 수명이 다했다. 만료 시 터지는 탄(포탄)과 분열탄을 여기서 처리한다 */
     expire(p) {
         const b = p.__def.behavior ?? EMPTY;
-        if (b.aoe && b.aoe.onExpire) this.explode(p, p.x, p.y, b.aoe);
+        if (p.__aoe && p.__aoe.onExpire) this.explode(p, p.x, p.y, p.__aoe);
         if (b.split && b.split.on === "expire") this.split(p, b.split, null);
         if (b.fxOnExpire) this.playImpact(p.__def.impact, p.x, p.y, p.__heading);
         this.release(p);

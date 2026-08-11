@@ -524,3 +524,46 @@
     gap: calc(8 * var(--u));
     justify-content: flex-end;
 }
+
+/* ── 룬 조망 (31 §6.2) ──
+   ★ 전용 룬 트리 화면을 만들지 않는다. 640x360 에서 4무기 x 7노드를 그리면 노드가 20px 남짓이 되고,
+   화면이 하나 늘면 10-UIUX §10.4 의 화면 상태 머신을 고쳐야 한다. 조망은 일시정지 안에서 끝낸다. */
+.rune-tree {
+    margin-top: calc(8 * var(--u));
+    padding-top: calc(6 * var(--u));
+    border-top: calc(1 * var(--u)) solid var(--stone-3);
+    display: flex;
+    flex-direction: column;
+    gap: calc(3 * var(--u));
+}
+.rune-row {
+    display: flex;
+    align-items: baseline;
+    gap: calc(4 * var(--u));
+    font-size: calc(9 * var(--u));
+    line-height: 1.6;
+}
+.rune-row__name {
+    color: var(--parchment);
+    white-space: nowrap;
+}
+.rune-row__lv { color: var(--ash); }
+.rune-row__slots {
+    display: flex;
+    flex: 1;
+    gap: calc(3 * var(--u));
+    justify-content: flex-end;
+}
+/* 빈 칸은 점선, 새긴 칸은 금색 실선. "무엇을 더 새길 수 있는가"가 한눈에 읽혀야 한다 */
+.rune-slot {
+    padding: 0 calc(3 * var(--u));
+    border: calc(1 * var(--u)) dashed var(--stone-3);
+    color: var(--stone-4);
+    white-space: nowrap;
+}
+.rune-slot--on {
+    border-style: solid;
+    border-color: var(--gold);
+    color: var(--gold);
+}
+.rune-slot__g { margin-right: calc(2 * var(--u)); }

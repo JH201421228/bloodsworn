@@ -31,6 +31,40 @@ import ResultScreen from "@/ui/screens/ResultScreen";
 import "@/ui/screens/screens.css";
 import "@/ui/loading/loading.css";
 
+/**
+ * 룬 조망 (31 §6.2). ★ 전용 룬 트리 화면을 만들지 않는다 —
+ * 가로 640x360 에서 4무기 x 7노드를 그리면 노드 하나가 20px 남짓이 되어 읽을 수 없고,
+ * 화면이 하나 늘면 10-UIUX §10.4 의 화면 상태 머신을 고쳐야 한다.
+ * 트리의 모양은 좌판이 이미 보여준다 — 지금 고를 수 있는 2개가 곧 그 시점의 트리다.
+ */
+function RuneTree() {
+    const runes = useStore((s) => s.runes);
+    if (!runes?.length) return null;
+    return (
+        <div className="rune-tree">
+            {runes.map((w) => (
+                <div className="rune-row" key={w.weaponId}>
+                    <span className="rune-row__name">{w.name}</span>
+                    <span className="rune-row__lv">Lv.{w.level}</span>
+                    <span className="rune-row__slots">
+                        {[w.t1, w.t2, w.t3].map((r, i) => (
+                            <span
+                                key={w.weaponId + ":" + i}
+                                className={"rune-slot" + (r ? " rune-slot--on" : "")}
+                                title={r ? r.name + " — " + r.desc : "빈 슬롯"}
+                            >
+                                {/* 아이콘이 오기 전 유니코드 글리프 폴백 (31 §6.3). runes.json 의 glyph 가 정본 */}
+                                {r ? <span className="rune-slot__g">{r.glyph}</span> : null}
+                                {r ? r.name : "·"}
+                            </span>
+                        ))}
+                    </span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 /** 일시정지 (10-UIUX 2.7). 「계속」이 최상단인 이유: 가장 자주 누르는 버튼이다. */
 function PauseOverlay({ onClose }) {
     const humanity = useStore((s) => s.humanity);
@@ -85,6 +119,7 @@ function PauseOverlay({ onClose }) {
                         {awakenings.length} / 2 · 리롤 {rerollLeft}
                     </span>
                 </div>
+                <RuneTree />
             </div>
         </div>
     );

@@ -36,6 +36,7 @@ import affixes from "./affixes.json" with { type: "json" };
 import droptables from "./droptables.json" with { type: "json" };
 import projectiles from "./projectiles.json" with { type: "json" };
 import awakenings from "./awakenings.json" with { type: "json" };
+import runes from "./runes.json" with { type: "json" };
 import sanctum from "./sanctum.json" with { type: "json" };
 import audio from "./audio.json" with { type: "json" };
 // 스탯 이름은 문자열 목록을 여기 복사하면 안 된다. 코드가 쓰는 표를 그대로 가져온다 —
@@ -98,6 +99,18 @@ const USE_EFFECT_TYPES = ["heal", "healPct", "buff", "bomb", "slow", "exp"];
 const ITEM_CATEGORIES = ["use", "gold", "relic", "equip"];
 /** AwakeningSystem.js:141~146 tag switch. 여기 없는 태그는 각성해도 특수 효과가 안 붙는다 */
 const AWAKEN_TAGS = ["FRAIL", "SLOW", "HUNGER", "MYOPIA", "GREED", "BLIND"];
+/** RuneSystem.js emptyMods() 의 거울. 여기 없는 key 는 recompute() 가 조용히 건너뛴다 = 룬이 무효다 */
+const RUNE_MOD_KEYS = ["arcMul", "radiusMul", "countAdd", "pierceAdd", "cdMul", "rehitMul", "durationMul"];
+/** RuneSystem 이 실제로 해석하는 special id 거울. 없는 id 는 새겨도 아무 일이 안 일어난다 */
+const RUNE_SPECIALS = [
+    "riposte", "lifesteal_kill", "arc_360", "arc_wave",           // W1
+    "hit_burst", "homing_seek", "meteor", "chain_bounce",         // W2
+    "orbit_counter", "orbit_pulse", "bone_launch",                // W3
+    "zone_slow", "sanctuary", "zone_smite",                       // W4
+];
+/** 31 §2 — 무기당 3단계, 각 단계 2택. 이 형태가 깨지면 좌판이 "선택"이 아니게 된다 */
+const RUNE_TIER_MAX = 3;
+const RUNE_PER_TIER = 2;
 /** StatSystem.js:97~105 recalc() 가 아는 연산자 */
 const STAT_OPS = ["add", "mul", "toll", "tollAdd", "awaken"];
 /** PactSystem.js:217~225 choose() 의 op 분기 */
@@ -662,6 +675,99 @@ function ruleAwakenings(R, D) {
     if (!D.awakenings.presentation) R.err("awakenings.presentation 이 없다 (AwakeningSystem.js:43)");
 }
 
+/**
+ * 룬 (31 §7 R-8). 읽는 곳: RuneSystem.js — canEngrave(게이트) / recompute(mods·specials)
+ *
+ * ★ 이 규칙이 잡아야 하는 조용한 사고 3가지
+ *   ① weapon 오타 → 그 룬은 canEngrave 의 G-1 에서 영원히 걸러진다. 에러도 안 난다.
+ *   ② mod key / special id 오타 → recompute 가 조용히 건너뛴다. 새겨지긴 하는데 아무 일이 없다.
+ *   ③ requires 불일치 → 게이트가 영원히 안 열리거나(weaponLevel > maxLevel),
+ *      트리 순서가 깨진다(requires.tier 가 선행 단계가 아니다).
+ * ★ 그리고 R-3 의 데이터판 보증 — 룬 id 가 blessings 에 섞여 있으면 카드에 나온다.
+ */
+function ruleRunes(R, D) {
+    if (!D.runes) return; // 번들에 안 실렸으면 이 규칙만 건너뛴다
+    const wByld = new Map((D.weapons.weapons ?? []).map((w) => [w.id, w]));
+    const pids = idSet(D.projectiles.projectiles);
+    const blessingIds = idSet(D.blessings.blessings);
+    const seen = new Set();
+    const glyphs = new Map();
+    const perTier = new Map();
+    const levelByTier = new Map();
+
+    for (const r of D.runes.runes ?? []) {
+        checkShape(R, `rune ${r.id}`, r, {
+            id: isStr, weapon: isStr, name: isStr, glyph: isStr, desc: isStr, tier: isNum,
+        });
+        if (seen.has(r.id)) R.err(`rune ${r.id}: id 가 중복이다 — 나중 것이 앞 것을 덮는다`);
+        seen.add(r.id);
+        if (blessingIds.has(r.id)) {
+            R.err(`rune ${r.id}: 같은 id 의 축복이 blessings.json 에 있다 — 룬이 레벨업 카드에 섞인다(R-3)`);
+        }
+        if (isStr(r.glyph)) {
+            const prev = glyphs.get(r.glyph);
+            if (prev) R.err(`rune ${r.id}: 글리프 "${r.glyph}" 를 ${prev} 가 이미 쓴다 — 조망에서 구분이 안 된다`);
+            else glyphs.set(r.glyph, r.id);
+        }
+
+        const w = wByld.get(r.weapon);
+        if (!w) { R.err(`rune ${r.id}: weapon "${r.weapon}" 가 weapons.json 에 없다 — G-1 에서 영원히 걸러진다`); continue; }
+        if (!isNum(r.tier) || r.tier < 1 || r.tier > RUNE_TIER_MAX) {
+            R.err(`rune ${r.id}: tier ${r.tier} 는 1~${RUNE_TIER_MAX} 밖이다 (RuneSystem TIER_KEY 에 슬롯이 없다)`);
+            continue;
+        }
+        const k = r.weapon + ":" + r.tier;
+        perTier.set(k, (perTier.get(k) ?? 0) + 1);
+
+        // 게이트 G-2 / G-3 정합
+        const req = r.requires ?? {};
+        if (!isNum(req.weaponLevel)) R.err(`rune ${r.id}: requires.weaponLevel 누락 (G-2)`);
+        else {
+            if (req.weaponLevel > w.maxLevel) {
+                R.err(`rune ${r.id}: requires.weaponLevel ${req.weaponLevel} 이 ${w.id}.maxLevel ${w.maxLevel} 을 넘는다 — 게이트가 영원히 안 열린다`);
+            }
+            const prev = levelByTier.get(r.weapon + ":" + (r.tier - 1));
+            if (prev !== undefined && req.weaponLevel < prev) {
+                R.err(`rune ${r.id}: 요구 레벨 ${req.weaponLevel} 이 선행 단계 요구(${prev})보다 낮다 — 단계가 역전된다`);
+            }
+            levelByTier.set(k, req.weaponLevel);
+        }
+        if (req.tier !== r.tier - 1) {
+            R.err(`rune ${r.id}: requires.tier ${req.tier} 가 선행 단계 ${r.tier - 1} 과 다르다 (G-3)`);
+        }
+
+        if (!Array.isArray(r.effects) || !r.effects.length) { R.err(`rune ${r.id}: effects 가 비었다 — 새겨도 아무 일이 없다`); continue; }
+        for (const e of r.effects) {
+            if (e.op === "mod") {
+                if (!has(RUNE_MOD_KEYS, e.key)) R.err(`rune ${r.id}: mod key "${e.key}" 를 RuneSystem.emptyMods 가 모른다 — 조용히 무시된다`);
+                if (!isNum(e.value)) R.err(`rune ${r.id}: mod "${e.key}" 의 value 가 숫자가 아니다`);
+            } else if (e.op === "special") {
+                if (!has(RUNE_SPECIALS, e.id)) R.err(`rune ${r.id}: special "${e.id}" 에 대응하는 핸들러가 RuneSystem 에 없다 — 새겨도 아무 일이 없다`);
+            } else if (e.op === "stat") {
+                if (!(e.stat in BASE_STATS)) R.err(`rune ${r.id}: stat "${e.stat}" 이 StatSystem BASE 에 없다`);
+                if (e.mode && !has(STAT_OPS, e.mode)) R.err(`rune ${r.id}: stat mode "${e.mode}" 를 StatSystem 이 모른다`);
+                if (!isNum(e.value)) R.err(`rune ${r.id}: stat value 가 숫자가 아니다`);
+            } else {
+                R.err(`rune ${r.id}: op "${e.op}" 를 RuneSystem 이 모른다 (mod/stat/special)`);
+                continue;
+            }
+            // 룬이 쏘는 투사체. 없는 id 면 ProjectileSystem 이 경고만 남기고 발사가 조용히 멈춘다
+            const pid = e.params?.projectile;
+            if (pid && !pids.has(pid)) R.err(`rune ${r.id}: projectile "${pid}" 가 projectiles.json 에 없다 — 그 효과가 조용히 안 나간다`);
+        }
+    }
+
+    // 31 §2 — 무기당 3단계, 각 단계 2택. 좌판 3개에 서로 다른 무기를 올린다는 전제가 여기서 나온다
+    for (const w of D.weapons.weapons ?? []) {
+        for (let t = 1; t <= RUNE_TIER_MAX; t++) {
+            const n = perTier.get(w.id + ":" + t) ?? 0;
+            if (n !== RUNE_PER_TIER) {
+                R.err(`rune: ${w.id} T${t} 이 ${n}종이다 (31 §2 는 단계마다 정확히 ${RUNE_PER_TIER}택)`);
+            }
+        }
+    }
+}
+
 /** 어픽스·성소 — 스탯 이름이 코드 표에 없으면 모디파이어가 허공에 쌓인다 */
 function ruleAffixesAndSanctum(R, D) {
     const rarities = D.items.rarities ?? [];
@@ -805,7 +911,7 @@ function ruleManifest(R, D) {
 const RULES = [
     ruleWeapons, ruleEnemies, ruleBlessings, ruleTolls, rulePhases, ruleNocturne,
     ruleStageEnemyPools, ruleWaveWeights, ruleBossAssignment, ruleBossSheets, ruleTelegraph,
-    ruleItems, ruleItemIcons, ruleDroptables, ruleProjectiles, ruleAwakenings,
+    ruleItems, ruleItemIcons, ruleDroptables, ruleProjectiles, ruleAwakenings, ruleRunes,
     ruleAffixesAndSanctum, ruleAudio, ruleWaveCurve, ruleManifest,
 ];
 
@@ -832,7 +938,7 @@ export function runRules(D) {
 export function browserBundle() {
     return {
         weapons, enemies, blessings, tolls, phases, nocturne, stages,
-        boss, bossAtlas, items, affixes, droptables, projectiles, awakenings, sanctum, audio,
+        boss, bossAtlas, items, affixes, droptables, projectiles, awakenings, runes, sanctum, audio,
     };
 }
 

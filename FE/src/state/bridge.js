@@ -101,6 +101,9 @@ export function installBridge() {
         persistSave();
     }, "bridge:awakening");
 
+    // 룬 조망. 룬을 새기거나 무기 레벨이 바뀔 때만 온다 — 일시정지 화면이 이걸 그린다(31 §6.2).
+    sub(EVENTS.RUNES_CHANGED, (p) => s().setRunes(p?.weapons ?? []), "bridge:runes");
+
     sub(EVENTS.BOSS_HP, (hp) => s().setBossHp(hp), "bridge:boss-hp");
 
     sub(EVENTS.RUN_ENDED, (result) => {

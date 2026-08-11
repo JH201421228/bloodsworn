@@ -1,0 +1,368 @@
+{
+    "_comment": "룬 24종. 정본 31-RUNE-EVOLUTION-TREE 3(목록) 5.3(스키마). 무기 4종 x (T1 2 + T2 2 + T3 2).",
+    "_schema": [
+        "op:\"mod\"     — w.mods 를 바꾸는 단순형. key 끝이 Mul 이면 곱(기본 1), Add 면 합(기본 0) 이다.",
+        "op:\"stat\"    — StatSystem 으로 흘리는 전역형. src 는 \"rune:\"+id (31 §5.2 접두 규약).",
+        "op:\"special\" — RuneSystem 안의 전용 핸들러. id 하나당 함수 하나다(awakenings.json 승계).",
+        "★ 수치는 이 파일이 정본이다. 코드에 적힌 기본값은 데이터가 깨졌을 때의 폴백일 뿐이다."
+    ],
+    "_glyph": "아트가 오기 전 폴백. awakenings.json 의 sigil 과 같은 방식이다. icon 은 Codex 아이콘(29 C-2)이 오면 채운다.",
+    "_gate": "requires.weaponLevel = 게이트 G-2, requires.tier = G-3(선행 단계). G-1(보유)/G-4(빈 슬롯)는 코드가 본다.",
+    "schemaVersion": 1,
+    "runes": [
+        {
+            "id": "rn_w1_maw",
+            "weapon": "W1",
+            "tier": 1,
+            "name": "벌어진 아가리",
+            "glyph": "◐",
+            "icon": null,
+            "desc": "부채꼴 각도 +40%",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "arcMul", "value": 1.4 }]
+        },
+        {
+            "id": "rn_w1_reach",
+            "weapon": "W1",
+            "tier": 1,
+            "name": "긴 이빨",
+            "glyph": "▶",
+            "icon": null,
+            "desc": "사거리 +30%",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "radiusMul", "value": 1.3 }]
+        },
+        {
+            "id": "rn_w1_riposte",
+            "weapon": "W1",
+            "tier": 2,
+            "name": "되받아치기",
+            "glyph": "↺",
+            "icon": null,
+            "desc": "벨 때마다 다음 쿨다운 −8% (최대 −40%)",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [{ "op": "special", "id": "riposte", "params": { "perHit": 0.08, "max": 0.4 } }]
+        },
+        {
+            "id": "rn_w1_drain",
+            "weapon": "W1",
+            "tier": 2,
+            "name": "피 빨기",
+            "glyph": "♦",
+            "icon": null,
+            "desc": "송곳니로 처치하면 최대 체력 1.5% 회복",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [{ "op": "special", "id": "lifesteal_kill", "params": { "pctMaxHp": 0.015, "cooldownSec": 0.6 } }]
+        },
+        {
+            "id": "rn_w1_circle",
+            "weapon": "W1",
+            "tier": 3,
+            "name": "선혈의 원",
+            "glyph": "◎",
+            "icon": null,
+            "desc": "부채꼴이 360도 전방위가 된다. 조준이 사라진다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [{ "op": "special", "id": "arc_360", "params": {} }]
+        },
+        {
+            "id": "rn_w1_wave",
+            "weapon": "W1",
+            "tier": 3,
+            "name": "참격 파동",
+            "glyph": "≫",
+            "icon": null,
+            "desc": "벨 때마다 전방으로 관통 파동을 날린다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "arc_wave",
+                    "params": {
+                        "projectile": "p_blood_wave",
+                        "damageMult": 0.6,
+                        "pierce": 5,
+                        "speed": 260,
+                        "range": 220,
+                        "scale": 2
+                    }
+                }
+            ]
+        },
+        {
+            "id": "rn_w2_twin",
+            "weapon": "W2",
+            "tier": 1,
+            "name": "쌍포",
+            "glyph": "‖",
+            "icon": null,
+            "desc": "발사 수 +1",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "countAdd", "value": 1 }]
+        },
+        {
+            "id": "rn_w2_pierce",
+            "weapon": "W2",
+            "tier": 1,
+            "name": "꿰뚫는 불",
+            "glyph": "»",
+            "icon": null,
+            "desc": "관통 +2",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "pierceAdd", "value": 2 }]
+        },
+        {
+            "id": "rn_w2_burst",
+            "weapon": "W2",
+            "tier": 2,
+            "name": "작렬",
+            "glyph": "✳",
+            "icon": null,
+            "desc": "명중하면 반경 22px 소폭발 (본 피해의 40%)",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "hit_burst",
+                    "params": { "radius": 22, "damageMult": 0.4, "impact": "fx_flame_blast", "fxScale": 0.8 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w2_seek",
+            "weapon": "W2",
+            "tier": 2,
+            "name": "불의 눈",
+            "glyph": "◉",
+            "icon": null,
+            "desc": "투사체가 약하게 유도된다 (선회 120도/초)",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "homing_seek",
+                    "params": { "turnRate": 120, "range": 170, "reacquire": 0.15 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w2_meteor",
+            "weapon": "W2",
+            "tier": 3,
+            "name": "유성우",
+            "glyph": "✷",
+            "icon": null,
+            "desc": "발사할 때마다 하늘에서 3발이 더 떨어진다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "meteor",
+                    "params": {
+                        "projectile": "p_meteor_fire",
+                        "count": 3,
+                        "fallHeight": 150,
+                        "spread": 70,
+                        "speed": 340,
+                        "damageMult": 0.8,
+                        "pierce": 1,
+                        "overshoot": 44
+                    }
+                }
+            ]
+        },
+        {
+            "id": "rn_w2_chain",
+            "weapon": "W2",
+            "tier": 3,
+            "name": "연쇄 화염",
+            "glyph": "◈",
+            "icon": null,
+            "desc": "적중하면 근처 적에게 3회 튄다. 피해는 25%씩 줄어든다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "chain_bounce",
+                    "params": { "count": 3, "falloff": 0.25, "range": 70 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w3_more",
+            "weapon": "W3",
+            "tier": 1,
+            "name": "더 많은 뼈",
+            "glyph": "∷",
+            "icon": null,
+            "desc": "궤도 뼈 +2",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "countAdd", "value": 2 }]
+        },
+        {
+            "id": "rn_w3_wide",
+            "weapon": "W3",
+            "tier": 1,
+            "name": "넓은 궤도",
+            "glyph": "◯",
+            "icon": null,
+            "desc": "궤도 반경 +35%",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "radiusMul", "value": 1.35 }]
+        },
+        {
+            "id": "rn_w3_counter",
+            "weapon": "W3",
+            "tier": 2,
+            "name": "역회전",
+            "glyph": "↻",
+            "icon": null,
+            "desc": "궤도가 두 겹이 되고 바깥 겹이 반대로 돈다",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "orbit_counter",
+                    "params": { "outerRadiusMul": 1.55 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w3_shard",
+            "weapon": "W3",
+            "tier": 2,
+            "name": "뼈 파편",
+            "glyph": "✱",
+            "icon": null,
+            "desc": "재타격 간격 −30%",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [{ "op": "mod", "key": "rehitMul", "value": 0.7 }]
+        },
+        {
+            "id": "rn_w3_grinder",
+            "weapon": "W3",
+            "tier": 3,
+            "name": "분쇄기",
+            "glyph": "◍",
+            "icon": null,
+            "desc": "궤도 반경이 2.4초 주기로 팽창·수축한다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "orbit_pulse",
+                    "params": { "periodSec": 2.4, "minMul": 0.55, "maxMul": 1.75 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w3_launch",
+            "weapon": "W3",
+            "tier": 3,
+            "name": "뼈 사출",
+            "glyph": "↗",
+            "icon": null,
+            "desc": "5초마다 뼈 하나가 최근접 적에게 날아가 관통한다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "bone_launch",
+                    "params": {
+                        "projectile": "p_bone_shard",
+                        "everySec": 5,
+                        "returnSec": 3,
+                        "speed": 300,
+                        "range": 320,
+                        "pierce": 99,
+                        "damageMult": 1.6
+                    }
+                }
+            ]
+        },
+        {
+            "id": "rn_w4_more",
+            "weapon": "W4",
+            "tier": 1,
+            "name": "넘치는 성수",
+            "glyph": "⋮",
+            "icon": null,
+            "desc": "낙하 수 +1",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "countAdd", "value": 1 }]
+        },
+        {
+            "id": "rn_w4_wide",
+            "weapon": "W4",
+            "tier": 1,
+            "name": "퍼지는 성수",
+            "glyph": "◌",
+            "icon": null,
+            "desc": "장판 반경 +30%",
+            "requires": { "weaponLevel": 3, "tier": 0 },
+            "effects": [{ "op": "mod", "key": "radiusMul", "value": 1.3 }]
+        },
+        {
+            "id": "rn_w4_linger",
+            "weapon": "W4",
+            "tier": 2,
+            "name": "마르지 않음",
+            "glyph": "∞",
+            "icon": null,
+            "desc": "지속 시간 +60%",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [{ "op": "mod", "key": "durationMul", "value": 1.6 }]
+        },
+        {
+            "id": "rn_w4_cleanse",
+            "weapon": "W4",
+            "tier": 2,
+            "name": "정화",
+            "glyph": "≋",
+            "icon": null,
+            "desc": "장판 안의 적 이동속도 −35%",
+            "requires": { "weaponLevel": 5, "tier": 1 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "zone_slow",
+                    "params": { "speedMult": 0.65, "refreshSec": 0.15 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w4_sanctuary",
+            "weapon": "W4",
+            "tier": 3,
+            "name": "성역",
+            "glyph": "✚",
+            "icon": null,
+            "desc": "장판이 하나로 합쳐져 따라다닌다. 반경 +80%",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "sanctuary",
+                    "params": { "radiusMul": 1.8, "minLifePad": 0.6 }
+                }
+            ]
+        },
+        {
+            "id": "rn_w4_smite",
+            "weapon": "W4",
+            "tier": 3,
+            "name": "낙뢰",
+            "glyph": "✦",
+            "icon": null,
+            "desc": "장판이 생길 때 중심에 즉발 대형 피해가 떨어진다",
+            "requires": { "weaponLevel": 5, "tier": 2 },
+            "effects": [
+                {
+                    "op": "special",
+                    "id": "zone_smite",
+                    "params": { "damageMult": 6, "radiusMul": 1 }
+                }
+            ]
+        }
+    ]
+}

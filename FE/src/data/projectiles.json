@@ -412,6 +412,35 @@
                 }
             },
             "_desc": "W4 성수 낙하 연출 교체용 후보. 현재 W4 는 zone 이라 이 정의를 쓰지 않는다"
+        },
+        {
+            "id": "p_blood_wave",
+            "name": "참격 파동",
+            "sheet": "proj-dart-blood",
+            "scale": 1.4,
+            "hitR": 7,
+            "impact": "fx_blood_hit",
+            "trail": {
+                "every": 0.04,
+                "life": 0.14,
+                "alpha": 0.4,
+                "scale": 0.8
+            },
+            "behavior": {},
+            "_desc": "룬 「참격 파동」(rn_w1_wave) 전용. 관통·피해는 RuneSystem 이 opts 로 넘긴다"
+        },
+        {
+            "id": "p_meteor_fire",
+            "name": "유성",
+            "sheet": "proj-comet-fire",
+            "scale": 0.8,
+            "hitR": 7,
+            "anim": {
+                "yoyo": true
+            },
+            "impact": "fx_flame_blast",
+            "behavior": {},
+            "_desc": "룬 「유성우」(rn_w2_meteor) 전용. 하늘에서 아래로 떨어진다 — 궤적 없음(3발이 한꺼번에 떨어져 잔상이 화면을 덮는다)"
         }
     ],
     "impacts": [

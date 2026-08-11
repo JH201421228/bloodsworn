@@ -19,6 +19,9 @@ export const EVENTS = {
     ELITE_SPAWNED: "elite:spawned",
     CHEST_OPENED: "chest:opened",
     ITEM_PICKED: "item:picked",
+    /** 룬을 새겼거나 무기 레벨이 바뀌었다. 일시정지 화면의 룬 조망이 이걸로 갱신된다 (31 §6.2).
+     *  ★ 60fps 값이 아니다 — 레벨업/조우 빈도로만 바뀌므로 스토어에 실어도 된다(06 §3.3). */
+    RUNES_CHANGED: "rune:changed",
     BOSS_SPAWNED: "boss:spawned",
     BOSS_HP: "boss:hp",
     RUN_PAUSED: "run:paused",

@@ -28,6 +28,7 @@ import { BossSystem } from "../systems/BossSystem";
 import { AudioSystem } from "../systems/AudioSystem";
 import { FxSystem } from "../systems/FxSystem";
 import { ProjectileSystem } from "../systems/ProjectileSystem";
+import { RuneSystem } from "../systems/RuneSystem";
 import { ItemSystem } from "../systems/ItemSystem";
 import { StageSystem } from "../systems/StageSystem";
 import { applySanctum } from "../systems/SanctumSystem";
@@ -93,6 +94,14 @@ export default class GameScene extends Phaser.Scene {
             });
             this.combatSystem.projectiles = this.projectiles;
 
+            // 룬 — 무기의 「수치」가 아니라 「거동」을 바꾼다(31). 얻는 경로는 조우뿐이고
+            // 조우(EncounterSystem)는 아직 없다 — 그래서 훅을 전부 옵셔널로 두어
+            // 룬을 하나도 안 새긴 런에서 코드가 지나가는 자리가 늘지 않게 했다.
+            this.runes = new RuneSystem(this, {
+                combat: this.combatSystem, stats: this.stats, player: this.player,
+            });
+            this.combatSystem.runes = this.runes;
+
             // 아이템 드롭. CombatSystem 이 적 사망 시 rollDrop 을 부른다.
             this.items = new ItemSystem(this, {
                 player: this.player, combat: this.combatSystem, stats: this.stats, spawn: this.spawnSystem,
@@ -139,6 +148,8 @@ export default class GameScene extends Phaser.Scene {
         // React 가 화면을 PLAYING 으로 넘기고 런 상태를 초기화하는 신호.
         // rerollLeft 는 성소 「재계약」으로 늘어나므로 Phaser 가 계산해 실어 보낸다.
         EventBus.emit(EVENTS.RUN_STARTED, { rerollLeft: this.combatSystem?.pact?.rerollLeft ?? 2 });
+        // ★ RUN_STARTED **뒤**여야 한다 — bridge 의 resetRun 이 런 상태를 비운 다음에 채워야 남는다
+        this.runes?.emitSnapshot();
 
         this.scene.launch(SCENES.HUD);
         // 오버레이는 기본 OFF 다. 씬은 띄우되(F9 토글 핸들러가 살아 있어야 한다)
