@@ -5,7 +5,10 @@
         "★ windup 은 전부 0.60 이상이어야 한다(T525 / 03-GDD 7.3). BossSystem 생성자가 이를 검사한다.",
         "이름 주의 — 「녹턴」은 PACT 카드를 제시하는 흡혈귀(01-CONCEPT 4.4)이고, 6:00 보스는 「여명의 처형인」이다.",
         "bosses: 스테이지별 보스 6종. boss(단수)는 BOSS1 하위호환용으로 남긴다.",
-        "baseHp 는 목표 전투 시간 x 그 시점 기대 DPS 로 역산했다(_designNote 참조)."
+        "baseHp 는 목표 전투 시간 x 그 시점 기대 DPS 로 역산했다(_designNote 참조).",
+        "★ 스프라이트는 라이선스가 확인된 3종만 쓴다(Bringer-Of-Death / EVil Wizard 2 CC-0 / FREE_Samurai).",
+        "  동봉 라이선스가 없던 Undead executioner · NightBorne · Mecha-stone Golem 은 쓰지 않는다.",
+        "  5스테이지를 3종으로 돌리되 tint·spriteScale·패턴으로 가른다."
     ],
     "schemaVersion": 1,
     "boss": {
@@ -354,7 +357,10 @@
             ],
             "_designNote": "목표 전투 76초. 기대 DPS 152 x 76s = 약 11600. 패턴 축: 낫·사령탄",
             "sheet": null,
-            "texture": "boss"
+            "texture": "boss",
+            "tint": 16777215,
+            "spriteScale": 1,
+            "_spriteNote": "Bringer-Of-Death 원본"
         },
         "BOSS2": {
             "id": "BOSS2",
@@ -364,15 +370,15 @@
             "contactDamage": 24,
             "moveSpeed": 52,
             "hitbox": {
-                "w": 60,
-                "h": 80
+                "w": 40,
+                "h": 71
             },
             "expValue": 0,
             "goldValue": 0,
             "goldOnClear": 240,
             "knockbackResist": 1,
             "ai": "chase",
-            "anim": "boss2.idle",
+            "anim": "boss4.idle",
             "spawnAt": 300,
             "purgeMinionsOnSpawn": true,
             "stopSpawning": true,
@@ -528,8 +534,11 @@
                 }
             ],
             "_designNote": "목표 전투 72초. 기대 DPS 205 x 72s = 약 14800. 패턴 축: 성가·추적탄",
-            "sheet": "boss2",
-            "texture": "boss2"
+            "sheet": "boss4",
+            "texture": "boss4",
+            "tint": 12575743,
+            "spriteScale": 0.95,
+            "_spriteNote": "EVil Wizard(CC-0). 창백한 성가대장"
         },
         "BOSS3": {
             "id": "BOSS3",
@@ -539,8 +548,8 @@
             "contactDamage": 28,
             "moveSpeed": 40,
             "hitbox": {
-                "w": 35,
-                "h": 54
+                "w": 39,
+                "h": 59
             },
             "expValue": 0,
             "goldValue": 0,
@@ -704,7 +713,10 @@
             ],
             "_designNote": "목표 전투 78초. 기대 DPS 250 x 78s = 약 19500. 패턴 축: 독장판·소환",
             "sheet": "boss3",
-            "texture": "boss3"
+            "texture": "boss3",
+            "tint": 10474634,
+            "spriteScale": 1.1,
+            "_spriteNote": "Samurai. 늪빛으로 물든 역병의 어미"
         },
         "BOSS4": {
             "id": "BOSS4",
@@ -714,15 +726,15 @@
             "contactDamage": 30,
             "moveSpeed": 44,
             "hitbox": {
-                "w": 42,
-                "h": 75
+                "w": 64,
+                "h": 92
             },
             "expValue": 0,
             "goldValue": 0,
             "goldOnClear": 340,
             "knockbackResist": 1,
             "ai": "chase",
-            "anim": "boss4.idle",
+            "anim": "boss.idle",
             "spawnAt": 330,
             "purgeMinionsOnSpawn": true,
             "stopSpawning": true,
@@ -878,8 +890,11 @@
                 }
             ],
             "_designNote": "목표 전투 74초. 기대 DPS 300 x 74s = 약 22200. 패턴 축: 돌진·낙석",
-            "sheet": "boss4",
-            "texture": "boss4"
+            "sheet": null,
+            "texture": "boss",
+            "tint": 13218047,
+            "spriteScale": 1.15,
+            "_spriteNote": "Bringer 재사용 + 자수정 색조·확대"
         },
         "BOSS5": {
             "id": "BOSS5",
@@ -889,15 +904,15 @@
             "contactDamage": 32,
             "moveSpeed": 48,
             "hitbox": {
-                "w": 66,
-                "h": 53
+                "w": 50,
+                "h": 90
             },
             "expValue": 0,
             "goldValue": 0,
             "goldOnClear": 420,
             "knockbackResist": 1,
             "ai": "chase",
-            "anim": "boss5.idle",
+            "anim": "boss4.idle",
             "spawnAt": 450,
             "purgeMinionsOnSpawn": true,
             "stopSpawning": true,
@@ -1053,8 +1068,11 @@
                 }
             ],
             "_designNote": "목표 전투 82초. 기대 DPS 360 x 82s = 약 29500. 패턴 축: 화염·광폭화",
-            "sheet": "boss5",
-            "texture": "boss5"
+            "sheet": "boss4",
+            "texture": "boss4",
+            "tint": 16751196,
+            "spriteScale": 1.2,
+            "_spriteNote": "EVil Wizard 재사용 + 화염 색조·확대"
         },
         "BOSS6": {
             "id": "BOSS6",
@@ -1064,15 +1082,15 @@
             "contactDamage": 34,
             "moveSpeed": 50,
             "hitbox": {
-                "w": 83,
-                "h": 80
+                "w": 44,
+                "h": 68
             },
             "expValue": 0,
             "goldValue": 0,
             "goldOnClear": 200,
             "knockbackResist": 1,
             "ai": "chase",
-            "anim": "boss6.idle",
+            "anim": "boss3.idle",
             "spawnAt": 360,
             "purgeMinionsOnSpawn": true,
             "stopSpawning": true,
@@ -1228,8 +1246,11 @@
                 }
             ],
             "_designNote": "목표 전투 85초. 기대 DPS 420 x 85s = 약 35700. 패턴 축: 전방위·분열",
-            "sheet": "boss6",
-            "texture": "boss6"
+            "sheet": "boss3",
+            "texture": "boss3",
+            "tint": 9080744,
+            "spriteScale": 1.25,
+            "_spriteNote": "Samurai 재사용 + 잿빛·최대 확대"
         }
     }
 }

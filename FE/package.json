@@ -20,7 +20,8 @@
     "build:ios": "npm run build && npx cap sync ios",
     "release:aab": "npm run build:android && node tools/gradle.mjs bundleRelease",
     "release:apk": "npm run build:android && node tools/gradle.mjs assembleRelease",
-    "build:audio": "node tools/encode-audio.mjs"
+    "build:audio": "node tools/encode-audio.mjs",
+    "build:items": "node tools/gen-item-icons.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",

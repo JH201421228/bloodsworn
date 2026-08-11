@@ -871,3 +871,41 @@ Q4. 라이선스가 확실한 무료 대체 에셋을 1시간 안에 찾을 수 
 - 리스크·스코프 컷: `16-RISKS-AND-SCOPE-CUTS.md` (**LC-02의 수익화 방침을 여기에도 기록할 것**)
 - 이미지 생성 프롬프트: `15-IMAGE-PROMPTS-FOR-CODEX.md` (Raven 대체 시 아이콘 40개가 여기로 넘어온다)
 - 일정: `11-ROADMAP-7DAYS.md` — LC-02/LC-03을 **Day 1~2 필수 항목**으로 반영할 것
+
+---
+
+## 부록 — 2026-08-11 예산 0원 방향에 따른 에셋 정리
+
+수익화(광고 + IAP)를 유지하면서 **예산 0원**으로 가기로 확정되어, 라이선스가 확인되지 않은
+에셋에 대한 의존을 전부 끊었다. 돈 대신 **가진 것으로 대체**하는 방향이다.
+
+| 항목 | 이전 | 조치 |
+|---|---|---|
+| 아이템 아이콘 66종 | Raven 52 + pixel items 14 | **절차적 생성으로 전량 교체** (`tools/gen-item-icons.mjs`). 외부 에셋 의존 0 |
+| 보스 스프라이트 | 6종(3종은 동봉 라이선스 없음) | **라이선스 확인된 3종만** 사용. 5스테이지를 색조·크기·패턴으로 가른다 |
+| 미사용 스프라이트 | `public/assets/boss/boss{2,5,6,7}.png` | **삭제**. 빌드에 들어가지 않는다 |
+
+### 사용 중인 보스 스프라이트 3종 (전부 원문 확인)
+| 스프라이트 | 라이선스 원문 |
+|---|---|
+| Bringer-Of-Death | "You can use this asset for personal and commercial purpose, you can modify this object to your needs." |
+| EVil Wizard 2 | **CC-0.** "Can be used in commercial and non-commercial projects." |
+| FREE_Samurai 2D Pixel Art | "You can use this asset in any game project, personal or commercial." |
+
+세 팩 모두 재판매·재배포는 금지다. NFT 전환도 금지(Samurai 명시).
+
+### 쓰지 않기로 한 것
+- `asset/bosses/Undead executioner` · `NightBorne` · `Mecha-stone Golem 0.1` — 동봉 라이선스 없음, 출처 미확인
+- `asset/bosses/MainCharacter(FreePack)` — "Purchasers are granted…" 문언이라 무료 배포분에 적용되는지 불명확
+- `asset/icons/Free - Raven Fantasy Icons` — 무료판은 "무료 배포 + 결제 0 + 광고 0" 한정
+- `asset/item/pixel items0~6` — 제작자·라이선스 단서 전무
+
+### 판단 원칙
+**라이선스가 확인된 스프라이트를 재사용하는 편이 불분명한 스프라이트를 쓰는 것보다 낫다.**
+전자는 "본 적 있는 실루엣"이고 후자는 스토어에서 내려갈 수 있는 위험이다.
+아이콘처럼 32px 실루엣이면 직접 그리는 것이 조사·교체보다 빠르고 안전하다.
+
+### 여전히 유효한 확인 과제
+- **BDragon1727 투사체** — 상업 사용 가능하나 "임의 금액 기여" 요청. itch 페이지에서 기여 후 영수증 보관.
+- **DeepDiveGameStudio 적 150종** — 전 티어 상업 허용(원문 확인). 조치 불필요.
+- **Szadi art 타일맵** — 퍼블릭 도메인. 조치 불필요.

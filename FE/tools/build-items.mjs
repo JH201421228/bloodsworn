@@ -1,4 +1,9 @@
 /**
+ * ⚠ DEPRECATED — tools/gen-item-icons.mjs 로 대체됐다.
+ *   이 스크립트는 Raven Fantasy(무료판은 수익화 불가)와 pixel items(제작자 미상)에 의존한다.
+ *   예산 0 + 수익화 방향이 확정되어 아이콘을 절차적으로 생성하는 쪽으로 바꿨다.
+ *   나중에 Raven 프리미엄을 구매하면 이 스크립트와 item-icon-map.json 을 되살릴 수 있다.
+ *
  * build-items.mjs — 아이템 아이콘 아틀라스 생성.
  *
  * ★ 왜 448+2192 장을 전부 넣지 않는가

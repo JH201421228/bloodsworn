@@ -272,6 +272,11 @@ export class BossSystem {
             const idle = this.def.sheet + ".idle";
             if (this.scene.anims.exists(idle)) b.play(idle, true);
         }
+        // 스프라이트를 3종으로 돌려 쓰므로 색조와 크기로 가른다.
+        // ★ 라이선스가 확인된 스프라이트를 재사용하는 편이 불분명한 것을 쓰는 것보다 낫다 —
+        //   전자는 "본 적 있는 실루엣"이고 후자는 스토어에서 내려갈 수 있는 위험이다.
+        b.setTint(this.def.tint ?? 0xffffff);
+        b.setScale(this.def.spriteScale ?? 1);
         b.knockbackResist = 1;                   // 넉백 면역. 정본 09-ART 넉백표 "보스 0px"
         b.kbx = 0;
         b.kby = 0;

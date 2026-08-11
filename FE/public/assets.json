@@ -310,12 +310,6 @@
             "frameHeight": 16
         },
         {
-            "key": "boss2",
-            "url": "assets/boss/boss2.png",
-            "frameWidth": 138,
-            "frameHeight": 110
-        },
-        {
             "key": "boss3",
             "url": "assets/boss/boss3.png",
             "frameWidth": 160,
@@ -326,24 +320,6 @@
             "url": "assets/boss/boss4.png",
             "frameWidth": 160,
             "frameHeight": 138
-        },
-        {
-            "key": "boss5",
-            "url": "assets/boss/boss5.png",
-            "frameWidth": 160,
-            "frameHeight": 156
-        },
-        {
-            "key": "boss6",
-            "url": "assets/boss/boss6.png",
-            "frameWidth": 160,
-            "frameHeight": 160
-        },
-        {
-            "key": "boss7",
-            "url": "assets/boss/boss7.png",
-            "frameWidth": 160,
-            "frameHeight": 58
         }
     ],
     "atlases": [

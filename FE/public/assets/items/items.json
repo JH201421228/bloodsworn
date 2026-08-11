@@ -1422,7 +1422,7 @@
     }
   },
   "meta": {
-    "app": "tools/build-items.mjs",
+    "app": "tools/gen-item-icons.mjs",
     "image": "items.png",
     "size": {
       "w": 384,
