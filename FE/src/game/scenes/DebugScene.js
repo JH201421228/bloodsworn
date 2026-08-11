@@ -12,9 +12,16 @@
  * ★ 수치의 출처는 QualitySystem 이다. 여기서 fps 를 따로 재면 두 값이 미세하게 달라져
  *   "오버레이는 47인데 강등이 안 걸린다" 같은 헛된 추적을 하게 된다.
  *   QualitySystem 이 없을 때만 자체 링버퍼로 폴백한다.
+ *
+ * ★ 표시 여부는 이 씬이 스스로 정한다 (기본 OFF)
+ *   GameScene 은 DEBUG(개발 빌드 포함)면 무조건 이 씬을 launch 한다. 그쪽은 다른 소유라
+ *   조건을 못 고친다 — 그래서 "떠 있되 그리지 않는" 상태를 여기서 만든다.
+ *   덕분에 F9 로 리로드 없이 켜고 끌 수 있다(씬을 stop 하면 키 핸들러까지 사라진다).
  */
 import Phaser from "phaser";
-import { SCENES, DEPTH } from "../constants";
+import { SCENES, DEPTH, EVENTS } from "../constants";
+import { EventBus } from "../EventBus";
+import { isOverlayOn, toggleOverlay, setOverlay } from "../debug";
 
 const SAMPLE = 300; // 폴백용. 약 5초분
 
@@ -36,9 +43,27 @@ export default class DebugScene extends Phaser.Scene {
             .text(4, 8, "", { fontFamily: "monospace", fontSize: "9px", color: COLOR_OK, lineSpacing: 1 })
             .setDepth(DEPTH.HUD + 2)
             .setScrollFactor(0);
+
+        this.applyVisible(isOverlayOn());
+
+        // F9 = 런타임 토글. 상태는 localStorage 에 남아 다음 실행까지 간다.
+        this.input.keyboard?.on("keydown-F9", () => this.applyVisible(toggleOverlay()));
+        // 실기기에는 F9 가 없다 — DebugPanel 버튼이 쏘는 이벤트로도 같은 토글을 연다.
+        const off = EventBus.on(EVENTS.CMD_DEBUG, (p) => {
+            this.applyVisible(typeof p?.overlay === "boolean" ? setOverlay(p.overlay) : toggleOverlay());
+        }, { key: "debug:overlay" });
+        this.events.once("shutdown", () => off?.());
+    }
+
+    /** 숨김 상태에서는 텍스트를 만들지도 갱신하지도 않는다 — update 가 통째로 빠진다 */
+    applyVisible(on) {
+        this.shown = !!on;
+        this.txt.setVisible(this.shown);
+        return this.shown;
     }
 
     update() {
+        if (!this.shown) return;
         const fpsNow = this.game.loop.actualFps;
         this.samples[this.idx] = fpsNow;
         this.idx = (this.idx + 1) % SAMPLE;

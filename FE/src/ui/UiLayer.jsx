@@ -24,6 +24,7 @@ import OptionsScreen from "@/ui/screens/OptionsScreen";
 import CreditsScreen from "@/ui/screens/CreditsScreen";
 import ResultScreen from "@/ui/screens/ResultScreen";
 import "@/ui/screens/screens.css";
+import "@/ui/loading/loading.css";
 
 /** 일시정지 (10-UIUX 2.7). 「계속」이 최상단인 이유: 가장 자주 누르는 버튼이다. */
 function PauseOverlay({ onClose }) {
@@ -135,16 +136,28 @@ export default function UiLayer() {
             {/* 각성 배너는 자체적으로 표시/해제를 관리한다. 여기서는 마운트만 해 준다(T422). */}
             <AwakeningBanner />
 
+            {/* ★ 로딩바는 여기 하나뿐이다. PreloadScene 이 캔버스에 그리던 진행바는 제거했다 —
+                같은 값을 두 군데에 그려서 로딩바가 2개로 보였다. 진행률의 출처는 여전히
+                PreloadScene 의 EVENTS.ASSET_PROGRESS 이고(bridge 가 setLoadProgress 로 연결),
+                React 를 남긴 이유는 Phaser 인스턴스가 생기기 **전** 구간을 덮을 수 있는 쪽이
+                여기뿐이기 때문이다. 자세한 근거는 PreloadScene.js 헤더 주석 참조. */}
             {screen === SCREENS.LOADING && (
-                <div className="ui-loading">
-                    <p className="ui-loading__label">봉인을 여는 중</p>
-                    <div className="ui-loading__bar">
-                        <div
-                            className="ui-loading__fill"
-                            style={{ width: `${Math.round(loadProgress * 100)}%` }}
-                        />
+                <>
+                    {/* 캔버스가 아직 아무것도 그리지 않은 구간을 덮는다. 레터박스까지 같은 검정이 된다. */}
+                    <div className="ui-scrim" />
+                    <div className="ui-stage">
+                        <div className="ui-loading">
+                            <p className="ui-loading__label">봉인을 여는 중</p>
+                            <div className="ui-loading__bar">
+                                <div
+                                    className="ui-loading__fill"
+                                    style={{ width: `${Math.round(loadProgress * 100)}%` }}
+                                />
+                            </div>
+                            <p className="ui-loading__pct">{Math.round(loadProgress * 100)}%</p>
+                        </div>
                     </div>
-                </div>
+                </>
             )}
 
             {/* T510 — 인간성 심장. 레벨업 때만 바뀌므로 React 오버레이가 맞다(HudScene 은 60fps 값 전담) */}

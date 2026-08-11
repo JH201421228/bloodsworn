@@ -1,0 +1,72 @@
+/*
+ * 로딩 화면. 이 게임에 존재하는 **유일한** 로딩바다.
+ *
+ * ★ 왜 index.css 가 아니라 여기인가
+ *   index.css 의 `.ui-loading` 은 200px / 6px / 12px 처럼 절대 px 로 짜여 있어
+ *   저해상도 기기에서는 화면을 덮고 고해상도에서는 좁쌀이 된다(--u 규약 위반).
+ *   index.css 는 다른 작업자 소유라 지울 수 없으므로, 같은 클래스명을 유지한 채
+ *   `.ui-layer` 를 앞에 붙여 구체성으로 덮는다 — 임포트 순서에 의존하지 않는다.
+ *
+ * ★ 경로가 ../../img/ 인 이유 (art.css 와 같은 규칙, 깊이만 한 단계 더 들어왔다)
+ *   빌드 후 이 CSS 는 dist/assets/ 로 합쳐지고 그림은 dist/img/ 에 남는다.
+ *   public/ 을 직접 가리키면 같은 PNG 가 번들에 한 벌 더 복제된다.
+ */
+
+/* 내용은 .ui-stage(캔버스와 1:1 인 박스) 안에서 정중앙이다.
+   가로만 맞추고 세로를 %/px 로 고정하면 기기 비율이 바뀔 때마다 어긋난다. */
+.ui-layer .ui-loading {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    bottom: auto; /* index.css 의 bottom:14% 를 무력화한다 */
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: calc(8 * var(--u));
+    text-align: center;
+}
+
+.ui-layer .ui-loading__label {
+    margin: 0;
+    font-size: calc(12 * var(--u));
+    letter-spacing: calc(2 * var(--u));
+    color: var(--parchment);
+}
+
+/* 프레임 원본은 108x16 이고 안쪽이 뚫려 있다(가로 7px, 세로 5px 이 테두리).
+   ★ 높이를 16u 로 고정하는 이유: 세로 슬라이스를 0 으로 두면 가운데 띠가 세로로 늘어난다.
+     원본 높이 그대로 두면 리벳이 정확히 1:1 로 찍힌다. */
+.ui-layer .ui-loading__bar {
+    position: relative;
+    width: calc(200 * var(--u));
+    height: calc(16 * var(--u));
+    background: rgba(0, 0, 0, 0.55);
+    /* ★ border 단축을 쓰면 border-image 가 초기화된다. 개별 속성으로 쓴다. */
+    border-width: 0 calc(7 * var(--u));
+    border-style: solid;
+    border-color: transparent;
+    border-image-source: url("../../img/ui/bar-hp-frame.png");
+    border-image-slice: 0 7 fill;
+    /* repeat 면 리벳이 가운데까지 반복된다. 가장자리는 단순한 금속 띠라 늘려도 된다. */
+    border-image-repeat: stretch;
+    image-rendering: pixelated;
+}
+
+/* 채움은 프레임의 뚫린 구멍(원본 y=5..10) 안쪽에만 놓는다.
+   구멍을 넘기면 자식이 border 위에 그려져 프레임 테두리를 먹는다. */
+.ui-layer .ui-loading__fill {
+    position: absolute;
+    left: 0;
+    top: calc(5 * var(--u));
+    bottom: calc(5 * var(--u));
+    height: auto;
+    background: linear-gradient(180deg, #c4182b 0%, #8b0f1d 100%);
+    transition: width 120ms linear;
+}
+
+.ui-layer .ui-loading__pct {
+    margin: 0;
+    font-size: calc(10 * var(--u));
+    color: var(--stone-4);
+}

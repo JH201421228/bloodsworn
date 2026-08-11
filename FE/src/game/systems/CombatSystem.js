@@ -16,6 +16,7 @@ import { Pool } from "../pools/Pool";
 import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
 import { dist2 } from "../utils/math";
+import { TEMPO_SCALE } from "./PlayerSystem";
 import weaponsData from "@/data/weapons.json";
 import { resolveAdPlacement } from "@/monetization";
 
@@ -29,7 +30,39 @@ const MAX_ORBIT = 5;    // W3 유골 최대 수 (Lv5)
 const MAX_ZONES = 12;   // W4 장판 최대 수 (Lv5 5곳 x 지속 1.8s / 쿨 2.6s)
 const MAX_ORBS = 300;
 const PLAYER_IFRAME = 400; // ms. 정본 05-COMBAT 1
-const ORB_MAGNET2 = 48 * 48;
+
+/**
+ * EXP 오브 아트. ItemSystem 과 **같은 아틀라스**를 쓴다.
+ *
+ * ★ 왜 도형(circle)에서 스프라이트로 바꾸는가 — 그림 문제만이 아니다
+ *   Phaser 의 Arc/Shape 는 텍스처가 없어 MultiPipeline 이 아니라 도형 경로로 나간다.
+ *   화면에 오브 200~300개 + 아이템 스프라이트가 섞이면 그릴 때마다 파이프라인이
+ *   왔다갔다 하며 배치가 끊긴다. 오브를 items 아틀라스로 옮기면 아이템 드롭·후광과
+ *   **같은 텍스처 한 장**이라 한 배치로 합쳐진다 — 드로우콜은 늘지 않고 오히려 준다.
+ *
+ * ★ 스케일 0.5 인 이유
+ *   프레임이 32x32(잉크 21x24)다. pixelArt:true / roundPixels:true 환경에서
+ *   0.5 는 원본 2픽셀이 화면 1픽셀로 정확히 떨어지는 유일한 축소비다.
+ *   0.4 나 0.6 은 픽셀 행이 들쭉날쭉 버려져 오브가 움직일 때 반짝거린다.
+ *   결과 크기는 잉크 약 10.5x12px — 예전 지름 4px 점보다 확실히 크고,
+ *   아이템 드롭(21x24, 배율 1)보다는 확실히 작아 "흔한 것 / 귀한 것"이 구분된다.
+ */
+const ORB_ATLAS = "items";
+const ORB_FRAME = "itm_gem_teal"; // 기존 0x35c9b4 청록과 같은 계열이라 학습된 색을 안 버린다
+const ORB_SCALE = 0.5;
+
+/**
+ * 자석/흡인/획득 반경. TEMPO_SCALE 을 함께 곱한다.
+ * ★ 안 곱하면 무슨 일이 생기나: 플레이어가 25% 빨라지면 오브 옆을 25% 빨리 지나쳐
+ *   자석에 걸리는 시간이 그만큼 줄어든다. "빨라졌더니 EXP가 안 붙는다"가 된다.
+ *   흡인 속도도 같이 올려야 오브가 플레이어를 따라잡는다(200 > 87.5, 여유 2.3배).
+ */
+const ORB_MAGNET = 48 * TEMPO_SCALE;          // 60px (정본 48 x 템포)
+const ORB_MAGNET2 = ORB_MAGNET * ORB_MAGNET;
+const ORB_PICKUP = 6 * TEMPO_SCALE;           // 7.5px — 한 프레임에 뛰어넘지 않을 크기
+const ORB_PICKUP2 = ORB_PICKUP * ORB_PICKUP;
+const ORB_PULL_SPEED = 160 * TEMPO_SCALE;     // 200px/s
+
 const ORB_MERGE_THRESHOLD = 200; // 이 수를 넘으면 병합한다 (T302)
 const ORB_MERGE_CELL = 24;       // 병합 격자 크기(px). 시각적으로 겹쳐 보이는 거리
 
@@ -80,8 +113,13 @@ export class CombatSystem {
             s.setDepth(DEPTH.PROJECTILE).setVisible(false);
             return s;
         });
+        // 텍스처가 없으면(에셋 미빌드) 예전 청록 점으로 조용히 되돌아간다.
+        // 오브가 아예 안 보이는 것보다 못생긴 게 낫다 — W3/W4 아트와 같은 규약이다.
+        this.orbArt = scene.textures.exists(ORB_ATLAS) && !!scene.textures.get(ORB_ATLAS)?.has(ORB_FRAME);
         this.orbs = new Pool(MAX_ORBS, () => {
-            const s = scene.add.circle(-999, -999, 2, 0x35c9b4);
+            const s = this.orbArt
+                ? scene.add.sprite(-999, -999, ORB_ATLAS, ORB_FRAME).setScale(ORB_SCALE)
+                : scene.add.circle(-999, -999, 2, 0x35c9b4);
             s.setDepth(DEPTH.ORB).setVisible(false);
             return s;
         });
@@ -525,7 +563,7 @@ export class CombatSystem {
         for (let i = list.length - 1; i >= 0; i--) {
             const o = list[i];
             const d2 = dist2(o.x, o.y, this.player.x, this.player.y);
-            if (d2 < 36) {
+            if (d2 < ORB_PICKUP2) {
                 this.exp += o.value * this.stats.get("expMult");
                 o.setVisible(false).setPosition(-999, -999);
                 this.orbs.release(o);
@@ -536,7 +574,7 @@ export class CombatSystem {
             const magnet2 = ORB_MAGNET2 * this.stats.get("magnet") * this.stats.get("magnet");
             if (d2 < magnet2) {
                 const d = Math.sqrt(d2) || 1;
-                const sp = 160 * dt;
+                const sp = ORB_PULL_SPEED * dt;
                 o.x += ((this.player.x - o.x) / d) * sp;
                 o.y += ((this.player.y - o.y) / d) * sp;
             }

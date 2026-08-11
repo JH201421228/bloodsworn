@@ -7,8 +7,30 @@
  */
 import { input } from "./InputSystem";
 
-export const BASE_MOVE_SPEED = 70; // px/s (정본 4)
-export const DASH_DISTANCE = 120;
+/**
+ * 게임 전체의 "이동 템포" 배율. 플레이어와 적에 **똑같이** 곱한다.
+ * (SpawnSystem.reset 의 e.speed, CombatSystem 의 자석/오브 흡인 속도가 이 값을 함께 쓴다)
+ *
+ * ★ 왜 1.25 인가 — 그리고 왜 플레이어만 올리면 안 되는가
+ *   정본 05-COMBAT 4 의 설계 전제는 "속도 기준선은 플레이어 70px/s, 그보다 빠른 적은
+ *   E1(95)·E3(135)·E7(110) 3종뿐" 이다. 이 3:5 비율이 "키팅은 통하지만 방심하면
+ *   둘러싸인다" 를 만든다. 플레이어만 올리면 빠른 적이 0종이 되어 게임이 사라진다.
+ *   그래서 **상대속도를 1.000 로 고정한 채** 절대 템포만 올린다.
+ *
+ *   1.25 의 근거 (640x360 논리 해상도 기준):
+ *   - 체감: 화면 단축(360px) 횡단 5.14s -> 4.11s, 장축(640px) 9.14s -> 7.31s.
+ *     20% 미만은 손에 잡히지 않고(원 불만이 그대로 남는다) 25%면 확실히 다르다.
+ *   - 상한: 데이터상 최속 적 140px/s 가 1.25 에서 175px/s 가 된다. 스폰 링(400px)에서
+ *     플레이어까지 도달 2.86s -> 2.29s. 1.5 로 올리면 210px/s / 1.90s 가 되는데,
+ *     모바일 화면에서 "보고-판단하고-경로를 트는" 데 필요한 약 2s 아래로 내려간다.
+ *     즉 1.25 는 "빨라진 체감"과 "반응 가능한 위협 도달시간"이 둘 다 성립하는 상한이다.
+ *   - 대시(120px)도 같은 배율로 올린다. 안 올리면 대시의 값어치가
+ *     "걸어서 1.71초" 에서 "1.37초" 로 떨어져 쿨 3s 를 정당화하지 못한다.
+ */
+export const TEMPO_SCALE = 1.25;
+
+export const BASE_MOVE_SPEED = 70 * TEMPO_SCALE; // 87.5px/s (정본 4 의 70 x 템포)
+export const DASH_DISTANCE = 120 * TEMPO_SCALE;  // 150px — 걸어서 1.71초, 배율 전과 동일
 export const DASH_IFRAME = 250; // ms
 export const DASH_COOLDOWN = 3000; // ms
 
@@ -26,7 +48,7 @@ export class PlayerSystem {
         this.player = player;
         this.wallLayer = wallLayer;
         this.facing = "down";
-        this.moveSpeed = BASE_MOVE_SPEED;
+        this.moveSpeed = BASE_MOVE_SPEED; // 이미 TEMPO_SCALE 이 반영된 값 — 다시 곱하지 않는다
         this.dashReadyAt = 0;
         /**
          * 외부 힘 (StageSystem 환경 기믹 등).
@@ -58,7 +80,12 @@ export class PlayerSystem {
         input.pollKeyboard();
 
         const v = input.vector;
-        const speed = this.stats ? this.stats.get("moveSpeed") : this.moveSpeed;
+        // ★ 배율을 StatSystem 안이 아니라 여기서 곱하는 이유
+        //   StatSystem 은 다른 소유다. 그리고 결과값에 곱하면 안전장치 S1 의
+        //   moveSpeed 하한(abs 32)까지 같은 비율로 40 이 되어, "대가로 아무리 느려져도
+        //   기본치의 45.7%는 남는다" 는 04-PACT 4 의 의도가 그대로 보존된다.
+        //   BASE 만 88 로 바꾸고 하한을 32 로 두면 그 비율이 36.4% 로 몰래 나빠진다.
+        const speed = this.stats ? this.stats.get("moveSpeed") * TEMPO_SCALE : this.moveSpeed;
         // 외부 힘은 입력 속도에 더한다(기믹의 미는 힘 등)
         this.player.setVelocity(v.x * speed + this.externalVx, v.y * speed + this.externalVy);
         const moving = v.x !== 0 || v.y !== 0;

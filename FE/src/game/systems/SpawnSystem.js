@@ -20,8 +20,75 @@ import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
 import { dist2 } from "../utils/math";
 import enemiesData from "@/data/enemies.json";
 import phasesData from "@/data/phases.json";
+import { TEMPO_SCALE } from "./PlayerSystem";
 
 export const MAX_ENEMIES = 150;
+
+/**
+ * 적 렌더/히트박스 공통 배율. (16x16 원본이 640x360 에서 너무 작다는 지적)
+ *
+ * ★ 왜 1.4 인가 — 전부 실측이다
+ *   1) 크기 문제의 정체
+ *      enemies.png 40프레임 실측: 몸통 알파 bbox 평균 12.2x12.7px(캔버스 16x16 의 38.8%).
+ *      플레이어는 19x34px 다. 적이 주인공의 절반도 안 되니 "점"으로 읽힌다.
+ *      1.4 면 17.1x17.8px — 폭은 플레이어와 맞먹고 키는 절반, "작지만 생물"이 된다.
+ *   2) 가독성 상한 (하네스로 350초 런을 돌려 캡 150 구간을 측정)
+ *      카메라 안 동시 표시는 배율과 무관하게 148~150체. 캔버스 합계 점유율은
+ *        1.00 -> 17.3% / 1.25 -> 27.1% / 1.40 -> 34.0% / 1.60 -> 44.3%.
+ *      1.4 가 "화면의 1/3" 을 넘지 않는 마지막 값이라 여기서 끊었다.
+ *   3) 그런데 진짜 병목은 크기가 아니었다
+ *      겹침을 뺀 실제 피복률은 1.4 에서도 최대 5.0% 뿐이다. 적이 플레이어 반경
+ *      약 40px 안으로 뭉치기 때문이다(separation 파라미터를 가진 def 가 150중 12뿐).
+ *      즉 "화면이 적으로 덮인다"는 크기보다 뭉침이 지배한다 — 1.4 는 안전하다.
+ *   4) 히트박스 동반 상승
+ *      일반 적 hitbox 13 -> 18.2(반경 9.1). 접촉 판정은 반경+7 이므로 16.1px 에서 걸린다.
+ *      배율 전 13.5px 였으니 "몸이 커진 만큼만" 위험해진다 — 보이는 것과 맞는 것이 일치한다.
+ *   5) 티어 서열 유지
+ *      엘리트 1.75 -> 2.45(39px), 미니보스 2.1 -> 2.94(47px).
+ *      보스는 원본 시트가 140~160px 이고 boss.json spriteScale 을 따로 쓰므로 손대지 않는다.
+ */
+const ENEMY_SIZE_SCALE = 1.4;
+
+/**
+ * 정본 수치에 런타임 튜닝 배율을 **부팅 시 1회** 굽는다.
+ *
+ * ★ 왜 reset() 이 아니라 def 자체를 고치는가
+ *   AwakeningSystem 이 슬로우를 풀 때 `e.speed = e.def.moveSpeed` 로 원복한다.
+ *   reset() 에서만 배율을 곱하면 슬로우가 끝난 적만 조용히 옛 속도로 돌아가
+ *   "가끔 어떤 적이 느리다" 는, 재현도 추적도 어려운 버그가 된다.
+ *   def 를 고치면 def.moveSpeed 를 읽는 모든 코드가 자동으로 맞는다.
+ *
+ * ★ 왜 enemies.json 을 직접 안 고치는가
+ *   그 파일 머리주석이 "tools/build-monsters.mjs 생성물 — 손으로 고치지 말고
+ *   스크립트를 고쳐 다시 돌린다" 다. 150행을 손으로 고치면 다음 재생성에 전부 날아간다.
+ *
+ * ★ 배율을 곱하는 것과 안 곱하는 것의 구분
+ *   속도(px/s)만 곱한다. dashSpeed/projSpeed 도 속도라서 함께 곱해야
+ *   "돌진은 대시로, 화살은 옆걸음으로 피한다"는 회피 기하가 보존된다.
+ *   크기(separation)는 SIZE 배율을 곱한다 — 분리 거리는 "겹쳐서 1체로 보이지 않게"가
+ *   목적이라(EnemyAISystem:315) 몸집을 키우면 같이 커져야 한다. 안 그러면 1.4배로 커진
+ *   적들이 예전 간격으로 붙어 서서 후반에 덩어리로 뭉개져 보인다.
+ *   전술 거리(maxRange/detect/tooClose/tooFar/radius)와 시간(windup/cooldown/dashDuration)은
+ *   **곱하지 않는다** — 화면 크기와 사람의 반응시간은 그대로다.
+ *
+ * @param {object} data enemies.json 모듈 객체. 씬 재시작으로 두 번 불려도 안전하다.
+ */
+function applyTuning(data) {
+    if (data.__tuned) return; // 이중 적용 방지. 씬 restart 는 SpawnSystem 을 새로 만든다
+    data.__tuned = { tempo: TEMPO_SCALE, size: ENEMY_SIZE_SCALE };
+    for (const d of data.enemies) {
+        d.moveSpeed *= TEMPO_SCALE;
+        d.hitbox *= ENEMY_SIZE_SCALE;
+        // scale 이 없던 일반 적에게도 명시적으로 넣는다 — reset() 의 (def.scale ?? 1) 이
+        // 히트박스만 커지고 그림은 그대로인 "안 맞는 적"을 만들지 않게 한다.
+        d.scale = (d.scale ?? 1) * ENEMY_SIZE_SCALE;
+        const p = d.params;
+        if (!p) continue;
+        if (typeof p.dashSpeed === "number") p.dashSpeed *= TEMPO_SCALE;
+        if (typeof p.projSpeed === "number") p.projSpeed *= TEMPO_SCALE;
+        if (typeof p.separation === "number") p.separation *= ENEMY_SIZE_SCALE;
+    }
+}
 const SPAWN_RADIUS = 400;
 const DESPAWN_RADIUS = 900;
 const DESPAWN_R2 = DESPAWN_RADIUS * DESPAWN_RADIUS;
@@ -38,6 +105,7 @@ export class SpawnSystem {
     constructor(scene, player) {
         this.scene = scene;
         this.player = player;
+        applyTuning(enemiesData);
         this.defs = enemiesData.enemies;
         this.byId = Object.fromEntries(this.defs.map((d) => [d.id, d]));
         this.segments = phasesData.segments;
@@ -287,6 +355,7 @@ export class SpawnSystem {
         e.isElite = e.tier === "elite";
         e.maxHp = Math.round(def.baseHp * seg.hpMult);
         e.hp = e.maxHp;
+        // def 는 부팅 시 applyTuning() 으로 이미 배율이 반영돼 있다 (파일 상단 참조)
         e.speed = def.moveSpeed;
         e.damage = def.contactDamage * seg.dmgMult;
         e.radius = def.hitbox / 2;
@@ -347,7 +416,8 @@ export class SpawnSystem {
 
     /**
      * 900px 밖은 풀로 돌려보낸다.
-     * ★ 엘리트만은 예외 — 원주로 끌어온다. 엘리트(44~50px/s)는 플레이어(70px/s)보다 느려서
+     * ★ 엘리트만은 예외 — 원주로 끌어온다. 엘리트(55~63px/s)는 플레이어(87.5px/s)보다 느려서
+     *   (TEMPO_SCALE 1.25 적용 후 값. 배율 전 44~50 vs 70 — 비율은 그대로다)
      *   도망만 치면 사라진다. 그러면 보물상자도 EXP 40도 그냥 증발한다.
      */
     despawnFar() {
@@ -374,6 +444,8 @@ export class SpawnSystem {
             this.killCount++;
             if (e.def?.dropsChest) this.dropChest(e.x, e.y, e.def.id);
         }
+        // setScale(1) 은 "기본 크기 복원"이 아니라 **중립화**다.
+        // 실제 크기는 다음 reset() 의 def.scale 이 정한다(applyTuning 이 배율을 이미 반영했다).
         e.setActive(false).setVisible(false).setPosition(-999, -999).setScale(1);
         this.pool.release(e);
     }

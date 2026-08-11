@@ -17,8 +17,6 @@ import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
 import "./revive.css";
 
-const pct = (v, total) => (v / total) * 100 + "%";
-
 export default function ReviveOverlay() {
     const rv = useStore((s) => s.revive);
     if (!rv?.open) return null;
@@ -29,12 +27,13 @@ export default function ReviveOverlay() {
     const hp = Math.round((rv.hpPct ?? 0.5) * 100);
 
     return (
+        // ★ 좌표를 직접 주지 않고 .ui-stage 를 flex 컨테이너로 써서 가로·세로 모두 중앙에 놓는다.
+        //   예전에는 left:50% + translateX 로 가로만 맞추고 세로는 top:84/360 고정이었다.
+        //   그 84 는 "카드 높이가 정확히 192 일 때"만 중앙이라, 글자가 한 줄만 늘어도(번역·폰트 대체)
+        //   카드가 아래로 자라며 중앙이 깨졌다. 크기가 변해도 중앙은 flex 가 알아서 지킨다.
         <div className="ui-stage revive-stage">
             <div className="revive-veil" />
-            <div
-                className="revive-card"
-                style={{ left: pct(160, 640), top: pct(84, 360), width: pct(320, 640), height: pct(192, 360) }}
-            >
+            <div className="revive-card">
                 <p className="revive-kicker">쓰 러 졌 다</p>
                 <h2 className="revive-title">한 번 더 서약한다</h2>
                 <p className="revive-body">

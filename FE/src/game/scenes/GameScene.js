@@ -12,7 +12,7 @@
 import Phaser from "phaser";
 import { SCENES, DEPTH } from "../constants";
 import { WORLD_WIDTH, WORLD_HEIGHT, LOGICAL_WIDTH, LOGICAL_HEIGHT, TILE_SIZE } from "../config";
-import { DEBUG } from "../debug";
+import { DEBUG, isOverlayOn } from "../debug";
 import { PlayerSystem } from "../systems/PlayerSystem";
 import { SpawnSystem } from "../systems/SpawnSystem";
 import { EnemyAISystem } from "../systems/EnemyAISystem";
@@ -136,7 +136,10 @@ export default class GameScene extends Phaser.Scene {
         EventBus.emit(EVENTS.RUN_STARTED, { rerollLeft: this.combatSystem?.pact?.rerollLeft ?? 2 });
 
         this.scene.launch(SCENES.HUD);
-        if (DEBUG) this.scene.launch(SCENES.DEBUG);
+        // 오버레이는 기본 OFF 다. 씬은 띄우되(F9 토글 핸들러가 살아 있어야 한다)
+        // 표시 여부는 DebugScene 이 스스로 판단한다. 네이티브 빌드에서 localStorage
+        // 플래그가 동작하려면 DEBUG 뿐 아니라 isOverlayOn() 으로도 열려야 한다.
+        if (DEBUG || isOverlayOn()) this.scene.launch(SCENES.DEBUG);
     }
 
     update(time, delta) {

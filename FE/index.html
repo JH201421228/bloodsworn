@@ -14,7 +14,9 @@
         <meta name="theme-color" content="#0b0710" />
         <title>BLOODSWORN · 피의 서약</title>
     </head>
-    <body>
+    <!-- 배경을 여기 박는 이유: React 마운트 전 1~2초 동안 흰 화면이 뜬다.
+         어두운 게임에서 흰 섬광은 로딩이 아니라 고장으로 읽힌다. -->
+    <body style="background:#0b0710">
         <div id="root"></div>
         <script type="module" src="/src/main.jsx"></script>
     </body>

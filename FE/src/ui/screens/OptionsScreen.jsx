@@ -96,8 +96,12 @@ export default function OptionsScreen({ onClose }) {
                     />
                 </section>
 
+                {/* ★ 「조작」1줄 + 「화면/접근성」3줄 이던 것을 2줄씩으로 다시 나눴다.
+                    가로 화면의 세로 예산으로는 한 패널에 44논리px 줄이 두 개까지만 들어간다.
+                    3줄짜리 패널 하나 때문에 아래 행 전체가 화면 밖으로 밀려 있었다(screens.css 주석).
+                    저사양 모드는 접근성이 아니라 성능 설정이라 「조작」쪽에 붙여 제목을 「조작 / 성능」으로 고쳤다. */}
                 <section className="panel">
-                    <h3 className="panel__title">조 작</h3>
+                    <h3 className="panel__title">조 작 / 성 능</h3>
                     <Toggle
                         label="조이스틱"
                         value={settings.joystickFloating}
@@ -105,10 +109,15 @@ export default function OptionsScreen({ onClose }) {
                         on="플로팅"
                         off="고정"
                     />
+                    <Toggle
+                        label="저사양 모드"
+                        value={settings.lowQuality}
+                        onChange={(v) => set({ lowQuality: v })}
+                    />
                 </section>
 
                 <section className="panel">
-                    <h3 className="panel__title">화 면 / 접 근 성</h3>
+                    <h3 className="panel__title">접 근 성</h3>
                     {/* 화면 흔들림 OFF 는 취향이 아니라 접근성이다 — 모바일 멀미 대응(10-UIUX 9.2) */}
                     <Toggle
                         label="화면 흔들림"
@@ -119,11 +128,6 @@ export default function OptionsScreen({ onClose }) {
                         label="데미지 숫자"
                         value={settings.damageNumbers}
                         onChange={(v) => set({ damageNumbers: v })}
-                    />
-                    <Toggle
-                        label="저사양 모드"
-                        value={settings.lowQuality}
-                        onChange={(v) => set({ lowQuality: v })}
                     />
                 </section>
 

@@ -95,6 +95,9 @@ body,
     height: 100%;
 }
 
+/* .ui-loading* 규칙은 ui/loading/loading.css 로 옮겼다 —
+   여기 있던 것은 절대 px(200/6/12) 라 --u 규약 위반이었다(저해상도에서 화면을 덮었다) */
+
 /* Phaser는 부모 엘리먼트 크기로 FIT을 계산한다. 높이를 주지 않으면 블록 높이 0을 기준으로 잡는다. */
 #game-root {
     position: absolute;
@@ -127,32 +130,9 @@ button:disabled {
     opacity: 0.6;
 }
 
-.ui-loading {
-    position: absolute;
-    left: 50%;
-    bottom: 14%;
-    transform: translateX(-50%);
-    text-align: center;
-}
 
-.ui-loading__label {
-    margin: 0 0 8px;
-    font-size: 12px;
-    color: var(--parchment);
-}
 
-.ui-loading__bar {
-    width: 200px;
-    height: 6px;
-    background: var(--stone-1);
-    border: 1px solid var(--stone-3);
-}
 
-.ui-loading__fill {
-    height: 100%;
-    background: var(--blood);
-    transition: width 120ms linear;
-}
 
 /* ── 스테이지 박스 ──────────────────────────────────────────
    Phaser가 Scale.FIT으로 640x360(16:9)을 중앙 배치하므로 같은 크기 박스를 만들어

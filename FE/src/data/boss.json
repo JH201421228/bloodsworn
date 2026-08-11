@@ -25,7 +25,10 @@
         "⚠ 명목 DPS 256/313/375/450/525(BOSS2~6)는 아직 실측 근거가 없다 — docs/26 §5.2 참조.",
         "  성소 만렙 상위 10% 실효 DPS 가 약 240 이므로 BOSS4 이후는 장비 시스템(23-ITEM)이",
         "  측정된 뒤 반드시 다시 역산해야 한다. 지금 값은 '가동률까지 반영한 등비수열'이다.",
-        "bosses: 스테이지별 보스 6종. boss(단수)는 BOSS1 하위호환용으로 남긴다."
+        "bosses: 스테이지별 보스 6종. boss(단수)는 BOSS1 하위호환용으로 남긴다.",
+        "★ moveSpeed 는 템포 배율 x1.25 가 이미 반영된 값이다(PlayerSystem.TEMPO_SCALE 과 같은 값).",
+        "  안 올리면 플레이어·잡몹만 빨라져 보스가 상대적으로 20% 느려지고 보스전이 쉬워진다.",
+        "  _tempoScaled 가 재적용을 막는다."
     ],
     "schemaVersion": 1,
     "boss": {
@@ -34,7 +37,7 @@
         "tier": "boss",
         "baseHp": 11000,
         "contactDamage": 16,
-        "moveSpeed": 46,
+        "moveSpeed": 58,
         "hitbox": {
             "w": 56,
             "h": 80
@@ -207,7 +210,7 @@
             "tier": "boss",
             "baseHp": 11000,
             "contactDamage": 26,
-            "moveSpeed": 46,
+            "moveSpeed": 58,
             "hitbox": {
                 "w": 56,
                 "h": 80
@@ -385,7 +388,7 @@
             "tier": "boss",
             "baseHp": 13900,
             "contactDamage": 24,
-            "moveSpeed": 52,
+            "moveSpeed": 65,
             "hitbox": {
                 "w": 40,
                 "h": 71
@@ -556,7 +559,7 @@
             "tier": "boss",
             "baseHp": 17000,
             "contactDamage": 28,
-            "moveSpeed": 40,
+            "moveSpeed": 50,
             "hitbox": {
                 "w": 39,
                 "h": 59
@@ -758,7 +761,7 @@
             "tier": "boss",
             "baseHp": 19900,
             "contactDamage": 30,
-            "moveSpeed": 44,
+            "moveSpeed": 55,
             "hitbox": {
                 "w": 64,
                 "h": 92
@@ -941,7 +944,7 @@
             "tier": "boss",
             "baseHp": 25000,
             "contactDamage": 32,
-            "moveSpeed": 48,
+            "moveSpeed": 60,
             "hitbox": {
                 "w": 50,
                 "h": 90
@@ -1147,7 +1150,7 @@
             "tier": "boss",
             "baseHp": 29500,
             "contactDamage": 34,
-            "moveSpeed": 50,
+            "moveSpeed": 63,
             "hitbox": {
                 "w": 44,
                 "h": 68
@@ -1348,5 +1351,6 @@
             "spriteScale": 1.25,
             "_spriteNote": "Samurai 재사용 + 잿빛·최대 확대"
         }
-    }
+    },
+    "_tempoScaled": 1.25
 }

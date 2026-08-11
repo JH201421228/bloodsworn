@@ -20,10 +20,14 @@
    5장을 flex:1 로 균등 분할한다. 스테이지가 6개로 늘어도 CSS 를 고칠 필요가 없다. */
 .stagesel__row {
     display: flex;
-    flex: 1;
-    gap: calc(6 * var(--u));
+    /* ★ flex:1 1 0 + min-height:0 — auto 로 두면 카드 내용이 길어질 때 이 줄이 부풀어
+       하단 띠(출정 버튼)를 화면 밖으로 밀어낸다. 성소에서 실제로 그렇게 잘렸다. */
+    flex: 1 1 0;
+    /* 6px 이던 간격을 4px 로 줄였다. 카드 6장 × 좌우 프레임 8px 를 두르고 나면
+       본문 폭이 글자 한 줄도 못 담는다 — 프레임이 먹은 폭을 여기서 되찾는다. */
+    gap: calc(4 * var(--u));
     min-height: 0;
-    padding: calc(6 * var(--u)) 0;
+    padding: calc(4 * var(--u)) 0;
 }
 
 /*
@@ -36,96 +40,93 @@
     min-width: 0;
     flex-direction: column;
     gap: calc(2 * var(--u));
-    /* 터치 타깃: 폭 약 110논리px × 높이 200논리px — 최소 48논리px 를 크게 넘는다(10-UIUX 3.4) */
+    /* 터치 타깃: 폭 약 96논리px × 높이 200논리px — 최소 48논리px 를 크게 넘는다(10-UIUX 3.4) */
     min-height: calc(120 * var(--u));
-    padding: calc(7 * var(--u)) calc(6 * var(--u));
+    /* ★ 테두리와 배경은 여기서 그리지 않는다 — art.css 가 card-*.png 를 9-slice 로 두른다.
+       여기에 border 단축 속성을 남기면 그쪽 border-image 를 초기화해 프레임이 사라진다.
+     ★ 위아래 패딩이 20/18px 로 유독 두꺼운 이유:
+       card-*.png 의 네 모서리 장식은 테두리 폭(상하 10px)을 넘어 카드 안쪽으로
+       약 30px 파고든다. 9-slice 로는 그 돌출부가 가운데 영역에 그려지므로 잘라낼 수 없다.
+       좌우로는 밀어낼 폭이 없으니(본문 76px) 세로로만 비켜 준다 —
+       첫 줄(순번)과 마지막 줄(클리어/해금 조건)이 장식 아래·위에서 시작한다.
+       카드 높이는 200px 이 넘고 내용은 110px 이라 세로 여유가 그만큼 있었다. */
+    padding: calc(20 * var(--u)) calc(3 * var(--u)) calc(18 * var(--u));
     text-align: left;
-    color: var(--parchment);
-    background: linear-gradient(180deg, #201a27 0%, #14101a 100%);
-    border: calc(1 * var(--u)) solid var(--stone-3);
+    /* 스테이지가 늘어 내용이 카드를 넘겨도 옆 카드나 하단 띠를 침범하지 않게 잘라낸다.
+       border-image 는 보더 박스에 그려지므로 이 클립에 영향받지 않는다. */
+    overflow: hidden;
 }
 .stagesel__card:active { transform: translateY(calc(1 * var(--u))); }
 
-/* 선택 상태는 색만으로 알리지 않는다(10-UIUX 9.1) — 테두리 두께까지 함께 바뀐다 */
+/* 선택 상태는 색만으로 알리지 않는다(10-UIUX 9.1) — art.css 가 프레임 **문양**을
+   card-common → card-epic 으로 바꾼다. 여기서는 그 위에 붉은 발광만 더한다. */
 .stagesel__card.is-active {
-    border-width: calc(2 * var(--u));
-    border-color: var(--blood-light);
-    background: linear-gradient(180deg, #2b1d24 0%, #170f16 100%);
     box-shadow: 0 0 calc(8 * var(--u)) rgba(196, 24, 43, 0.35);
 }
 
-/* 잠김: 채도를 내리고 테두리를 점선으로. 형태가 달라야 흑백 화면에서도 구분된다 */
-.stagesel__card.is-locked {
-    border-style: dashed;
-    border-color: var(--stone-3);
-    background: linear-gradient(180deg, #1a171f 0%, #110e15 100%);
-    color: var(--stone-4);
-}
+/* 잠김의 형태 차이도 art.css 담당이다 — fill 을 빼 액자 속을 비운다.
+   여기서는 발광을 끈다. 잠긴 칸이 선택돼도 "갈 수 있다"로 보이면 안 된다. */
 .stagesel__card.is-locked.is-active {
-    border-color: var(--stone-4);
     box-shadow: none;
 }
 
 /* ── 카드 내부 ──────────────────────────────────────────────
    한글 최소 크기 규약(10-UIUX 8.2)을 지켜 본문은 9논리px 아래로 내려가지 않는다.
    순번만 예외로 작게 쓴다 — 숫자는 형태가 단순해 작아도 읽힌다. */
+/* ★ 왼쪽으로 9px 들여 쓴다. 선택된 카드(card-epic)의 좌상단 문양 꼬리가
+   테두리 안쪽 9px 까지 늘어져 순번의 첫 글자를 덮었다. 이 줄만 비켜 주면 되고,
+   카드 전체 좌우 패딩을 늘리면 보스 이름이 한 줄 더 접힌다. */
 .stagesel__no {
+    padding-left: calc(9 * var(--u));
     font-size: calc(8 * var(--u));
     letter-spacing: calc(1 * var(--u));
-    color: var(--stone-4);
 }
 .stagesel__name {
     font-size: calc(12 * var(--u));
     line-height: 1.1;
-    color: inherit;
 }
-.stagesel__card.is-active .stagesel__name { color: #f0e6d2; }
 .stagesel__sub {
     font-size: calc(9 * var(--u));
     line-height: 1.2;
-    color: var(--ash);
     /* 부제는 두 줄까지만. 세 줄이 되면 아래 메타가 카드 밖으로 밀린다 */
     max-height: calc(22 * var(--u));
     overflow: hidden;
 }
-.stagesel__card.is-locked .stagesel__sub { color: var(--stone-3); }
 
 .stagesel__rule {
     height: calc(1 * var(--u));
     margin: calc(3 * var(--u)) 0;
-    background: var(--stone-2);
 }
-.stagesel__card.is-active .stagesel__rule { background: var(--blood); }
 
 .stagesel__meta {
     display: flex;
     flex-direction: column;
     gap: calc(2 * var(--u));
 }
-/* 라벨(i)을 고정폭으로 세워 3줄의 값이 같은 x 에서 시작한다 — 눈이 훑기 쉬워진다 */
+/*
+ * ★ 라벨을 20논리px 고정폭 열로 세우던 방식을 버렸다.
+ *   프레임을 두르면 본문 폭이 76논리px 인데 라벨 열이 24px 를 가져가 값에 52px 밖에 남지 않았다.
+ *   "여명의 처형인" 이 세 글자에서 끊겨 카드마다 줄 수가 달라졌다.
+ *   라벨을 글줄 안에 흘려 넣으면 같은 폭에서 값이 두 배 가까이 들어간다.
+ *   값이 같은 x 에서 시작하지 않는 손해보다, 이름이 안 잘리는 이득이 크다.
+ */
 .stagesel__kv {
-    display: flex;
-    gap: calc(4 * var(--u));
+    display: block;
     font-size: calc(9 * var(--u));
     line-height: 1.25;
-    color: var(--parchment);
-    /* 보스 이름이 길면 줄바꿈 대신 잘라낸다. 카드 높이가 카드마다 달라지면 줄이 흔들린다 */
+    /* 카드 폭을 넘길 만큼 긴 값은 잘라낸다. 전체 이름은 하단 띠가 완성해 준다 */
     overflow: hidden;
 }
 .stagesel__kv i {
-    flex: 0 0 auto;
-    width: calc(20 * var(--u));
+    margin-right: calc(3 * var(--u));
     font-style: normal;
-    color: var(--stone-4);
 }
-.stagesel__card.is-locked .stagesel__kv { color: var(--stone-4); }
 
 /* 클리어 여부는 카드 맨 아래에 붙인다(margin-top:auto) — 카드 높이가 달라도 한 줄에 정렬된다 */
 .stagesel__state {
     margin-top: auto;
     padding-top: calc(4 * var(--u));
     font-size: calc(9 * var(--u));
-    color: var(--candle-light);
 }
 
 /* ── 잠긴 카드의 조건 ────────────────────────────────────────
@@ -137,15 +138,15 @@
     gap: calc(2 * var(--u));
     margin-top: auto;
     padding-top: calc(4 * var(--u));
-    border-top: calc(1 * var(--u)) dashed var(--stone-2);
+    /* 단축 border-top 은 border-image 를 지우지 않는다(border-image 는 border 단축만 초기화한다).
+       그래도 폭/모양/색을 나눠 적어 두면 나중에 프레임을 갈아도 이 줄이 안 사라진다. */
+    border-top-width: calc(1 * var(--u));
+    border-top-style: dashed;
 }
 .stagesel__cond {
     font-size: calc(9 * var(--u));
     line-height: 1.25;
-    color: var(--parchment);
 }
-/* all 조건 중 이미 채운 항목. 남은 것이 무엇인지가 바로 보인다 */
-.stagesel__cond.is-done { color: var(--candle); }
 
 /* ── 하단 띠 ────────────────────────────────────────────────
    왼쪽은 정보, 오른쪽은 조작. 가로 파지에서 오른손 엄지가 닿는 곳이 우측이다(10-UIUX 2.2).
@@ -153,6 +154,7 @@
      같은 지점에 큰 버튼을 두면 근육기억이 섞인다. 하단 띠 안에서 우측 정렬까지만 한다. */
 .stagesel__foot {
     display: flex;
+    /* ★ 0 0 auto — 이 띠가 줄어들면 출정 버튼이 잘린다. 줄어드는 쪽은 위 카드 줄이어야 한다. */
     flex: 0 0 auto;
     align-items: center;
     gap: calc(10 * var(--u));
