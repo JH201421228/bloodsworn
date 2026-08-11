@@ -51,15 +51,14 @@ import affixData from "@/data/affixes.json";
 import dropData from "@/data/droptables.json";
 
 /**
- * 아이템 전용 이벤트. constants.js 의 EVENTS 표에 넣지 않은 이유는
- * 그 파일이 공유 소유라 동시에 고치면 충돌하기 때문이다. 표에 편입할 패치는 보고서에 있다.
- * ★ 페이로드는 전부 **인덱스**다. 문자열을 만들지 않는 것이 이 시스템의 성능 규약이다.
+ * 아이템 전용 이벤트.
+ * ★ EQUIPPED / RELICS 는 제거했다 — 선언만 하고 한 번도 쏘지 않는 죽은 코드였고,
+ *   UI 는 PICKED 하나로 전부 유도한다. pickup() 이 taken===true 일 때만 쏘고
+ *   장비는 applyEquip() 이 "점수가 더 높을 때만" true 를 돌려주므로
+ *   **PICKED = 실제로 갈아입음**이 성립하기 때문이다. 이벤트를 늘릴 이유가 없었다.
+ * ★ 문자열은 constants.js 의 EVENTS.ITEM_PICKED 와 같아야 한다. 두 곳에 적으면 어긋난다.
  */
-export const ITEM_EVENTS = {
-    PICKED: "item:picked",     // 획득 토스트 (2.4초)
-    EQUIPPED: "item:equipped", // 장비 슬롯 3칸 갱신
-    RELICS: "item:relics",     // 유물 목록 갱신
-};
+export const ITEM_EVENTS = { PICKED: EVENTS.ITEM_PICKED };
 
 /** 23 문서 8. 풀 64칸은 P4 정상치(≈13개)의 5배 — 엘리트/보스 폭발 대비다 */
 const MAX_DROPS = 64;
