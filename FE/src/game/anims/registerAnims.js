@@ -1,7 +1,7 @@
 /**
  * 전 애니메이션 키 등록 단일 지점. (T122)
  *
- * 근거: 09-ART-AUDIO-AND-ASSET-MAP.md 2 (애니 키 / fps 표)
+ * 근거: 09-ART-AUDIO-AND-ASSET-MAP.md 2 (애니 키 / fps 표) · 30-ENCOUNTERS 7.1 (NPC)
  * 호출: PreloadScene.create()에서 1회
  *
  * ★ 키를 여기 한 곳에서만 만드는 이유
@@ -11,6 +11,7 @@
 
 import monsterCatalog from "../../data/monster-catalog.json";
 import enemiesData from "../../data/enemies.json";
+import npcCatalog from "../../data/npc-catalog.json";
 
 const DIRS = ["up", "down", "left", "right"];
 
@@ -109,6 +110,23 @@ export function registerAnims(scene) {
                 end: sp.frameStart + sp.frames - 1,
             }),
             frameRate: speciesFps(sp.id),
+            repeat: -1,
+        });
+    }
+
+    // ── 조우 NPC 6종: npcs 시트에서 종별 대기 애니 1개
+    //   적 150종과 같은 규약이다 — 프레임 배정은 npc-catalog.json 하나만 갖고 여기는 읽기만 한다.
+    //   ★ NPC 는 걷거나 싸우지 않는다. 원본이 대기 애니 하나뿐이고(4~6프레임), 조우는
+    //     "제자리에 서서 좌판을 연다"가 전부라 방향별/상태별 키를 만들 이유가 없다.
+    //   ★ fps 는 카탈로그가 들고 있다(제작자 권장 6). 여기서 유도하지 않는 이유는
+    //     "상인이 빠르게 씰룩거리면 이상하다"가 데이터가 아니라 아트의 성질이기 때문이다.
+    for (const n of npcCatalog.npcs) {
+        make(npcCatalog.animPrefix + n.id, npcCatalog.texture, {
+            frames: scene.anims.generateFrameNumbers(npcCatalog.texture, {
+                start: n.frameStart,
+                end: n.frameStart + n.frameCount - 1,
+            }),
+            frameRate: n.fps ?? npcCatalog.fps,
             repeat: -1,
         });
     }

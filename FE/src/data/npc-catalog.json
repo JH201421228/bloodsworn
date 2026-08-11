@@ -1,0 +1,46 @@
+{
+    "_comment": [
+        "tools/build-npcs.mjs 생성물. 손으로 고치지 말고 스크립트를 고친 뒤 다시 돌린다.",
+        "texture=npcs, 균일 격자 spritesheet. frameWidth=frameHeight=40, 한 행 6칸.",
+        "★ 한 행 = 한 종이다. frameStart = 종 인덱스 x 열수, 애니는 frameStart ~ frameStart+frameCount-1.",
+        "  행 뒤쪽 남는 칸은 투명 프레임이다 — frameCount 를 넘겨 재생하면 NPC 가 사라진 것처럼 보인다.",
+        "★ 셀 안에서 스프라이트는 바닥 정렬(가로 가운데 / 세로 아래 변)이다.",
+        "  쓰는 쪽은 setOrigin(0.5, 1) 을 권장한다 — 그러면 스프라이트 y 가 곧 발이 닿는 지점이 된다.",
+        "  기본 origin(0.5,0.5)으로 써도 6종의 발이 서로 같은 높이에 서기는 한다(셀 기준이 같으므로).",
+        "bodyW/bodyH 는 프레임별 알파 bbox 의 중앙값(실측). 셀 크기가 아니라 이 값으로 접촉 판정을 잡는다.",
+        "padTop 은 셀 위쪽 투명 여백(px). CELL - 합집합 높이 이며 바닥 정렬의 결과다.",
+        "anim 키는 registerAnims 가 이 파일을 읽어 만든다 — 프레임 배정을 두 곳에 적지 않는다.",
+        "라이선스: chierit 'Lively NPCs' CC BY 4.0 — 크레딧 표기 의무. 17-LICENSES-AND-CREDITS LC-06."
+    ],
+    "schemaVersion": 1,
+    "texture": "npcs",
+    "frameWidth": 40,
+    "frameHeight": 40,
+    "columns": 6,
+    "align": "bottom-center",
+    "animPrefix": "npc.",
+    "fps": 6,
+    "source": {
+        "pack": "Lively NPCs v3.1",
+        "author": "chierit",
+        "url": "https://chierit.itch.io/lively-npcs",
+        "license": "CC BY 4.0",
+        "creditRequired": true
+    },
+    "sheet": {
+        "file": "assets/npc/npcs.png",
+        "width": 240,
+        "height": 240,
+        "cells": 36,
+        "usedFrames": 29,
+        "bytes": 2893
+    },
+    "npcs": [
+        {"id":"merchant","nameKo":"떠돌이 상인","role":"merchant","encounter":"enc_merchant","anim":"npc.merchant","frameStart":0,"frameCount":5,"fps":6,"bodyW":25,"bodyH":30,"padTop":10,"srcSize":"160x32","srcFrame":"32x32","trim":"28x30+3+2","src":"asset/npcs/Lively_NPCs_v3.1/sprite sheets/medieval/merchant.png"},
+        {"id":"witch","nameKo":"재의 마녀","role":"witch","encounter":"enc_witch","anim":"npc.witch","frameStart":6,"frameCount":5,"fps":6,"bodyW":26,"bodyH":32,"padTop":8,"srcSize":"170x34","srcFrame":"34x34","trim":"26x32+6+1","src":"asset/npcs/Lively_NPCs_v3.1/sprite sheets/medieval/witch.png"},
+        {"id":"seer","nameKo":"눈먼 예언자","role":"seer","encounter":"enc_seer","anim":"npc.seer","frameStart":12,"frameCount":6,"fps":6,"bodyW":18,"bodyH":28,"padTop":12,"srcSize":"204x34","srcFrame":"34x34","trim":"18x28+9+4","src":"asset/npcs/Lively_NPCs_v3.1/sprite sheets/medieval/seer.png"},
+        {"id":"shady_guy","nameKo":"수상한 자","role":"shady","encounter":"enc_shady","anim":"npc.shady_guy","frameStart":18,"frameCount":5,"fps":6,"bodyW":19,"bodyH":30,"padTop":10,"srcSize":"170x34","srcFrame":"34x34","trim":"21x30+9+2","src":"asset/npcs/Lively_NPCs_v3.1/sprite sheets/medieval/shady_guy.png"},
+        {"id":"elder","nameKo":"노인","role":"spare","encounter":null,"anim":"npc.elder","frameStart":24,"frameCount":4,"fps":6,"bodyW":20,"bodyH":24,"padTop":16,"srcSize":"128x32","srcFrame":"32x32","trim":"20x24+5+8","src":"asset/npcs/Lively_NPCs_v3.1/sprite sheets/medieval/elder.png"},
+        {"id":"trader","nameKo":"장사꾼","role":"spare","encounter":null,"anim":"npc.trader","frameStart":30,"frameCount":4,"fps":6,"bodyW":24,"bodyH":28,"padTop":11,"srcSize":"128x32","srcFrame":"32x32","trim":"24x29+1+2","src":"asset/npcs/Lively_NPCs_v3.1/sprite sheets/steampunk/trader.png"}
+    ]
+}

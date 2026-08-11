@@ -21,6 +21,12 @@
         "  구 enemies 시트(64x160, 10종)는 SpawnSystem 이 풀 스프라이트를 생성할 때의",
         "  초기 텍스처로만 남아 있다(SpawnSystem.js 의 add.sprite(...,\"enemies\",0)). 지우면 초록 체크무늬가 뜬다.",
         "",
+        "★ 조우 NPC 6종은 npcs 한 장(240x240, 40x40 격자 6열 = 36칸, 실사용 29칸)이 전부다.",
+        "  한 행이 정확히 한 종이고 프레임 배정은 src/data/npc-catalog.json 이 갖는다.",
+        "  원본(asset/npcs/Lively_NPCs_v3.1)은 프레임이 32x32/34x34 로 섞여 있어 균일 격자가 아니다 —",
+        "  tools/build-npcs.mjs 가 바닥 정렬 패딩을 넣어 40x40 으로 다시 굽는다. 손으로 고치지 않는다.",
+        "  ⚠ 라이선스 CC BY 4.0(chierit) — 크레딧 표기가 의무다. docs/17 LC-06.",
+        "",
         "맵은 Tiled 타일맵이 아니라 단일 이미지 + 충돌 배열이다(docs/18-MAP-IMAGE-PROMPT.md)."
     ],
     "images": [
@@ -157,6 +163,12 @@
             "url": "assets/enemies/monsters.png",
             "frameWidth": 16,
             "frameHeight": 16
+        },
+        {
+            "key": "npcs",
+            "url": "assets/npc/npcs.png",
+            "frameWidth": 40,
+            "frameHeight": 40
         },
         {
             "key": "boss",

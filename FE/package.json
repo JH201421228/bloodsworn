@@ -25,8 +25,9 @@
     "build:monsters": "node tools/build-monsters.mjs",
     "build:projectiles": "node tools/build-projectiles.mjs",
     "build:bosses": "node tools/build-bosses.mjs",
+    "build:npcs": "node tools/build-npcs.mjs",
     "build:ui": "node tools/build-ui.mjs",
-    "build:all-assets": "npm run build:assets && npm run build:props && npm run build:monsters && npm run build:projectiles && npm run build:bosses && npm run build:items",
+    "build:all-assets": "npm run build:assets && npm run build:props && npm run build:monsters && npm run build:npcs && npm run build:projectiles && npm run build:bosses && npm run build:items",
     "validate": "node tools/validate-data.mjs"
   },
   "dependencies": {
