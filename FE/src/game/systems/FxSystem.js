@@ -28,6 +28,12 @@ import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
 import { LOGICAL_WIDTH, LOGICAL_HEIGHT } from "../config";
 
+/** 폭발 스프라이트. 매니페스트 키와 같아야 한다 */
+const BURST_KEY = "fx-slash";
+const BURST_ANIM = "fx.burst";
+/** 동시 폭발 상한. 넘치면 가장 오래된 것을 회수한다 */
+const MAX_BURST = 6;
+
 const BONE = 0xd8cfc0;   // 09-ART 1.1 기본 텍스트색
 const GOLD = 0xe8b44c;   // 치명타
 const BLOOD = 0x8e1220;  // 피 파티클
@@ -140,6 +146,23 @@ export class FxSystem {
         this.player = ctx.player;
         this.enabled = true;
 
+        // 폭발 스프라이트 풀. 런 중 new 금지 규약대로 미리 만든다.
+        if (scene.textures.exists(BURST_KEY)) {
+            if (!scene.anims.exists(BURST_ANIM)) {
+                scene.anims.create({
+                    key: BURST_ANIM,
+                    frames: scene.anims.generateFrameNumbers(BURST_KEY, { start: 0, end: 7 }),
+                    frameRate: 24, repeat: 0, hideOnComplete: true,
+                });
+            }
+            this.bursts = new Pool(MAX_BURST, () => {
+                const b = scene.add.sprite(-999, -999, BURST_KEY, 0);
+                b.setDepth(DEPTH.FX + 2).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+                // 재생이 끝나면 스스로 풀로 돌아간다 — update 에서 수명을 세지 않아도 된다
+                b.on("animationcomplete", () => { b.setVisible(false).setPosition(-999, -999); this.bursts.release(b); });
+                return b;
+            });
+        }
         this.level = 0;                 // QualitySystem 이 바꾼다
         this.caps = CAPS[0];
         this.screenShake = true;        // settings.screenShake
@@ -236,6 +259,26 @@ export class FxSystem {
     }
 
     /** 처치 이펙트. 09-ART 7.1 — 피 파티클 3개(저사양 0개) + 처치음 */
+    /**
+     * 폭발 연출. fx-slash 시트(64x64 x 8프레임)를 쓴다.
+     *
+     * ★ 이 에셋은 이름과 달리 **참격이 아니라 방사형 폭발**이다(별 모양 -> 잔불).
+     *   근접 부채꼴에 쓰면 휘두를 때마다 플레이어 중심에 폭발이 터지는 꼴이 된다.
+     *   폭탄·광역 투사체처럼 "한 점에서 퍼지는" 것에만 쓴다.
+     * ★ 텍스처가 없으면 조용히 건너뛴다. 연출이 없어도 피해는 이미 들어간 뒤다.
+     *
+     * @param {number} radius 폭발 반경(px). 스프라이트를 여기에 맞춰 늘린다
+     */
+    burst(x, y, radius = 48) {
+        if (!this.enabled || !this.scene.textures.exists(BURST_KEY)) return;
+        const s2 = this.bursts?.obtain?.();
+        if (!s2) return;
+        s2.setPosition(x, y).setVisible(true).setAlpha(0.9)
+            .setDisplaySize(radius * 2.2, radius * 2.2)
+            .setRotation(Math.random() * Math.PI * 2);   // 매번 같은 각도면 도장처럼 보인다
+        s2.play(BURST_ANIM, true);
+    }
+
     killBurst(x, y) {
         this.scene.audio?.sfx("kill");
         if (!this.enabled) return;

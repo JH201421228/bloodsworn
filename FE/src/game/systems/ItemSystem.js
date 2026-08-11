@@ -647,6 +647,8 @@ export class ItemSystem {
                 if (dist2(en.x, en.y, this.player.x, this.player.y) > r2) continue;
                 this.combat.queueDamage(en, e.value ?? 40, e.knockback ?? 20);
             }
+            // 폭발 연출. 피해는 이미 큐에 들어간 뒤라 연출이 없어도 결과는 같다.
+            this.scene.fxSystem?.burst?.(this.player.x, this.player.y, e.radius ?? 90);
             this.scene.fxSystem?.hitStop?.(40);
         }
         console.warn("[ItemSystem] 처리하지 않는 effect.type:", e.type, "-", b.id);

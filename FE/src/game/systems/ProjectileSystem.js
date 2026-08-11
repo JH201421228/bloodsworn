@@ -337,6 +337,8 @@ export class ProjectileSystem {
      * ★ 반경만 stats.area 를 곱한다. 직격 판정에는 area 가 붙지 않는다(정본에 그런 항목이 없다).
      */
     explode(p, x, y, aoe) {
+        // 광역 폭발 연출. 반경에 맞춰 스프라이트를 늘린다.
+        this.scene.fxSystem?.burst?.(x, y, aoe?.radius ?? 40);
         const radius = (aoe.radius ?? 24) * (this.stats?.get("area") ?? 1);
         const r2 = radius * radius;
         const dmg = p.__dmg * (aoe.damageMult ?? 0.5);
