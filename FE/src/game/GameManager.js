@@ -58,7 +58,11 @@ class GameManagerImpl {
             // 성소 업그레이드. registry 에 두면 씬 재시작을 넘어 살아남아
             // 결과 화면 [다시 하기] 로 돌아온 런에도 그대로 적용된다.
             if (p?.meta?.upgrades) g.registry.set("sanctum", p.meta.upgrades);
-            else if (!g.registry.has("stageId")) g.registry.set("stageId", "stage1");
+            // ★ else 로 묶여 있던 줄이다. requestStartRun 은 meta.upgrades 를 **항상** 실어
+            //   보내므로 이 기본값은 한 번도 실행된 적이 없었다(실측: 부팅 직후 성소 [출정]
+            //   에서 registry.stageId 가 undefined). StageSystem.load 가 defaultStageId 로
+            //   떨어져 결과는 같았지만, 「기본 스테이지를 여기서 정한다」는 의도가 죽어 있었다.
+            if (!g.registry.has("stageId")) g.registry.set("stageId", "stage1");
             const gs = g.scene.getScene(SCENES.GAME);
             if (!gs || !gs.scene.isActive()) { g.scene.start(SCENES.GAME); return; }
             // 승리/카드 대기 중에는 씬이 pause 상태다. 풀지 않으면 restart 가 먹지 않는다.

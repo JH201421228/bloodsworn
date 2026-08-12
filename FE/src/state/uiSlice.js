@@ -68,9 +68,28 @@ export const createUiSlice = (set, get) => ({
     setScreen: (screen) => set({ screen, modal: null, confirm: null, stageSelect: false }),
     setModal: (modal) => set({ modal, confirm: modal === MODALS.CONFIRM ? get().confirm : null }),
 
-    /** 확인 다이얼로그. 포기·세이브 삭제처럼 되돌릴 수 없는 조작에만 쓴다(10-UIUX 2.7 / 2.10). */
-    openConfirm: (confirm) => set({ modal: MODALS.CONFIRM, confirm }),
-    closeConfirm: () => set({ modal: null, confirm: null }),
+    /**
+     * 확인 다이얼로그. 포기·세이브 삭제처럼 되돌릴 수 없는 조작에만 쓴다(10-UIUX 2.7 / 2.10).
+     *
+     * ★ 확인창은 **자기가 열린 자리를 기억한다**(returnTo). 10-UIUX 1.1 「닫으면 원래 있던
+     *   곳으로 돌아간다」가 모달 스택에도 그대로 적용돼야 하는데, 예전 closeConfirm 은
+     *   modal 을 무조건 null 로 만들었다. 그래서 실측으로 두 가지가 깨져 있었다.
+     *     - 일시정지 → 「포기」 → 「취소」 : 일시정지 메뉴까지 사라지는데 **Phaser 씬은 멈춘
+     *       채로 남는다.** 화면에는 게임이 보이는데 아무것도 움직이지 않고 되살릴 버튼도 없다.
+     *     - 옵션 → 「저장 데이터 삭제」 → 「취소」 : 옵션 화면이 닫히고 타이틀로 튕긴다.
+     *   platform.handleBack 은 이 복귀를 이미 직접 구현하고 있었지만, 화면의 「취소」 버튼은
+     *   그 경로를 타지 않아 같은 사고가 그대로 남아 있었다. 복귀 규칙을 여기 한 곳에 둔다.
+     * ★ 확인창 위에 확인창을 겹쳐 열어도 최초의 자리를 잃지 않는다.
+     */
+    openConfirm: (confirm) =>
+        set((s) => ({
+            modal: MODALS.CONFIRM,
+            confirm: {
+                ...confirm,
+                returnTo: s.modal === MODALS.CONFIRM ? (s.confirm?.returnTo ?? null) : s.modal,
+            },
+        })),
+    closeConfirm: () => set((s) => ({ modal: s.confirm?.returnTo ?? null, confirm: null })),
 
     openPact: (payload) =>
         set({

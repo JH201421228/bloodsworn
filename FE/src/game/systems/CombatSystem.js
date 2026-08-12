@@ -19,7 +19,7 @@ import { dist2 } from "../utils/math";
 import { TEMPO_SCALE } from "./PlayerSystem";
 import { emptyMods } from "./RuneSystem";
 import weaponsData from "@/data/weapons.json";
-import { resolveAdPlacement } from "@/monetization";
+import { resolveAdPlacement, showRewarded } from "@/monetization";
 
 const MAX_PROJECTILES = 200;
 
@@ -571,12 +571,40 @@ export class CombatSystem {
         return true;
     }
 
-    /** CMD_REVIVE 응답. 두 번 불려도 안전하다 */
+    /**
+     * CMD_REVIVE 응답. 두 번 불려도 안전하다.
+     *
+     * ★ 「광고 보고 부활」은 **광고를 실제로 튼 다음**에 살린다 (2026-08-12 수정).
+     *   고치기 전에는 수락과 동시에 인간성만 깎고 그 자리에서 부활했다 — 광고는 한 번도
+     *   재생되지 않았고(showRewarded 호출부가 없었다), 그래서
+     *     · 버튼 문구 「광고 보고 부활」이 거짓말이 되고,
+     *     · ads.revive.perRun 상한과 일일 노출 집계가 영원히 0 이며,
+     *     · ad_request / ad_rewarded 텔레메트리에 revive 가 통째로 빠진다.
+     *   실측(웹 dev, 2026-08-12): 부활 성공 후 caps.perDay={} / runCounts={} 였다.
+     * ★ 8초 무응답 타임아웃은 「답을 안 했다」를 위한 것이다. 사용자가 눌렀으면 그 순간
+     *   끝난다 — 안 그러면 광고를 끝까지 보고 온 사람이 그 사이 타임아웃으로 죽는다.
+     * ★ 광고 실패는 "보상 없음"이지 "진행 불가"가 아니다(20-MONETIZATION). 실패·거부·
+     *   미준비는 전부 거절과 같게 endRunDead() 로 떨어진다. 절대 멈춘 채로 남지 않는다.
+     */
     resolveRevive(accepted) {
-        if (!this.reviveOffered || this.reviveDone) return;
-        this.reviveDone = true;
+        if (!this.reviveOffered || this.reviveDone || this.reviveShowing) return;
+        // 사용자가 답했다 — 무응답 타임아웃은 여기서 역할이 끝난다.
         clearTimeout(this.reviveTimer);
-        if (!accepted) { this.endRunDead(); return; }
+        this.reviveTimer = null;
+        if (!accepted) { this.reviveDone = true; this.endRunDead(); return; }
+
+        this.reviveShowing = true;
+        showRewarded("revive")
+            .then((r) => this.finishRevive(Boolean(r?.rewarded)))
+            .catch(() => this.finishRevive(false));
+    }
+
+    /** 광고 결과가 나온 뒤의 실제 부활 처리. rewarded=false 면 거절과 같다. */
+    finishRevive(rewarded) {
+        this.reviveShowing = false;
+        if (this.reviveDone) return;
+        this.reviveDone = true;
+        if (!rewarded) { this.endRunDead(); return; }
 
         let p = null;
         try { p = resolveAdPlacement("revive"); } catch { p = null; }
@@ -773,11 +801,25 @@ export class CombatSystem {
                 EventBus.emit(EVENTS.HUMANITY_ZERO, { humanity: 0 });
                 this.awakening?.triggerAscension?.();
             }
-        } else if (index < 0 && cards) {
-            // T541 스킵 — HP 25% 회복 + 골드 30. 인간성 감소가 없는 유일한 선택지이자
-            // 후반 인간성 관리의 유일한 수단이다(04-PACT 6.2).
-            this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.25);
-            this.gold += 30;
+        } else if (cards) {
+            if (index < 0) {
+                // T541 스킵 — HP 25% 회복 + 골드 30. 인간성 감소가 없는 유일한 선택지이자
+                // 후반 인간성 관리의 유일한 수단이다(04-PACT 6.2).
+                this.hp = Math.min(this.maxHp, this.hp + this.maxHp * 0.25);
+                this.gold += 30;
+            }
+            // ★ 카드를 화면에서 내리는 신호는 PACT_APPLIED **하나뿐**이다(bridge:pact-applied).
+            //   축복을 고른 경로에서만 쏘고 있어서, 「거절」을 누르면 씬은 resume 되는데
+            //   카드 3장은 화면에 그대로 남아 조작이 통째로 막혔다. 실측: 거절 직후
+            //   paused=false 인데 .pact-stage 가 DOM 에 남고 다음 레벨업까지 사라지지 않는다.
+            //   범위 밖 index(늦게 들어온 연타 등)도 같은 자리에서 닫아 준다.
+            //   스킵은 인간성·대가를 건드리지 않으므로 지금 값을 그대로 실어 보낸다 — 멱등하다.
+            EventBus.emit(EVENTS.PACT_APPLIED, {
+                level: this.level,
+                humanity: this.pact?.humanity ?? 100,
+                tagCounts: { ...(this.pact?.tagCounts ?? {}) },
+                ownedBlessings: { ...(this.pact?.owned ?? {}) },
+            });
         }
         this.pendingCards = null;
         this.scene.scene.resume();

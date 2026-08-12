@@ -96,13 +96,13 @@ export function handleBack() {
     if (s.revive?.open) return false;
 
     if (s.modal === MODALS.CONFIRM) {
+        // ★ 복귀 자리는 확인창 자신이 기억한다(uiSlice.openConfirm 의 returnTo).
+        //   여기서 다시 판단하면 규칙이 두 벌이 되고, 실제로 그래서 어긋나 있었다 —
+        //   옵션 위에서 연 확인창을 back 으로 닫으면 옵션이 아니라 일시정지로 갔다.
         s.closeConfirm();
-        // ★ 런 중에 뜬 확인창(「런을 포기할까」)은 **일시정지 위에 얹힌 것**이다.
-        //   closeConfirm() 은 modal 을 통째로 null 로 만들기 때문에, 그냥 두면 일시정지 메뉴까지
-        //   사라지는데 **Phaser 씬은 멈춘 채로 남는다** — 화면에는 게임이 보이는데 아무것도
-        //   움직이지 않는 "얼어붙은" 상태가 된다(에뮬레이터에서 실제로 재현했다).
-        //   확인창을 취소했으면 원래 있던 자리, 즉 일시정지로 돌아가는 것이 맞다.
-        if (s.screen === SCREENS.PLAYING) s.setModal(MODALS.PAUSE);
+        // 그래도 갈 곳이 없는데 런 중이면 일시정지로 떨어뜨린다. 메뉴만 사라지고
+        // **Phaser 씬은 멈춘 채로 남으면** 화면이 얼어붙는다(에뮬레이터에서 재현했다).
+        if (!useStore.getState().modal && s.screen === SCREENS.PLAYING) s.setModal(MODALS.PAUSE);
         return false;
     }
     if (s.modal === MODALS.OPTIONS || s.modal === MODALS.CREDITS) {
@@ -143,7 +143,9 @@ export function handleBackground() {
     // 광고 표시 중은 백그라운드가 아니다. 그대로 두면 광고를 닫아도 일시정지 모달이 남는다.
     if (adInFlight) return;
     const s = useStore.getState();
-    if (s.screen !== SCREENS.PLAYING || s.pact.open || s.modal) return;
+    // ★ 부활 제안도 PACT 와 같이 "답을 기다리는" 오버레이다. 여기서 일시정지 모달을 얹으면
+    //   부활 카드 위에 메뉴가 덮여, 광고를 보고 돌아왔을 때 답을 할 수 없게 된다.
+    if (s.screen !== SCREENS.PLAYING || s.pact.open || s.revive?.open || s.modal) return;
     EventBus.emit(EVENTS.CMD_PAUSE);
     s.setModal(MODALS.PAUSE);
 }

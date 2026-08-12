@@ -114,7 +114,14 @@ export function installBridge() {
 
     sub(EVENTS.RUN_ENDED, (result) => {
 
+        // ★ 런이 끝나면 「런 중에만 있어야 하는 오버레이」를 전부 내린다.
+        //   닫기가 각자의 성공 경로에만 걸려 있으면, 한 군데만 새도 그 오버레이가
+        //   결과 화면 위에 그대로 올라탄다 — PactOverlay 와 AwakeningBanner 는
+        //   screen 을 보지 않고 자기 상태만 보고 그려지기 때문이다(UiLayer 최상단).
+        //   여기는 런의 유일한 종착점이라 정리를 한곳에 모으기에 맞는 자리다.
         s().closeRevive();
+        s().closePact();
+        s().hideAwakening();
         // T232 텔레메트리 — 밸런스를 "느낌"이 아니라 숫자로 조정하기 위한 유일한 수단
         console.log("[텔레메트리] 런 종료", JSON.stringify(result));
         const win = isWin(result?.reason);

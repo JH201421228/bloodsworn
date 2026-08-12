@@ -12,6 +12,7 @@
  *   그래서 [거절]이 아니라 [부활]에 시선이 가야 하고, 실수로 부활을 누르는 것보다
  *   실수로 거절하는 쪽이 덜 아프다(광고를 안 봤을 뿐 잃은 것이 없다).
  */
+import { useState } from "react";
 import { useStore } from "@/state/store";
 import { EventBus } from "@/game/EventBus";
 import { EVENTS } from "@/game/constants";
@@ -19,9 +20,22 @@ import "./revive.css";
 
 export default function ReviveOverlay() {
     const rv = useStore((s) => s.revive);
+    /**
+     * 「어느 제안에 대해 답했는가」. ResultScreen 의 claimedFor 와 같은 수법이다 —
+     * 제안 객체가 바뀌는 순간 자동으로 미응답이 되므로 리셋 effect 가 필요 없다.
+     * ★ 이게 필요해진 이유: 수락은 이제 **광고를 튼 뒤에** 끝난다(CombatSystem.resolveRevive).
+     *   그 사이 화면을 그대로 두면 카운트다운 바가 계속 줄어들어 "씹혔다"로 읽히고,
+     *   두 버튼이 살아 있어 광고 도중 「여기서 끝낸다」를 눌러 버릴 수 있다.
+     */
+    const [answeredFor, setAnsweredFor] = useState(null);
+    const waiting = answeredFor === rv;
     if (!rv?.open) return null;
 
-    const answer = (accepted) => EventBus.emit(EVENTS.CMD_REVIVE, { accepted });
+    const answer = (accepted) => {
+        if (waiting) return;
+        if (accepted) setAnsweredFor(rv); // 거절은 즉시 끝나므로 잠글 이유가 없다
+        EventBus.emit(EVENTS.CMD_REVIVE, { accepted });
+    };
     const cost = rv.humanityCost ?? 0;
     const afford = (rv.humanity ?? 0) >= cost;
     const hp = Math.round((rv.hpPct ?? 0.5) * 100);
@@ -45,23 +59,32 @@ export default function ReviveOverlay() {
                     </p>
                 )}
 
-                {/* 남은 시간. transition 이 아니라 keyframes 라 리렌더 없이 줄어든다 */}
+                {/* 남은 시간. transition 이 아니라 keyframes 라 리렌더 없이 줄어든다.
+                    ★ 답을 한 뒤에는 멈춘다 — Phaser 쪽 8초 타임아웃도 그 순간 해제되므로
+                      계속 줄어드는 바는 이제 화면에만 있는 거짓말이 된다. */}
                 <div className="revive-timer">
                     <div
                         className="revive-timer__fill"
-                        style={{ animationDuration: (rv.timeoutMs ?? 8000) + "ms" }}
+                        style={{
+                            animationDuration: (rv.timeoutMs ?? 8000) + "ms",
+                            animationPlayState: waiting ? "paused" : "running",
+                        }}
                     />
                 </div>
 
                 <div className="revive-actions">
                     <button
                         className="btn btn--primary revive-yes"
-                        disabled={!afford}
+                        disabled={!afford || waiting}
                         onClick={() => answer(true)}
                     >
-                        ▶ 광고 보고 부활
+                        {waiting ? "광고를 여는 중" : "▶ 광고 보고 부활"}
                     </button>
-                    <button className="btn btn--sm revive-no" onClick={() => answer(false)}>
+                    <button
+                        className="btn btn--sm revive-no"
+                        disabled={waiting}
+                        onClick={() => answer(false)}
+                    >
                         여기서 끝낸다
                     </button>
                 </div>

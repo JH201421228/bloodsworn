@@ -31,6 +31,26 @@ const PENALTY_KEPT = new Set(
     awakeningsData.awakenings.filter((a) => a.tag && !a.removePenalty).map((a) => a.tag),
 );
 
+/**
+ * 축복 수치 → 카드에 찍히는 문자열.
+ *
+ * ★ "%" 를 여기서 무조건 붙이면 안 된다. blessings.json 의 desc 는 두 가지 모양이 섞여 있다.
+ *     op:"mul"  → "모든 피해 +{v}%"   (데이터가 % 를 이미 들고 있다)
+ *     fmt:"pct" → "치명타 확률 +{v}"  (데이터에 % 가 없어 코드가 붙여 줘야 한다)
+ *   예전 코드는 백분율이면 항상 "%" 를 붙여, mul 계열 11종이 전부 **"+20%%"** 로 찍혔다
+ *   (실측 2026-08-12: bls_dmg / spd / as / range / area / exp / magnet / dash / vision /
+ *    kb / iframe — PACT 카드 3장 중 대부분이 여기 걸린다).
+ *   그래서 「{v} 뒤에 % 가 이미 있으면 붙이지 않는다」로 바꿨다. 데이터를 고치는 대신
+ *   코드를 고친 이유는, 두 모양 중 어느 쪽이든 정상 출력이 나오게 해야 다음에 desc 를
+ *   새로 쓰는 사람이 같은 함정에 다시 빠지지 않기 때문이다.
+ */
+function fmtValue(b, value) {
+    const pct = b.op === "mul" || b.fmt === "pct";
+    if (!pct) return value;
+    const n = Math.round(value * 100);
+    return b.desc?.includes("{v}%") ? String(n) : n + "%";
+}
+
 export class PactSystem {
     constructor(stats) {
         this.stats = stats;
@@ -257,7 +277,7 @@ export class PactSystem {
             value, tier,
             level: lv + 1,
             maxLevel: b.maxLevel,
-            desc: b.desc ? b.desc.replace("{v}", (b.op === "mul" || b.fmt === "pct") ? Math.round(value * 100) + "%" : value) : "",
+            desc: b.desc ? b.desc.replace("{v}", fmtValue(b, value)) : "",
         };
     }
 
