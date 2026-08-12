@@ -1170,7 +1170,7 @@ function ruleWaveCurve(R, D) {
 }
 
 /** 텍스처 키가 매니페스트에 있는가. public/assets.json 은 번들 밖이라 노드판에서만 본다.
- *  읽는 곳: PreloadScene.js:37~73 queueFromManifest / StageSystem.js:250 (폴백 있음)
+ *  읽는 곳: PreloadScene.js:37~73 queueFromManifest / StageSystem.applyGround (폴백 있음)
  *          BossSystem.js:384 `textures.exists(key)` — 없으면 애니 생성이 통째로 건너뛴다 */
 function ruleManifest(R, D) {
     const M = D.manifest;
@@ -1186,13 +1186,26 @@ function ruleManifest(R, D) {
     for (const b of D.bossAtlas.bosses ?? []) {
         if (!tex.has(b.key)) R.warn(`boss-atlas "${b.key}": 텍스처가 매니페스트에 없다 (file=${b.file})`);
     }
+    /**
+     * ★ stage2~5 의 지형 8건은 **오타가 아니라 미수령**이다 (2026-08-13 전수 확인).
+     *   저장소 어디에도 ground-cathedral/mire/spire/hellgate 원본이 없고
+     *   (`asset/` · `store/_raw/` · `tools/` 전부 0건), 그것을 굽는 코드도 없다.
+     *   의뢰서는 이미 있다 — `docs/26 §7`. 그래서 이 8건은 **완성해야 할 일감의 표시**로
+     *   여기 남긴다. 위반으로 올리지 않는 이유는 폴백이 실제로 동작해서 화면이 안 깨지기
+     *   때문이고, 지우지 않는 이유는 지우면 "같은 묘지 6개"가 조용해지기 때문이다.
+     *   ⚠ 아트가 오면 고칠 곳은 두 군데다 — `public/assets.json` 8줄 등록과
+     *     `stages.json` 의 `ground.tint` 를 0xFFFFFF 로 되돌리는 것(docs/26 §7.9).
+     */
     for (const st of D.stages.stages ?? []) {
         const g = st.ground ?? {};
         // texture/props 는 폴백이 있으니 경고, 폴백까지 없으면 초록 체크무늬가 뜬다 = error
         for (const [k, fb] of [["texture", "fallbackTexture"], ["props", "fallbackProps"]]) {
             if (g[k] && !tex.has(g[k])) {
-                if (g[fb] && tex.has(g[fb])) R.warn(`${st.id}.ground.${k} "${g[k]}" 없음 — ${fb} "${g[fb]}" 로 내려간다`);
-                else R.err(`${st.id}.ground.${k} "${g[k]}" 도 ${fb} 도 매니페스트에 없다 — 초록 체크무늬가 뜬다`);
+                if (g[fb] && tex.has(g[fb])) {
+                    R.warn(`${st.id}.ground.${k} "${g[k]}" 미수령 — ${fb} "${g[fb]}" + tint 로 내려간다 (의뢰서 docs/26 §7)`);
+                } else {
+                    R.err(`${st.id}.ground.${k} "${g[k]}" 도 ${fb} 도 매니페스트에 없다 — 초록 체크무늬가 뜬다`);
+                }
             }
         }
     }

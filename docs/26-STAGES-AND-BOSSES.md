@@ -896,9 +896,42 @@ G-5  Deepest shadow #0B0710 / Obsidian #16121C / Obsidian light #2A2533 / Ash #4
 1. `magick identify` 로 크기·알파 확인 → 2×2 이음매 자동 검증
 2. `FE/public/assets/map/` 에 배치, 좌표 목록을 `props-*.json` 으로 저장
 3. **`stages.json` 의 해당 스테이지 `ground.tint` 를 `16777215`(`0xFFFFFF`)로 되돌린다** ← 잊기 쉽다
-4. 프리로더에 텍스처 키 8개 등록 (`ground_cathedral` 등). 등록하지 않으면 `applyGround` 가
-   조용히 폴백하므로 **"이미지를 넣었는데 안 바뀐다"** 가 된다
+4. **`FE/public/assets.json` 의 `images[]` 에 8줄을 넣는다.** ⚠ `PreloadScene.js` 는 고치지 않는다 —
+   이 저장소의 규약이다(`assets.json` 머리 주석 · `32` §8 · `33` §9.2). 등록하지 않으면
+   `applyGround` 가 조용히 폴백하므로 **"이미지를 넣었는데 안 바뀐다"** 가 된다
+
+   ```json
+   { "key": "ground_cathedral", "url": "assets/map/ground-cathedral.png" },
+   { "key": "props_cathedral",  "url": "assets/map/props-cathedral.png"  },
+   { "key": "ground_mire",      "url": "assets/map/ground-mire.png"      },
+   { "key": "props_mire",       "url": "assets/map/props-mire.png"       },
+   { "key": "ground_spire",     "url": "assets/map/ground-spire.png"     },
+   { "key": "props_spire",      "url": "assets/map/props-spire.png"      },
+   { "key": "ground_hellgate",  "url": "assets/map/ground-hellgate.png"  },
+   { "key": "props_hellgate",   "url": "assets/map/props-hellgate.png"   }
+   ```
+
+   좌표 목록은 `json[]` 에 따로 4줄이 더 붙는다(`props_cathedral` 등 — `props_grave` 와 같은 모양).
 5. 헤드리스로 스테이지 5종 각각 전체 조망 + 150체 스트레스 재확인
+6. `npm run validate` 의 경고 8건이 **사라지는지** 확인한다. 남아 있으면 4번을 안 한 것이다
+
+### 7.10 ★ 수령 전에 막혀 있는 곳 (2026-08-13 실측)
+
+의뢰서는 완성돼 있다. 그런데 **그림이 와도 그대로는 §7.9 를 끝까지 돌릴 수 없다.**
+막힌 곳 2개를 미리 적어 둔다 — 그림을 받고 나서 발견하면 그날 하루가 날아간다.
+
+| # | 막힌 곳 | 무슨 일이 생기나 | 언제 고치나 |
+|---|---|---|---|
+| B-1 | `FE/tools/build-props.mjs` 가 `props-grave.png` **한 장을 하드코딩**한다(18~19행). 알파 연결성분으로 프레임 좌표를 뽑아 `props-grave.json` 을 만드는 스크립트인데 인자도 루프도 없다 | §7.9-2 의 "좌표 목록을 `props-*.json` 으로 저장"을 손으로 하게 된다. `props-grave.json` 은 손으로 만든 적이 없다 — 이 스크립트가 뽑았다 | 소품 시트 4장을 받는 날. 파일명을 인자로 받게 고치면 끝난다 |
+| B-2 | `FE/tools/build-assets.mjs:244` 가 **존재하지 않는 `build-map.mjs`** 를 참조하는 주석을 달고 있고, 같은 파일의 `buildTiles()`(151~174행)는 정의만 있고 아무도 부르지 않는다 | 맵 파이프라인을 찾는 사람이 없는 파일을 20분 찾는다. 실제로 맵을 굽는 코드는 **저장소에 없다** — `ground-grave.png` 는 수령 후 손으로 놓았다 | 지금 당장은 아니다. 죽은 주석·죽은 함수라 동작에 영향이 없다 |
+
+★ **stage6 은 누락이 아니다.** `stages.json:725-731` 이 의도적으로 `ground_grave` 를 쓴다
+(「봉인묘 심층 — 처음 그 자리」). 의뢰 대상은 stage2~5 넷뿐이다.
+
+★ **아트가 아예 없다는 것은 2026-08-13 에 전수 확인했다.** `asset/` · `store/_raw/` · `tools/` ·
+저장소 전체 파일명에서 `cathedral` / `mire` / `spire` / `hellgate` **0건**이다.
+근거표는 `18-MAP-IMAGE-PROMPT.md` §12.2 에 있다. 그래서 **절차 생성으로 흉내내지 않는다** —
+같은 문서 §12.2 가 그 판단의 근거를 적었다.
 
 ---
 

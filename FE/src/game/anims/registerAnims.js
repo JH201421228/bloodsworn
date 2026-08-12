@@ -176,6 +176,17 @@ export function registerAnims(scene) {
         repeat: 0,
     });
 
+    // ── 보스 실탄 「혼탄」 맥동 (docs/32 §11.2 B)
+    //   ★ 4프레임이 7 / 10 / 13 / 9 px 로 부풀었다 줄어든다. 12fps = 한 맥동 333ms —
+    //     보스 탄속(150px/s)에서 화면을 가로지르는 동안 6~7번 뛴다. 이보다 빠르면 떨림으로 읽힌다.
+    //   ★ 텍스처가 없으면 make() 가 건너뛰고, BossSystem 은 boltArt=false 로 원을 그린다.
+    //     즉 이 한 줄은 폴백을 막지 않는다.
+    make("boss_soul_bolt", "proj-soul-bolt", {
+        frames: scene.anims.generateFrameNumbers("proj-soul-bolt", { start: 0, end: 3 }),
+        frameRate: 12,
+        repeat: -1,
+    });
+
     if (skipped.length) {
         console.warn("[registerAnims] 텍스처가 없어 건너뛴 애니메이션 " + skipped.length + "개:", skipped.join(", "));
     }

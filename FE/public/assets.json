@@ -45,9 +45,37 @@
         "★ runes 는 룬·상자·조우마커·성소 아이콘 38종 시트다(docs/32). 32x32 격자 48칸.",
         "  ⚠ 이 두 줄을 빼면 EncounterSystem 이 예전의 반투명 원으로 그대로 되돌아간다 — 그것이 폴백이다.",
         "  손그림 시트가 오면 같은 경로에 덮어쓰기만 한다. 격자·칸 순서가 docs/33 §4 와 같다.",
-        "맵은 Tiled 타일맵이 아니라 단일 이미지 + 충돌 배열이다(docs/18-MAP-IMAGE-PROMPT.md)."
+        "",
+        "★ 3차 수령본 4종 (2026-08-13 · docs/32 §11 · docs/33 §9). 전부 아래 네 줄이 전부다 —",
+        "  ui-dash / proj-soul-bolt / proj-arrow-bone / mark-chest.",
+        "  ⚠ 이 네 줄을 빼면 각각 예전 도형으로 정확히 되돌아간다. 그것이 롤백 절차다.",
+        "     ui-dash        빼면 HudScene 이 글리프 「≫」 로 (HudScene.js dashMark)",
+        "     proj-soul-bolt 빼면 BossSystem 이 반지름 4~9 단색 원으로 (BossSystem.js boltArt)",
+        "     proj-arrow-bone 빼면 EnemyProjectileSystem 이 7x2 단색 사각형으로",
+        "     mark-chest     빼면 「봉인된 궤」 발밑이 다시 빈 바닥으로 (원으로 대신하지 않는다 — docs/33 §9)",
+        "  파일은 tools/bake-art34.mjs 가 assets/generated/ 수령본에서 재단한다.",
+        "  ⚠ assets/generated/** 는 사용자 수령본이다. 그 폴더에는 아무도 쓰지 않는다",
+        "     (bake-art34.mjs 의 assertNotReceipt 가 물리적으로 막는다).",
+        "",
+        "맵은 Tiled 타일맵이 아니라 단일 이미지 + 충돌 배열이다(docs/18-MAP-IMAGE-PROMPT.md).",
+        "★ stage2~5 전용 지형(ground_cathedral/mire/spire/hellgate · props_*)은 여기 없다.",
+        "  누락이 아니라 미수령이다 — 아트가 아직 없다. 의뢰서는 docs/26 §7 이 갖고 있고",
+        "  StageSystem.applyGround 가 fallbackTexture(ground_grave) + tint 로 내려간다.",
+        "  npm run validate 의 경고 8건이 그 미수령을 화면에 남기는 표시다(위반이 아니다)."
     ],
     "images": [
+        {
+            "key": "ui-dash",
+            "url": "assets/icons/ui-dash.png"
+        },
+        {
+            "key": "proj-arrow-bone",
+            "url": "assets/projectile/proj-arrow-bone.png"
+        },
+        {
+            "key": "mark-chest",
+            "url": "assets/decal/mark-chest-48.png"
+        },
         {
             "key": "ground_grave",
             "url": "assets/map/ground-grave.png"
@@ -291,6 +319,12 @@
             "url": "assets/icons/runes.png",
             "frameWidth": 32,
             "frameHeight": 32
+        },
+        {
+            "key": "proj-soul-bolt",
+            "url": "assets/projectile/proj-soul-bolt.png",
+            "frameWidth": 16,
+            "frameHeight": 16
         }
     ],
     "atlases": [

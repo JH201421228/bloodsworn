@@ -33,10 +33,14 @@ import { SCENES, DEPTH } from "../constants";
 import { input, JOY_RADIUS, DASH_BTN } from "../systems/InputSystem";
 
 const PARCHMENT = 0xc9b792;
+/** 어두운 잉크. 양피지 판 위에 얹는 것은 이 색이다(29·32 §4 외곽선) */
+const INK = 0x1a1216;
 const CANDLE = 0x35c9b4;
 
 /** HUD 아트 아틀라스 키. public/assets.json 의 atlases 항목과 같아야 한다 */
 const ATLAS = "hud";
+/** 대시 버튼 아이콘. 없으면 글리프 「≫」 로 떨어진다 (docs/32 §11.1) */
+const DASH_ICON = "ui-dash";
 
 /** 우측 끝에서 킬 수까지의 여백. 640 기준 원안(x=632)을 앵커로 환산한 값이다 */
 const KILLS_MARGIN_R = 8;
@@ -162,11 +166,34 @@ export default class HudScene extends Phaser.Scene {
         this.txtTimer = t(0, 8, 14, "#c9b792", 0.5);
         this.txtKills = t(0, 10, 10, "#9a94a3", 1);
         this.txtHp = t(18, 26, 9, "#c7c2ce", 0);
-        // 대시 버튼 글리프 — 판만 있으면 "무슨 버튼인지"를 아무도 모른다
-        this.txtDash = this.dashUp
-            ? this.add.text(-999, -999, "≫", { fontFamily: "monospace", fontSize: "16px", color: "#c9b792" })
-                .setOrigin(0.5, 0.5).setDepth(DEPTH.HUD + 2).setScrollFactor(0)
-            : null;
+        /**
+         * 대시 버튼 표식 — 판만 있으면 "무슨 버튼인지"를 아무도 모른다.
+         *
+         * ★ 아트가 있으면 아이콘, 없으면 글리프 「≫」 로 떨어진다 (docs/32 §11.1 · 예비칸 38 ui_dash).
+         *   두 갈래가 같은 변수(dashMark)를 쓰므로 아래 layout()·drawDash() 는 어느 쪽인지 모른다 —
+         *   assets.json 에서 ui-dash 한 줄을 빼면 글리프로 정확히 되돌아간다. 그것이 롤백 절차다.
+         * ★ 배율 1 로 쓴다 — 축소하지 않는다.
+         *   docs/32 §11.1 은 "1/2 축소하면 16px"을 예상했지만, 수령본은 32x32 칸 안에 그림이
+         *   **22x13** 로 들어와 여백이 크다. 즉 1:1 로 놓아도 화면에 찍히는 표식은 22x13 이고
+         *   이것이 판 얼굴(44x20)에 정확히 들어간다. 굳이 0.5 로 줄이면 1px 갈매기 획이
+         *   최근접 표본화에 솎여 나가 세 줄이 점 몇 개로 흩어진다(실측 8배 확대에서 확인).
+         *   정수배 축소가 안전한 것은 획이 2px 이상일 때 이야기다(docs/32 §2.1 의 전제).
+         * ★ 색은 tint 로 준다 — 시트는 양피지색 단색 한 가지로 구워져 있다.
+         *   ⚠ 그런데 곱할 색은 양피지색이 **아니다.** docs/32 §11.1 은 "판(어두운 금속) 위에
+         *   얹히므로 밝은 양피지색"이라고 적었는데, 실제 `btn-normal` 은 **어두운 금속 테 안에
+         *   양피지 판**이다(실측: 판 얼굴 rgb 230,215,178). 그 위에 양피지색을 얹으면 아무것도
+         *   안 보인다 — 헤드리스 8배 확대에서 아이콘이 통째로 사라졌다.
+         *   그래서 어두운 잉크(29·32 §4 의 외곽선 색)를 곱한다. 같은 이유로 아래 글리프 폴백의
+         *   색도 함께 내렸다 — 글리프가 안 보이던 것은 아트가 오기 전부터 있던 문제다.
+         */
+        this.dashMark = !this.dashUp
+            ? null
+            : this.textures.exists(DASH_ICON)
+                ? this.add.image(-999, -999, DASH_ICON)
+                    .setOrigin(0.5, 0.5).setTint(INK)
+                    .setDepth(DEPTH.HUD + 2).setScrollFactor(0)
+                : this.add.text(-999, -999, "≫", { fontFamily: "monospace", fontSize: "16px", color: "#1a1216" })
+                    .setOrigin(0.5, 0.5).setDepth(DEPTH.HUD + 2).setScrollFactor(0);
 
         /**
          * 남은 Graphics 하나 — 아틀라스가 통째로 없을 때의 폴백 전용이다.
@@ -226,7 +253,7 @@ export default class HudScene extends Phaser.Scene {
         // 대시 버튼 — DASH_BTN 은 InputSystem.layout 이 먼저 갱신한다(attach 가 먼저 구독했다)
         this.dashUp?.setPosition(DASH_BTN.x, DASH_BTN.y);
         this.dashDown?.setPosition(DASH_BTN.x, DASH_BTN.y);
-        this.txtDash?.setPosition(DASH_BTN.x, DASH_BTN.y);
+        this.dashMark?.setPosition(DASH_BTN.x, DASH_BTN.y);
         // 덮개는 판 안쪽만 덮는다 — 테두리 장식까지 덮으면 버튼이 사라진 것처럼 보인다
         this.dashCool?.setPosition(DASH_BTN.x - DASH_PLATE.w / 2 + 4, DASH_BTN.y - DASH_PLATE.h / 2 + 5)
             .setDisplaySize(DASH_PLATE.w - 8, DASH_PLATE.h - 10);
@@ -332,7 +359,7 @@ export default class HudScene extends Phaser.Scene {
             this.dashUp.setVisible(!held).setAlpha(alpha);
             this.dashDown.setVisible(held).setAlpha(alpha);
             // 눌린 판은 1px 내려앉는다 — 실제로 눌렸다는 신호가 색 변화만으로는 약하다
-            this.txtDash?.setPosition(DASH_BTN.x, DASH_BTN.y + (held ? 1 : 0)).setAlpha(alpha);
+            this.dashMark?.setPosition(DASH_BTN.x, DASH_BTN.y + (held ? 1 : 0)).setAlpha(alpha);
             if (this.dashCool) {
                 // 왼쪽부터 걷힌다. progress 1 이면 덮개가 없다
                 const innerW = DASH_PLATE.w - 8;

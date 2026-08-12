@@ -28,6 +28,11 @@ const MAX_ENEMY_PROJECTILES = 64;
 const HIT_R2 = 10 * 10;
 /** 화면 밖으로 한참 나간 탄은 사거리와 무관하게 회수한다 */
 const CULL_R2 = 640 * 640;
+/**
+ * 궁수 화살 텍스처. 14x14 칸에 12x3 그림이 오른쪽을 향해 누워 있다(docs/32 §11.2 C).
+ * ★ 회전은 코드가 한다 — 방향별 시트를 만들지 않는다. fire() 의 setRotation 하나로 끝난다.
+ */
+const ARROW_TEX = "proj-arrow-bone";
 
 export class EnemyProjectileSystem {
     constructor(scene, ctx = {}) {
@@ -35,9 +40,19 @@ export class EnemyProjectileSystem {
         this.player = ctx.player;
         this.combat = ctx.combat;
 
+        /**
+         * ★ 폴백 판정은 생성자에서 한 번뿐이다. 매 프레임 textures.exists 를 부르지 않는다
+         *   (EncounterSystem.buildObjects 와 같은 규약).
+         *   아트가 없으면 예전의 7x2 단색 사각형으로 그대로 되돌아간다 —
+         *   assets.json 에서 proj-arrow-bone 한 줄을 빼는 것이 롤백 절차다(docs/32 §11.2 C).
+         */
+        this.hasArrowTex = scene.textures.exists(ARROW_TEX);
+
         this.pool = new Pool(MAX_ENEMY_PROJECTILES, () => {
             // 화살 형태. 원으로 그리면 EXP 오브와 구분이 안 된다
-            const s = scene.add.rectangle(-999, -999, 7, 2, 0xd8c9a0);
+            const s = this.hasArrowTex
+                ? scene.add.image(-999, -999, ARROW_TEX)
+                : scene.add.rectangle(-999, -999, 7, 2, 0xd8c9a0);
             s.setDepth(DEPTH.PROJECTILE).setVisible(false);
             return s;
         });

@@ -126,6 +126,21 @@ const LOCKED_COLOR = 0x4a4650;
  */
 const LOCKED_TINT = 0x9a94a3;
 const DECAL_PED = "enc-decal-48";
+/**
+ * 「봉인된 궤」 발밑 표식 (docs/33 §9 추가 후보 · 시트A 예비칸 05 `mark_chest`).
+ * ★ 시트 A 에 끼워 넣지 않고 낱장으로 둔다. enc-decal-48.png 는 이미 수령한 그림이고
+ *   칸 하나를 채우자고 6칸짜리 시트를 통째로 덮어쓰면 00~04 를 잃는다(33 §9 의 경고 그대로).
+ *   낱장이라 텍스처 유닛을 하나 더 쓰지만, 궤와 좌판은 같은 화면에 안 뜬다(33 §3.5 와 같은 근거).
+ * ★ 없으면 아무것도 만들지 않는다. 원으로 대신하지 않는 것이 이 문서의 규약이다(33 §4.1 03·04).
+ */
+const DECAL_CHEST = "mark-chest";
+/**
+ * 궤 표식 알파. 수령본에는 알파 사다리가 없다 — 두 계조(#4E4E4E/#9D9D9D)가 전부 alpha 255 다.
+ * 그래서 33 §5.2 의 "층"을 코드가 준다. 데칼이 불투명하면 그 위를 지나는 적과 투사체가 가려진다.
+ */
+const CHEST_MARK_ALPHA = 0.62;
+/** 표식과 열린 궤가 같은 자리인지 보는 반경. 궤 스프라이트 32px 의 절반이면 충분하다 */
+const CHEST_MARK_R2 = 16 * 16;
 const DECAL_ALTAR = "enc-decal-72";
 /** 시트 A 칸 순서 (33 §4.1). 프레임 번호를 손으로 적는 유일한 자리다 */
 const FA = { BASE: 0, LOCKED: 1, HALO: 2, BOSS: 3, NPC: 4 };
@@ -250,6 +265,16 @@ export class EncounterSystem {
             : null;
         this.bossMark = this.hasPedTex
             ? s.add.sprite(-9999, -9999, DECAL_PED, FA.BOSS).setDepth(DEPTH.ORB).setVisible(false)
+            : null;
+        /**
+         * 「봉인된 궤」 발밑 (33 §9). 조우 6종 중 궤만 바닥이 비어 있었다 —
+         * 묘지 바닥에는 관·비석·해골이 깔려 있어서 32px 궤 하나만 놓이면 소품과 구분되지 않는다.
+         * ★ 회전하지 않는다. 궤는 맥동만 한다(SpawnSystem.updateChests) — 바닥까지 돌면
+         *   소품 사이에서 눈이 피로해진다. tint 도 없다. 무채색 그대로가 33 §5.1 의 원칙이다.
+         */
+        this.chestMark = s.textures.exists(DECAL_CHEST)
+            ? s.add.image(-9999, -9999, DECAL_CHEST).setDepth(DEPTH.ORB)
+                .setAlpha(CHEST_MARK_ALPHA).setVisible(false)
             : null;
 
         // 「피의 제단」 — NPC 없이 바닥 마법진(30 §3.5). 고리가 돌고 안쪽이 차오른다
@@ -1265,6 +1290,11 @@ export class EncounterSystem {
      * @returns {{kind: string, label: string, blessing: object|null}}
      */
     rollChestReward(x, y) {
+        // 열린 궤의 표식을 걷는다. 좌표로 고르는 이유는 궤가 조우 말고 필드보스 보상으로도
+        // 떨어지기 때문이다 — 표식이 붙은 것은 조우 궤 하나뿐이라 그 한 자리만 본다.
+        if (this.chestMark?.visible && dist2(x, y, this.chestMark.x, this.chestMark.y) <= CHEST_MARK_R2) {
+            this.chestMark.setVisible(false).setPosition(-9999, -9999);
+        }
         const pick = rollWeighted(this.cfg.chest.rewards ?? EMPTY);
         const kind = pick?.kind ?? "blessing";
         // ★ 폴백 **순서**가 확률표만큼 중요하다 (2026-08-11 수정 / 30 §3.7).
@@ -1311,6 +1341,9 @@ export class EncounterSystem {
     beginChest(at) {
         if (!this.spawn) return false;
         this.spawn.dropChest(at.x, at.y, "encounter");
+        // ★ 표식은 조우가 닫혀도 남는다 — 궤가 그 자리에 그대로 있기 때문이다(30 §4.4).
+        //   그래서 hideAll() 에 넣지 않는다. 지우는 곳은 궤가 열리는 순간(rollChestReward) 하나다.
+        this.chestMark?.setPosition(at.x, at.y).setVisible(true);
         // 체류 시간을 짧게 잡아 화살표만 잠깐 남긴다. 상자는 그 자리에 그대로 있다.
         this.act.life = 12;
         return true;
@@ -1373,6 +1406,7 @@ export class EncounterSystem {
     }
 
     clear() {
+        this.chestMark?.setVisible(false).setPosition(-9999, -9999);
         this.altarFlash?.stop();
         this.altarFlash?.setVisible(false).setPosition(-9999, -9999);
         this.bossMark?.setVisible(false).setPosition(-9999, -9999);
