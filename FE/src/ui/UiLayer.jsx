@@ -5,13 +5,15 @@
  *
  * ★ 화면은 라우터가 아니라 uiSlice.screen 이 결정한다. Phaser 캔버스는 절대 언마운트하지 않고
  *   그 위에 오버레이를 얹기만 한다 — 화면 전환마다 WebGL 컨텍스트를 다시 만들면 실기기에서 수 초가 든다.
- * ★ 전면 화면은 .ui-screen(스테이지 크기 + 세이프 인셋), PACT 는 .ui-stage(스테이지 크기, 패딩 없음).
+ * ★ 전면 화면은 .ui-screen(뷰포트 전체), PACT 는 .ui-stage(16:9 스테이지, 패딩 없음).
  *   PACT 에 패딩을 주면 카드 좌표가 Phaser 와 어긋난다(index.css 주석 참조).
- * ★ 박스가 셋이다. 헷갈리면 반드시 잘못 쓴다 (index.css "HUD 스테이지 박스" 주석 참조)
- *     .ui-screen    16:9 스테이지 + 사방 세이프 인셋 — 전면 화면 전용
+ * ★ 박스가 셋이다. 헷갈리면 반드시 잘못 쓴다 (index.css "전면 화면 박스" 주석 참조)
+ *     .ui-screen    뷰포트 전체(inset:0) — 전면 화면 전용. 세이프 인셋은 .screen 이 padding 으로 먹는다
  *     .ui-stage     16:9 스테이지 정확히 — PACT / 각성 / 로딩. 640 기준 좌표가 박혀 있다
  *     .ui-hud-stage 캔버스와 1:1(가로 가변) + 좌우 세이프 인셋 — 플레이 중 HUD 전용
- *   플레이 중 HUD 만 물리적 화면 끝까지 민다. 나머지를 넓히면 PACT 카드 3장이 흩어진다.
+ *   Phaser 좌표와 맞춰야 하는 것은 .ui-hud-stage 하나뿐이라 그 박스만 캔버스를 따라간다.
+ *   전면 화면은 Phaser 와 맞출 것이 없고 화면을 덮는 것만이 요구사항이라 뷰포트를 쓴다 —
+ *   캔버스에 묶어 두면 캔버스가 레터박스되는 비율(16:10 등)에서 전면 화면까지 같이 잘린다.
  */
 import { useStore } from "@/state/store";
 import { SCREENS, MODALS } from "@/state/uiSlice";

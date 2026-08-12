@@ -76,7 +76,10 @@ export function logicalWidthFor(viewportW, viewportH) {
  * ★ 왜 필요한가: .ui-stage 는 16:9 고정이라 20:9 기기에서 캔버스보다 좌우 91px 씩 좁다.
  *   React HUD(인간성 심장·장비 슬롯·토스트)를 물리적 화면 끝에 붙이려면 캔버스와 1:1 인
  *   박스가 따로 있어야 한다. 그 박스가 index.css 의 .ui-hud-stage 이고, 크기를 여기서 준다.
- *   (PACT·각성·전면 화면은 계속 .ui-stage 16:9 를 쓴다 — 넓히면 카드 좌표가 흩어진다.)
+ *   ★ 이 값을 읽는 곳은 .ui-hud-stage 하나뿐이다. PACT·각성은 .ui-stage(16:9)를 쓰고
+ *     (넓히면 카드 좌표가 흩어진다), 전면 화면(.ui-screen)은 뷰포트 전체를 쓴다 —
+ *     캔버스가 레터박스되는 비율에서 전면 화면까지 같이 잘리면 안 되기 때문이다
+ *     (index.css "전면 화면 박스" 주석).
  * ★ 왜 CSS 만으로는 못 하나: 논리 폭이 floor() 정수 내림이라 순수 CSS 로는 최대 2~3 CSS px
  *   어긋나고, CSS floor() 는 빌드 타깃(chrome87 / safari14)에 없다. 캔버스의 진짜 크기를
  *   아는 곳은 여기뿐이므로 여기서 한 번 쓰고 CSS 는 읽기만 한다.
@@ -98,6 +101,28 @@ function publishCanvasMetrics(game) {
 
     root.style.setProperty("--canvas-w", w + "px");
     root.style.setProperty("--canvas-h", h + "px");
+}
+
+/**
+ * Phaser 가 **스스로** 캔버스를 다시 재단할 때도 --canvas-w/h 를 따라 갱신시킨다.
+ *
+ * ★ 왜 필요한가: ScaleManager 는 GameCanvas 의 이벤트와 별개로 움직이는 경로가 둘 있다.
+ *   자체 window resize 리스너와, step() 이 resizeInterval(기본 500ms)마다 부모 박스를
+ *   다시 재는 폴링이다. 둘 중 하나로 refresh() 가 돌면 canvas.style.width/height 는
+ *   바뀌는데 publishCanvasMetrics 는 안 불린다 — 그 순간 --canvas-w/h 가 낡는다.
+ *   낡은 값을 읽는 것은 이제 .ui-hud-stage 뿐이지만, 그 박스가 어긋나면 인간성 심장·
+ *   장비 슬롯이 Phaser 가 그린 HP바와 어긋나 보인다. RESIZE 이벤트에 붙여 두면
+ *   "캔버스가 바뀌었으면 반드시 다시 쓴다"가 경로와 무관하게 성립한다.
+ * ★ 60fps 값이 아니다. RESIZE 는 실제로 크기가 바뀔 때만 발화한다.
+ *
+ * @returns {() => void} 구독 해제
+ */
+export function watchCanvasMetrics(game) {
+    const s = game?.scale;
+    if (!s?.on) return () => {};
+    const onResize = () => publishCanvasMetrics(game);
+    s.on(Phaser.Scale.Events.RESIZE, onResize);
+    return () => s.off(Phaser.Scale.Events.RESIZE, onResize);
 }
 
 /**

@@ -12,7 +12,7 @@
  */
 import { useEffect, useRef } from "react";
 import { gameManager } from "@/game/GameManager";
-import { fitCanvasToViewport } from "@/game/config";
+import { fitCanvasToViewport, watchCanvasMetrics } from "@/game/config";
 
 export default function GameCanvas({ hidden = false }) {
     const ref = useRef(null);
@@ -40,6 +40,11 @@ export default function GameCanvas({ hidden = false }) {
         //   못 써서 React HUD 가 16:9 폴백 폭으로 한동안 남는다. 'ready' 에서 한 번 더 접는다.
         game?.events?.once?.("ready", schedule);
 
+        // ★ Phaser 가 자기 경로(자체 resize 리스너 / step() 의 부모 박스 폴링)로
+        //   캔버스를 다시 재단하는 경우까지 --canvas-w/h 에 반영시킨다. 이 구독이 없으면
+        //   그 경로에서만 값이 낡아 .ui-hud-stage 가 캔버스와 어긋난다(config.js 주석).
+        const unwatch = watchCanvasMetrics(game);
+
         window.addEventListener("resize", schedule);
         // ★ orientationchange 는 resize 보다 먼저 오고, 그 시점의 innerWidth/Height 는
         //   아직 회전 전 값이다. 그래서 별도로 듣되 계산은 rAF 뒤로 미룬다.
@@ -56,6 +61,7 @@ export default function GameCanvas({ hidden = false }) {
 
         return () => {
             if (raf) cancelAnimationFrame(raf);
+            unwatch();
             ro?.disconnect();
             window.removeEventListener("resize", schedule);
             window.removeEventListener("orientationchange", schedule);
