@@ -43,6 +43,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
+        // ★ F-1 — 지난 런이 예외로 죽었더라도 새 런은 깨끗하게 시작한다.
+        //   restart() 는 인스턴스를 재사용하므로 이 한 줄이 없으면 부활한 씬이 첫 프레임에 바로 멈춘다.
+        this.fatal = false;
         this.timeScale = 1; // 치트: 시간 배속
         // 데이터 오타는 JSON 파서를 통과하고 런타임에 NaN 으로 나타난다. 부팅 때 한 번 잡는다(T322).
         if (DEBUG) validateData();
@@ -169,7 +172,31 @@ export default class GameScene extends Phaser.Scene {
         if (DEBUG || isOverlayOn()) this.scene.launch(SCENES.DEBUG);
     }
 
+    /**
+     * ★ F-1 예외 방어 — 실제 로직은 stepRun 이고 여기는 그물이다.
+     *
+     * 왜 필요한가: Phaser 의 rAF 는 「콜백 실행 → 다음 프레임 예약」 순서라
+     * update 가 한 번만 던져도 rAF 체인이 그 자리에서 끊기고 게임이 영원히 언다
+     * (근거: ui/error/loopGuard.js 헤더). 루프 전체를 감싸는 그물이 따로 있지만,
+     * 여기서 먼저 잡으면 **이 씬만** 멈추고 루프와 다른 씬은 살아 있는 채로 남아
+     * 「타이틀로 돌아가기」가 깨끗하게 동작한다. 그물은 여기서 놓친 것만 받는다.
+     *
+     * ★ this.fatal 가드가 없으면 매 프레임 같은 예외를 다시 던져 로그와 이벤트가
+     *   초당 60회 쏟아진다. 한 번 죽은 런은 두 번 돌리지 않는다.
+     */
     update(time, delta) {
+        if (this.fatal) return;
+        try {
+            this.stepRun(time, delta);
+        } catch (e) {
+            this.fatal = true;
+            // 씬을 세운다. 결과를 못 내는 런이 뒤에서 계속 도는 것이 더 나쁘다.
+            try { this.scene.pause(); } catch (e2) { console.error("[치명] 씬 정지 실패", e2); }
+            EventBus.emit(EVENTS.FATAL_ERROR, { kind: "game", error: e, where: "GameScene.update" });
+        }
+    }
+
+    stepRun(time, delta) {
         // ★ update 순서 고정 (06-TECH 4.2) — 입력/이동 -> 스폰 -> AI -> 전투
         //   전투가 마지막인 이유: 공간해시를 모든 이동이 끝난 뒤 재구축해야 한다.
         const dt = Math.min(delta, 50) / 1000 * this.timeScale;

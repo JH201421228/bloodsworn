@@ -3209,7 +3209,214 @@ npx cap sync ios           # dist → ios/App/App/public + 플러그인 동기�
 
 ---
 
-## 16. 관련 문서
+## 16. ★ 치명 오류 처리 — 흰 화면을 없앤다 (F-1)
+
+### 16.0 무엇이 문제였나 (실측)
+
+전수조사 결과, 이 앱에는 **예외를 받는 쪽만 있고 쏘는 쪽이 없었다.**
+
+| 항목 | 실측 |
+|---|---|
+| `EVENTS.FATAL_ERROR` 구독 | `state/bridge.js` 1곳 |
+| `EVENTS.FATAL_ERROR` emit | **0곳** |
+| `window.onerror` / `unhandledrejection` | `src` + `index.html` 전부 **0곳** |
+| React ErrorBoundary / `componentDidCatch` | **0곳** |
+
+즉 예외가 하나라도 나면 React 트리가 통째로 죽고 **아무 신호 없이 흰 화면**만 남았다.
+실기기에서는 앱을 지우고 다시 깔기 전엔 복구 수단이 없다.
+
+### 16.1 ★ 왜 React 가 아니라 정적 DOM 인가
+
+오류 화면을 React 컴포넌트로 그리는 설계를 **버렸다.** 근거는 셋이다.
+
+1. **자기모순.** 이 화면이 필요한 순간은 정의상 「React 트리가 죽은 순간」이다.
+   죽은 트리로 죽음을 알릴 수는 없다. fallback 컴포넌트가 스토어를 읽는데 그 스토어가
+   깨져 있으면 fallback 자신이 다시 던지고, 결과는 똑같은 흰 화면이다.
+2. **흰 화면의 대표 원인은 「예외」가 아니라 「번들이 아예 안 뜨는 것」이다.**
+   청크 404 · 문법 에러 · import 실패. 그때는 React 도 Zustand 도 존재하지 않는다.
+   → **실측**: `dist/assets/index-*.js` 를 지우고 띄웠더니 정적 화면은 정상적으로 떴다
+   (`24-no-bundle.png`). React 로 그렸다면 이 경우 아무것도 못 띄운다.
+3. **스타일도 같은 이유로 인라인이다.** `index.css` 는 `main.jsx` 가 import 한다 —
+   번들이 죽으면 스타일도 함께 죽어 흰 배경의 맨 글자가 된다. 그래서 오류 화면은
+   `--u` · `--void` · `base_font` 같은 앱 자산을 **하나도** 쓰지 않는다.
+   색은 리터럴, 폰트는 시스템 고정폭, 크기는 뷰포트 단위다.
+
+정리: **보여주기는 의존성 0 인 `index.html` 이 전담**하고, 번들은
+「살아 있을 때만 할 수 있는 일」(이벤트 배선 · 소프트 복구)만 맡는다.
+
+### 16.2 구조
+
+```
+[전역]    window "error"(capture) / "unhandledrejection"   ─┐
+[리소스]  <script> 로드 실패                                 ─┤
+[감시견]  15초가 지나도 #root 가 비어 있음                     ─┤
+[React]   ErrorBoundary.componentDidCatch                   ─┤→ __BSW_FATAL__.report()
+          createRoot({ onUncaughtError })                   ─┤    (index.html · 의존성 0)
+[Phaser]  GameScene.update try/catch      ─emit FATAL_ERROR─┤        │
+          game.loop.callback 그물          ─emit FATAL_ERROR─┘        │
+                                                                      ├→ 저장 잠금
+                                                                      ├→ console.error (logcat)
+                                                                      ├→ 정적 화면 표시
+                                                                      └→ sink → EventBus FATAL_ERROR
+                                                                            → bridge.js 기존 구독
+```
+
+| 파일 | 역할 |
+|---|---|
+| `index.html` | 정적 화면 + 스타일 + 전역 핸들러 + `__BSW_FATAL__` 관문. **여기만은 절대 실패하지 않아야 한다** |
+| `ui/error/fatal.js` | 관문 ↔ EventBus/Zustand 배선. `sink` · `uiRecover` 등록 |
+| `ui/error/ErrorBoundary.jsx` | 렌더 예외로 죽는 가지를 잘라낸다. **fallback 은 `null` 이다** |
+| `ui/error/loopGuard.js` | Phaser 루프 그물 + `gameRecover` 등록 |
+| `game/scenes/GameScene.js` | `update` 를 `stepRun` 으로 감싼 씬 단위 방어 |
+| `state/bridge.js` | 기존 `FATAL_ERROR` 구독(계약 유지). 텔레메트리 한 줄만 남긴다 |
+| `state/store.js` | `persistSave()` 저장 잠금 |
+
+
+### 16.3 ★ Phaser — 씬이 던지면 게임이 **영원히** 언다
+
+Phaser 의 rAF 는 이렇게 생겼다 (`phaser/src/dom/RequestAnimationFrame.js` 89행).
+
+```js
+this.step = function step (time) {
+    _this.callback(time);                                    // ← 여기서 던지면
+    if (_this.isRunning) {
+        _this.timeOutID = window.requestAnimationFrame(step); // ← 여기에 못 온다
+    }
+};
+```
+
+**다음 프레임 예약이 콜백 뒤에 있다.** 즉 씬의 `update` 가 단 한 번만 던져도
+rAF 체인이 그 자리에서 끊기고 게임은 두 번 다시 움직이지 않는다. 예외는 `window` 로
+빠져나가므로 오류 화면은 뜨지만, 그 뒤의 캔버스는 죽은 채다.
+→ **실측**: 그물이 없는 상태에서 `HudScene` 이 던지자 `loop.frame` 이 3414 에서 정지했다.
+
+**대책은 2단이다.**
+
+1. **루프 그물** (`loopGuard.js`) — `TimeStep.callback`(= `Game.step`)을 try/catch 로 감싼다.
+   예외가 rAF 콜백 밖으로 못 나가므로 **rAF 체인이 살아남는다.** 그래서 「타이틀로
+   돌아가기」가 실제로 성립한다. 씬마다 try/catch 를 다는 방식은 택하지 않았다 —
+   예외는 `update` 만이 아니라 렌더·물리·플러그인 어디서든 나고, 루프 콜백은 그
+   전부가 반드시 지나가는 **단 하나의 길목**이다.
+2. **씬 단위 방어** (`GameScene.update`) — 여기서 먼저 잡으면 **그 씬만** 멈추고
+   루프와 다른 씬은 살아 있는 채로 남아 복구가 더 깨끗하다. 그물은 여기서 놓친 것만 받는다.
+
+#### ★ 함정 두 개 (둘 다 실측으로 잡았다)
+
+**(1) `loop.callback` 을 그냥 덮어쓰면 그물이 조용히 걷힌다.**
+`TimeStep` 은 생성 시 `callback` 을 `NOOP` 으로 채워 둔다(`TimeStep.js` 231행).
+「함수가 들어 있다」가 「루프가 시작됐다」를 뜻하지 않는다. 게다가 Phaser 는 `READY` 를
+**`Game.start()` 보다 먼저** 쏜다. 그래서 부팅 훅에서 단순히 감싸면 `NOOP` 을 감싸게 되고,
+곧이어 도착한 `start()` 의 `this.callback = callback` 한 줄이 그물을 지운다.
+**「가드가 걸린 것처럼 보이는데 실제로는 안 걸린」 최악의 모양**이다.
+→ 해결: `Object.defineProperty` 로 **접근자**를 건다. 이후 몇 번을 다시 꽂든
+들어오는 함수는 `inner` 로 들어가고, `TimeStep` 이 읽어 가는 것은 언제나 그물이다.
+
+**(2) 멈춘 씬을 `resume()` 한 뒤 `stop()` 하면 죽인 씬이 되살아난다.**
+`ScenePlugin.resume` 은 **언제나 `queueOp`** 다(`ScenePlugin.js` 564행) — 다음
+SceneManager 업데이트로 밀린다. 반면 `SceneManager.stop` 은 `sys.shutdown()` 을
+**즉시** 부른다(1286행). 그래서 `resume → stop` 순서로 쓰면 상태가 `SHUTDOWN` 이 됐다가
+한 프레임 뒤 밀려 있던 `resume` 이 도착해 `RUNNING` 으로 되돌린다
+(실측: GameScene `6 → 8 → 5`). `stop` 은 `PAUSED` 에서도 그대로 먹으므로 `resume` 자체가 필요 없다.
+
+### 16.4 ★ 세이브 보호 — 「저장하지 않았다」를 보장한다
+
+깨진 상태를 디스크로 내보내면 **다음 실행도 같은 자리에서 죽는다.** 그게 최악이다.
+진행도를 조금 잃는 쪽이 세이브를 통째로 잃는 쪽보다 언제나 낫다.
+
+- `report()` 는 **화면을 띄우기 전에** `window.__BSW_SAVE_LOCKED__ = true` 를 건다.
+  이 플래그의 주인이 `index.html` 인 이유: 번들이 통째로 실패한 상황에서도 잠글 수 있어야 한다.
+- `store.persistSave()` 가 그 플래그를 보고 즉시 반환한다. **한 곳만 막으면 충분하다** —
+  `saveNow` 를 부르는 곳이 `persistSave` 뿐이고 앱 안의 저장 요청이 전부 이 함수를 지난다.
+- 잠금은 **「타이틀로 돌아가기」가 디스크의 마지막 정상 세이브를 다시 읽어 메모리에 덮어쓴 뒤에만**
+  풀린다(`hydrateStore()`). 즉 예외 직전의 메모리는 한 바이트도 디스크로 나가지 못한다.
+- ★ **경합 하나를 실측으로 잡았다.** 원인이 그대로인 채 복구를 누르면 다시 그리는 순간
+  같은 예외가 나서 잠금이 다시 걸리는데, 뒤늦게 도착한 `hydrate` 완료가 그 잠금을 조용히
+  풀어 버렸다. → 완료 시점에 `shown` 을 다시 확인해 「그 사이에 또 죽었으면 풀지 않는다」.
+- 오류 화면 문구 「이 상태는 저장하지 않았다」는 장식이 아니라 **위 계약의 사용자용 표현**이다.
+
+### 16.5 사용자에게 보여주는 것
+
+기술 용어를 한 글자도 쓰지 않는다.
+
+```
+                    ✚
+               의식이 끊겼다
+      예상치 못한 문제로 게임이 멈췄다.
+   모아 둔 골드와 성소 진행도는 그대로 남아 있다.
+        이 상태는 저장하지 않았다.
+
+   [ 타이틀로 돌아가기 ]   [ 앱 다시 시작 ]
+                  자세히
+```
+
+- **「타이틀로 돌아가기」가 우선**이다 — 진행도를 잃지 않는 쪽이다. 씬을 내리고
+  런 상태만 비운 뒤 타이틀로 간다. 재부팅(3~5초)도, 에셋 재파싱도 없다.
+- **★ 이 버튼은 「루프가 살아 있음이 증명될 때」만 보인다.** 증거는 `gameRecover` 훅의
+  존재다 — 그물이 예외를 삼켰다는 사실 자체가 rAF 체인이 아직 돈다는 뜻이기 때문이다.
+  그물이 없으면(번들 실패 등) 타이틀로 가 봐야 멈춘 화면만 남으므로 **재시작만** 제시한다.
+  이것이 「정직한 폴백」이다.
+- 「자세히」는 접혀 있다. 펼치면 종류·메시지·스택 8줄이 보인다 — 사용자가 스크린샷
+  한 장으로 제보할 수 있게 하는 것이 목적이다.
+
+### 16.6 반복 예외 대책
+
+| 층 | 대책 |
+|---|---|
+| `GameScene.update` | `this.fatal` 플래그. 한 번 죽은 런은 두 번 돌리지 않는다 |
+| 루프 그물 | 잡는 즉시 `stopped = true`. 루프는 돌되 `Game.step` 을 부르지 않는다 |
+| `report()` | 화면 표시와 `sink` 통보는 **첫 보고에만**. 이후는 세기만 한다 |
+| logcat | 3회까지만 남기고 그 뒤엔 「반복된다」 한 줄. 로그 폭주를 막는다 |
+| sink ↔ 구독 | `echoing` 가드로 `emit → 구독 → report → emit` 순환을 끊는다 |
+| 복구 버튼 | **횟수가 아니라 간격**으로 판정한다. 복구 후 10초 안에 재발하면 감춘다(상한 3회) |
+
+★ 마지막 줄이 중요하다. 횟수로만 막으면 복구해서 한참 잘 놀다가 한 시간 뒤에 난
+무관한 오류에도 진행도를 지키는 선택지가 사라진다. 막고 싶은 것은 그게 아니라
+**「눌렀는데 곧바로 또 죽는」 왕복**이다.
+
+### 16.7 로그
+
+`console.error` 만 쓴다 — Capacitor WebView 의 콘솔이 그대로 logcat 으로 나가므로
+실기기에서 `adb logcat` 으로 읽을 수 있다. 형식은 한 줄이다.
+
+```
+[치명] game | Error: ... @ GameScene.update
+    at ...   (스택 8줄)
+```
+
+- ⚠ **세이브 내용·개인정보를 절대 싣지 않는다.** 싣는 것은 종류·메시지·스택·위치 힌트뿐이다.
+- `bridge.js` 는 스택을 **다시 찍지 않는다.** 같은 스택이 logcat 에 두 번 쌓이면
+  원인 줄을 찾기가 오히려 어려워진다. 전체 스택은 관문이 이미 한 번 남겼다.
+- 외부 전송은 없다. Sentry 는 §15 에서 배제했고 그 결정은 그대로다.
+
+
+### 16.8 검증 (실측 · vite preview + CDP, 프로덕션 번들)
+
+세 경로 모두 **실제로 예외를 일으켜** 화면·복구·세이브를 확인했다.
+
+| # | 경로 | 결과 |
+|---|---|---|
+| 1 | React 렌더 중 `throw` | 화면 O · `#root` 자식 **0**(트리 전멸 확인) · `kind=react` · 복구 O |
+| 2 | `Promise.reject` | 화면 O · `kind=promise` · 복구 O |
+| 3 | `GameScene.update` 안에서 `throw` | 화면 O · `kind=game` @ `GameScene.update` · **rAF 생존** · 3초간 보고 **1회** · 복구 O |
+| 3-b | `HudScene` (씬 방어가 못 잡는 경로) | 그물이 잡음 · `kind=game` @ `Phaser 루프` · **rAF 생존** · 복구 O |
+| 4 | 번들 청크 삭제 | 정적 화면 O · 소프트 복구는 **정직하게 숨김**(재시작만) |
+| 5 | 복구 직후 재발 | 소프트 복구 숨김 · 저장 **잠긴 채 유지** |
+
+**복구 동작**: 세 경로 모두 실제 포인터로 「타이틀로 돌아가기」를 눌러
+타이틀 복귀 → **새 런 정상 진행**(`elapsed` 증가, 씬 5개 상태 정상)까지 확인했다.
+
+**세이브 무결성**: 성소에서 「신속」을 실제로 구매(골드 777 → 727, `meta_swift` 0 → 1)한 뒤
+런 도중 예외를 일으켰다.
+
+- 예외 시점 `__BSW_SAVE_LOCKED__ = true`, **디스크 문자열 완전 동일**
+- 「앱 다시 시작」 후 골드 727 / `meta_swift` 1 / `meta_tough` 3 **그대로 복원**
+
+**기준선**: `npx eslint src` 무결 · `npm run build` 성공 · `npm run validate` 위반 0 / 경고 27.
+
+
+---
+
+## 17. 관련 문서
 
 - 프로젝트 구조·컨벤션: → `07-PROJECT-STRUCTURE-AND-CONVENTIONS.md`
 - 데이터 스키마: → `08-DATA-SCHEMA.md`
@@ -3219,3 +3426,4 @@ npx cap sync ios           # dist → ios/App/App/public + 플러그인 동기�
 - QA·실기 검증 경로(iOS 포함): → `13-QA-TEST-PLAN.md` (§10.3, §11.6에서 참조)
 - 서명·CI·스토어 업로드: → `14-BUILD-AND-DEPLOY.md` (§11, §14.4, §14.5에서 참조)
 - 리스크 레지스터: → `16-RISKS-AND-SCOPE-CUTS.md` (§12.0의 결정 변경이 파급된다)
+- 치명 오류 처리(흰 화면 방지): → 본 문서 §16. 구현은 `FE/index.html` · `FE/src/ui/error/**`

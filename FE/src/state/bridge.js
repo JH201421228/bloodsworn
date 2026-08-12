@@ -162,8 +162,19 @@ export function installBridge() {
     sub(EVENTS.RUN_PAUSED, () => s().setModal("pause"), "bridge:paused");
     sub(EVENTS.RUN_RESUMED, () => s().setModal(null), "bridge:resumed");
 
+    /**
+     * 치명 오류 (F-1). ★ 이 구독은 원래부터 있었지만 **쏘는 쪽이 하나도 없었다** —
+     * 그래서 예외가 나면 아무 신호 없이 흰 화면만 남았다. 이제 세 갈래가 여기로 들어온다:
+     *   window error / unhandledrejection · React 렌더 예외 · Phaser 루프·씬 예외
+     * 배선은 ui/error/fatal.js 가, 화면은 index.html 의 정적 DOM 이 맡는다(06 §16).
+     *
+     * ★ 여기서 스택을 다시 찍지 않는다. 전체 스택은 관문(index.html)이 이미 한 번 남겼고,
+     *   실기기 logcat 에 같은 스택이 두 번 쌓이면 원인 줄을 찾기가 오히려 어려워진다.
+     * ★ 여기서 스토어를 만지거나 저장하지 않는다. 깨진 상태를 디스크로 내보내는 순간
+     *   다음 실행도 같은 자리에서 죽는다. 저장은 관문이 이미 잠갔다(__BSW_SAVE_LOCKED__).
+     */
     sub(EVENTS.FATAL_ERROR, (e) => {
-        console.error("[bridge] 게임에서 치명적 오류가 보고됐다", e);
+        console.error("[텔레메트리] 치명 오류 " + (e?.kind ?? "unknown") + " · " + (e?.message ?? e));
     }, "bridge:fatal");
 
     installed = true;

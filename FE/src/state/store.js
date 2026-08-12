@@ -67,6 +67,19 @@ export function collectSave() {
  */
 let pending = false;
 export function persistSave() {
+    // ★ F-1 치명 오류 뒤에는 절대 쓰지 않는다.
+    //   깨진 메모리 상태를 디스크로 내보내면 다음 실행도 같은 자리에서 죽는다.
+    //   진행도를 조금 잃는 쪽이 세이브를 통째로 잃는 쪽보다 언제나 낫다.
+    //   ★ 이 플래그의 주인은 index.html 의 정적 관문이다 — 번들이 통째로 실패한
+    //     상황에서도 잠글 수 있어야 하므로 모듈 변수가 아니라 window 플래그다.
+    //   ★ 잠금은 「타이틀로 돌아가기」가 디스크의 마지막 정상 세이브를 다시 읽어
+    //     메모리에 덮어쓴 뒤에만 풀린다(ui/error/fatal.js uiRecover).
+    //   ★ persistSave 하나만 막으면 충분하다 — saveNow 를 부르는 곳이 여기뿐이고,
+    //     앱 안의 저장 요청이 전부 이 함수를 지난다.
+    if (typeof window !== "undefined" && window.__BSW_SAVE_LOCKED__) {
+        console.warn("[save] 치명 오류 상태다. 저장하지 않는다");
+        return;
+    }
     if (pending) return;
     pending = true;
     queueMicrotask(() => {

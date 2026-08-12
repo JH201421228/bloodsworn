@@ -8,12 +8,14 @@
  */
 import { useEffect } from "react";
 import GameCanvas from "@/ui/GameCanvas";
+import { gameManager } from "@/game/GameManager";
 import UiLayer from "@/ui/UiLayer";
 import { installBridge } from "@/state/bridge";
 import { installPlatform } from "@/state/platform";
 import { useStore, hydrateStore, persistSave } from "@/state/store";
 import { initMonetization } from "@/monetization";
 import { initAnalytics } from "@/analytics";
+import { installLoopGuard } from "@/ui/error/loopGuard";
 
 /**
  * 보류 지급을 스토어에 반영한다.
@@ -35,6 +37,15 @@ export default function App() {
     useEffect(() => {
         // 안드로이드 뒤로가기 / 앱 백그라운드 전환. 웹에서는 조용히 아무것도 하지 않는다.
         return installPlatform();
+    }, []);
+
+    useEffect(() => {
+        // F-1 게임 루프 예외 그물. ★ 여기가 맞는 자리인 이유:
+        //   자식 effect 가 부모보다 먼저 돈다 — 즉 이 시점에 GameCanvas 의 gameManager.boot()
+        //   가 이미 끝나 있어 game 인스턴스가 존재한다. 그리고 부팅 직후이므로
+        //   BootScene/PreloadScene 이 던지는 예외까지 그물 안에 들어온다.
+        //   ★ 여기서 Phaser 를 새로 import 하지 않는다. GameCanvas 가 이미 끌고 온 것을 쓸 뿐이다.
+        installLoopGuard(gameManager.game);
     }, []);
 
     useEffect(() => {
