@@ -59,8 +59,12 @@ export function defaultSave() {
             stageClears: emptyStageClears(),
         },
         options: {
-            bgm: 0.6, sfx: 0.8, screenShake: true, damageNumbers: true,
-            joystickMode: "floating", lowSpec: false, lang: "ko",
+            // bgm 0.9 — settingsSlice.SETTINGS_INIT 주석 참조(실효 볼륨이 곡별 vol 과 곱해진다).
+            // 저장본에 bgm 이 있으면 deepMergeDefaults 가 그 값을 살리므로 직접 조절한 사용자는 영향이 없다.
+            bgm: 0.9, sfx: 0.8, screenShake: true, damageNumbers: true,
+            // ★ 기본 「고정」(2026-08). deepMergeDefaults 는 저장본에 키가 있으면 그 값을 살리므로
+            //   이미 "floating" 을 저장해 둔 세이브는 그대로 유지된다. 마이그레이션이 필요 없다.
+            joystickMode: "fixed", lowSpec: false, lang: "ko",
         },
         lastPlayedAt: 0,
     };

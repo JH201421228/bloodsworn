@@ -10,12 +10,28 @@
  * ★ 히트박스 규칙: max(시각크기 × 1.5, 48논리px). 10-UIUX 3.4. min-height 로 강제한다.
  */
 
+/*
+ * ★ 2026-08 — 세이프 인셋(10-UIUX 3.3.3)의 자리가 .ui-screen 에서 여기로 내려왔다.
+ *   .ui-screen 은 이제 캔버스와 1:1 인 사각형이고(index.css 참조) 배경 아트는 이 요소가
+ *   그린다. 인셋을 위(.ui-screen)에서 주면 배경이 좌우 16논리px 씩 안쪽에서 끊겨
+ *   노치 옆에 검은 띠가 남는다 — 배경은 끝까지, 글자·버튼만 인셋이어야 한다.
+ *   이 요소는 border-box 라 width/height 100% 가 그대로 캔버스 사각형이고,
+ *   자식이 전부 일반 흐름(grid/flex)이라 padding 이 정상 동작한다.
+ * ★ --pad-* 를 거쳐 더하는 이유: 화면별 규칙(.title 의 아래 여백, .result 의 위 여백)이
+ *   padding 단축을 다시 쓰면 세이프 인셋이 통째로 지워진다. 화면별 여백은 padding 이
+ *   아니라 --pad-t / --pad-b 로 얹는다.
+ * ★ --pad-x 는 "콘텐츠 폭 상한"이다. 아래 .pause 주석 참조.
+ */
 .screen {
     position: relative;
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
+    padding-top: calc(var(--safe-t) + var(--pad-t, 0px));
+    padding-right: calc(var(--safe-r) + var(--pad-x, 0px));
+    padding-bottom: calc(var(--safe-b) + var(--pad-b, 0px));
+    padding-left: calc(var(--safe-l) + var(--pad-x, 0px));
 }
 
 /* ── 공통 버튼 ── */
@@ -132,9 +148,21 @@
     align-content: center;
     gap: calc(24 * var(--u));
     height: 100%;
-    padding-bottom: calc(24 * var(--u));
+    /* 하단 띠(.title__foot)와 겹치지 않게 비워 두는 높이. padding 단축을 쓰면
+       .screen 의 세이프 인셋이 지워지므로 --pad-b 로 얹는다. */
+    --pad-b: calc(24 * var(--u));
 }
-.title__brand { align-self: center; }
+/* ★ 폭 상한 392논리px — 16:9 에서 1fr 열이 갖던 폭 그대로다(640 − 224 버튼 − 24 간격).
+   .ui-screen 이 캔버스 폭까지 넓어졌으므로 상한이 없으면 이 열이 21:9 에서 592px 이 되고,
+   art.css 가 로고에 걸어 둔 margin:0 auto 때문에 로고만 열 한가운데(≈x300)로 끌려가
+   왼쪽 끝에 붙어 있는 「피 의 서 약」·태그라인과 따로 논다. 상한을 두면 브랜드 덩어리는
+   16:9 때와 똑같이 붙어 있고, 남는 폭은 로고와 버튼 **사이**의 여백으로만 흘러간다.
+   버튼(우측 1열)은 상한이 없으므로 화면 우측 끝으로 간다 — 가로 파지의 엄지 위치다. */
+.title__brand {
+    align-self: center;
+    justify-self: start;
+    max-width: calc(392 * var(--u));
+}
 .title__logo {
     margin: 0;
     font-size: calc(28 * var(--u));
@@ -169,11 +197,13 @@
     gap: calc(8 * var(--u));
 }
 .title__row .btn { flex: 1; }
+/* ★ 절대 배치라 .screen 의 padding 을 못 받는다 — 컨테이닝 블록이 패딩 박스이기 때문이다.
+   세이프 인셋을 여기 직접 적는다. 안 적으면 하단 띠가 노치·제스처 바 밑으로 깔린다. */
 .title__foot {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: calc(var(--safe-l) + var(--pad-x, 0px));
+    right: calc(var(--safe-r) + var(--pad-x, 0px));
+    bottom: var(--safe-b);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -415,7 +445,8 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    padding-top: calc(6 * var(--u));
+    /* padding 단축 금지 — .screen 의 세이프 인셋이 지워진다(위 .screen 주석) */
+    --pad-t: calc(6 * var(--u));
 }
 .result__head {
     margin: 0;
@@ -478,7 +509,18 @@
 }
 
 /* ── 일시정지 (10-UIUX 2.7) ── */
+/*
+ * ★ 콘텐츠 폭 상한 — 이 화면만 논리 640px 로 묶는다.
+ *   .ui-screen 이 캔버스 폭(20:9 = 논리 800, 21:9 = 840)까지 넓어졌는데, 이 화면은
+ *   1fr 1fr 격자 안에 버튼 3개를 세로로 쌓는 구조라 넓힌 만큼이 전부 **버튼 폭**이 된다.
+ *   640 에서 이미 버튼 하나가 논리 300px(화면의 절반)이고 800 이면 380px 이다.
+ *   「계 속」 세 글자를 그 폭으로 그리면 어디를 눌러야 하는지 되레 안 보인다.
+ *   남는 폭은 좌우 여백으로 흘린다 — 암막은 .ui-scrim 이 이미 화면 전체를 덮는다.
+ * ★ 값의 성질: 세이프 인셋을 뺀 콘텐츠 폭이 예전(16:9 스테이지)과 정확히 같아진다.
+ *   즉 이 화면은 이번 변경 전후로 1px 도 움직이지 않는다.
+ */
 .pause {
+    --pad-x: max(0px, calc((var(--canvas-w) - 640 * var(--u)) / 2));
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: calc(16 * var(--u));
@@ -514,9 +556,14 @@
     font-size: calc(13 * var(--u));
     color: var(--parchment);
 }
+/* ★ pre-line — 본문을 줄바꿈으로 나눠 쓸 수 있게 한다. 성소 강화 확인창이
+   "단계 변화 + 얻는 효과" / "비용 + 남는 골드" 두 줄이다. 한 줄로 이으면
+   가운데에서 접히는 자리가 기기마다 달라져 어디까지가 비용인지 안 읽힌다. */
 .confirm__body {
     margin: 0 0 calc(12 * var(--u));
     font-size: calc(11 * var(--u));
+    line-height: 1.6;
+    white-space: pre-line;
     color: var(--ash);
 }
 .confirm__actions {

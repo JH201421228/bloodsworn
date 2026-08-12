@@ -2767,11 +2767,11 @@ const DEFAULT_SAVE = {
     codex: [], // 발동한 각성 id
     stats: { runs: 0, bestTime: 0, bestKills: 0, clears: 0, endings: [] },
     settings: {
-        bgmVolume: 0.6,
+        bgmVolume: 0.9,
         sfxVolume: 0.8,
         screenShake: true,
         damageNumbers: true,
-        joystickMode: "floating",
+        joystickMode: "fixed",
         lowSpec: false,
     },
 };

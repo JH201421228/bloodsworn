@@ -1,5 +1,5 @@
 /**
- * InputSystem — 플로팅 조이스틱 + 대시 버튼 + 키보드 폴백. (T133/T134)
+ * InputSystem — 조이스틱(기본 「고정」 / 옵션 「플로팅」) + 대시 버튼 + 키보드 폴백. (T133/T134)
  *
  * 규격: 10-UIUX-LANDSCAPE.md 5.1(플로팅) / 5.2(시각) / 4(HUD 좌표) / 3.2(히트박스 레터박스 확장)
  *
@@ -21,6 +21,37 @@ import { EVENTS } from "../constants";
 export const JOY_RADIUS = 48;
 export const JOY_DEADZONE = 8;
 
+/**
+ * 고정 모드 조이스틱 원점 (10-UIUX 5.3).
+ *
+ * ★ 값의 근거 — 「왼손 엄지」 아크
+ *   10-UIUX 2.2 / screens.css 에 적힌 스윕 아크 x≈420~600 / y≈150~300 은 **오른손** 기준이다.
+ *   왼손 데이터는 문서에 없으므로 640 폭을 기준으로 좌우 반전해 근거로 삼는다
+ *   → 왼손 엄지 아크 ≈ x 40~220 / y 150~300. (좌우 반전이 성립하는 이유: 양손 파지에서
+ *      왼손은 화면 **왼쪽 끝**을 잡으므로 x 는 좌측 절대값이고 화면 폭이 640~864 로 늘어나도
+ *      변하지 않는다. 그래서 x 만 상수로 두고 폭을 곱하지 않는다.)
+ *
+ * ★ 아크 안에서 다시 좁힌 조건 (전부 실측으로 확인했다)
+ *   - 반경 48 이 화면 밖으로 나가면 안 된다 → x ≥ 48, 48 ≤ y ≤ 312
+ *   - 중앙 시야 금지 구역 x ≥ 200 (10-UIUX 2.4) 을 침범하면 안 된다 → x + 48 ≤ 200 → x ≤ 152
+ *   - 좌상단 HUD 와 겹치면 안 된다. EXP 바 y 0~4 / HP 바 y 12~22 / HP 숫자 y 26 /
+ *     인간성 심장 y 38~62 (x 16~120) / 녹턴 초상 y 66~131 (x 6~58) → y − 48 ≥ 131 이면 전부 안전
+ *   - 우하단 대시 버튼(우측에서 84, 히트 72x72)과는 화면 반대편이라 겹칠 수 없다
+ *   교집합은 x ∈ [106, 152] / y ∈ [179, 300] 이고, 그 안에서 「우 상단」쪽으로 (120, 200) 을 잡았다.
+ *
+ * ★ y 는 바닥 앵커로 둔다. 논리 세로는 360 고정이지만 엄지가 닿는 기준은 언제나 화면 아래쪽이라,
+ *   세로가 바뀌는 날이 와도 손 위치를 따라가는 쪽이 맞다. x 는 좌측 앵커라 절대값 그대로다.
+ */
+const FIXED_JOY_X = 120;
+const FIXED_JOY_MARGIN_B = 160; // y = h − 160 → 360 화면에서 200
+
+/**
+ * 고정 모드에서 조이스틱을 「잡을 수 있는」 반경 (10-UIUX 5.3 활성 영역 80px).
+ * ★ 이게 없으면 좌측 절반 아무 데나 눌러도 원점이 고정점으로 잡혀, 링이 **그려진 자리**와
+ *   **먹히는 자리**가 달라진다. 고정 모드의 의도(정본 5.3)이기도 하다.
+ */
+export const FIXED_JOY_GRAB = 80;
+
 /** 대시 버튼 가장자리 여백 — 640x360 원안의 (556, 292) 를 앵커로 환산한 값이다 (10-UIUX 4) */
 const DASH_MARGIN_R = LOGICAL_WIDTH - 556;   // 84
 const DASH_MARGIN_B = LOGICAL_HEIGHT - 292;  // 68
@@ -39,18 +70,25 @@ class InputSystemImpl {
         this.active = false;
         this.origin = { x: 0, y: 0 };
         /**
-         * 조이스틱 모드. true = 손가락을 댄 자리에 생긴다(기본, 모바일에서 눈으로 찾을 필요가 없다).
-         * false = 좌하단 고정. 손가락이 화면을 가리는 것을 싫어하는 사람이 있어 옵션으로 둔다.
+         * 조이스틱 모드. false = 고정(**기본**). 링이 늘 같은 자리에 있어 눈으로 찾지 않아도 되고,
+         * 근육 기억이 기기·런을 넘어 유지된다.
+         * true = 플로팅(옵션). 손가락을 댄 자리가 원점이 된다.
+         * ★ settingsSlice.SETTINGS_INIT.joystickFloating 과 반드시 같은 값이어야 한다 —
+         *   설정 이벤트가 오기 전 1프레임 동안 이 값이 그대로 쓰인다.
          */
-        this.floating = true;
-        this.fixedOrigin = { x: 84, y: LOGICAL_HEIGHT - 76 };
+        this.floating = false;
+        this.fixedOrigin = { x: FIXED_JOY_X, y: LOGICAL_HEIGHT - FIXED_JOY_MARGIN_B };
         /** 현재 논리 화면 크기. layout() 이 채운다 */
         this.screenW = LOGICAL_WIDTH;
         this.screenH = LOGICAL_HEIGHT;
         /** 조이스틱 활성 영역 — 좌측 절반. 레터박스까지 확장한다(10-UIUX 3.2) */
         this.joyZoneRight = LOGICAL_WIDTH / 2;
         EventBus.on(EVENTS.CMD_SETTINGS, (st) => {
-            if (typeof st?.joystickFloating === "boolean") this.floating = st.joystickFloating;
+            if (typeof st?.joystickFloating !== "boolean") return;
+            this.floating = st.joystickFloating;
+            // 옵션을 바꾼 즉시 링을 제자리로 옮긴다. 안 하면 모드를 바꾼 뒤 첫 터치 전까지
+            // 예전 모드의 원점에 링이 남아 있다.
+            this.syncIdleOrigin();
         }, { key: "input:settings" });
         this.knob = { x: 0, y: 0 };
         /** 이번 프레임에 대시가 요청됐는가. consumeDash()로 꺼내 쓴다 */
@@ -76,9 +114,23 @@ class InputSystemImpl {
         this.screenH = h;
         DASH_BTN.x = w - DASH_MARGIN_R;
         DASH_BTN.y = h - DASH_MARGIN_B;
-        // 좌하단 고정 조이스틱 — 좌측 앵커라 x 는 그대로, 바닥에서 76 만 유지한다.
-        this.fixedOrigin.y = h - 76;
+        // 고정 조이스틱 — 좌측 앵커라 x 는 그대로, 바닥에서 FIXED_JOY_MARGIN_B 만 유지한다.
+        this.fixedOrigin.y = h - FIXED_JOY_MARGIN_B;
         this.joyZoneRight = w / 2;
+        this.syncIdleOrigin();
+    }
+
+    /**
+     * 손을 떼고 있을 때의 링 위치를 고정점에 맞춘다.
+     * ★ 고정 모드는 상시 표시(10-UIUX 5.3)라 「안 눌린 동안의 origin」이 그림 좌표가 된다.
+     *   잡고 있는 중에는 절대 건드리지 않는다 — 드래그 중에 링이 튄다.
+     */
+    syncIdleOrigin() {
+        if (this.active || this.floating) return;
+        this.origin.x = this.fixedOrigin.x;
+        this.origin.y = this.fixedOrigin.y;
+        this.knob.x = this.fixedOrigin.x;
+        this.knob.y = this.fixedOrigin.y;
     }
 
     /** HudScene에서 1회 호출 */
@@ -143,10 +195,14 @@ class InputSystemImpl {
         if (this.joyPointerId !== null) return;
         // 좌측 절반. x<0(레터박스)도 0으로 클램프해 받는다
         if (p.x > this.joyZoneRight || p.y < 0 || p.y > this.screenH) return;
+        const px = Math.max(0, p.x);
+        // 고정 모드는 링 근처(반경 80)를 잡아야 활성이다 — 5.3. 그 밖의 좌측 절반 터치는 무시한다.
+        if (!this.floating
+            && Math.hypot(px - this.fixedOrigin.x, p.y - this.fixedOrigin.y) > FIXED_JOY_GRAB) return;
         this.joyPointerId = p.id;
         this.active = true;
         // 고정 모드면 손가락 위치와 무관하게 항상 같은 자리를 원점으로 쓴다.
-        this.origin.x = this.floating ? Math.max(0, p.x) : this.fixedOrigin.x;
+        this.origin.x = this.floating ? px : this.fixedOrigin.x;
         this.origin.y = this.floating ? p.y : this.fixedOrigin.y;
         this.knob.x = this.origin.x;
         this.knob.y = this.origin.y;
@@ -196,6 +252,9 @@ class InputSystemImpl {
         this.active = false;
         this.vector.x = 0;
         this.vector.y = 0;
+        // 손을 떼면 고정 모드 링은 제자리로 돌아간다(드리프트는 플로팅 전용이라 사실상 무변화지만,
+        // 노브가 마지막 위치에 남는 것을 막는다).
+        this.syncIdleOrigin();
     }
 
     /** 키보드 입력을 벡터에 합성한다. 매 프레임 호출 */

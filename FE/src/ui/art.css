@@ -24,12 +24,20 @@
 }
 
 /* ── 화면 배경 4종 ────────────────────────────────────────────
-   640x360 원본이 논리 해상도와 정확히 같다. cover 로 늘리면 정수배가 깨지므로
-   100% 100% 로 스테이지 박스에 정확히 맞춘다. */
-.screen.title { background: url("../img/bg/title.png") no-repeat center / 100% 100%; }
-.screen.sanctum { background: url("../img/bg/sanctum.png") no-repeat center / 100% 100%; }
-.screen.result.is-win { background: url("../img/bg/result-win.png") no-repeat center / 100% 100%; }
-.screen.result.is-lose { background: url("../img/bg/result-lose.png") no-repeat center / 100% 100%; }
+   640x360 원본이 논리 해상도와 정확히 같다.
+   ★ 2026-08 — 100% 100% 에서 cover 로 바꿨다.
+     전면 화면 박스(.ui-screen)가 16:9 고정을 벗고 캔버스와 1:1 이 되면서, 20:9 기기에서는
+     이 상자가 논리 800x360 이 된다. 거기에 640x360 그림을 100% 100% 로 깔면 **가로로만**
+     1.25배(21:9 는 1.31배) 늘어난다 — 촛불이 뚱뚱해지고 첨두아치가 타원이 된다.
+     cover 는 가로세로에 같은 배율을 걸고 위아래를 잘라낸다. 잘리는 곳은 title 의
+     천장 첨탑과 바닥 자갈, sanctum 의 아치 상단과 난간 아래쪽처럼 정보가 없는 띠다.
+     "모양이 찌그러진 픽셀아트"보다 "가장자리가 잘린 픽셀아트"가 낫다.
+   ★ 16:9 에서는 두 방식이 같은 결과다(상자가 정확히 640x360 비율이라 잘림이 0).
+     즉 이 변경으로 16:9 화면은 1픽셀도 바뀌지 않는다. */
+.screen.title { background: url("../img/bg/title.png") no-repeat center / cover; }
+.screen.sanctum { background: url("../img/bg/sanctum.png") no-repeat center / cover; }
+.screen.result.is-win { background: url("../img/bg/result-win.png") no-repeat center / cover; }
+.screen.result.is-lose { background: url("../img/bg/result-lose.png") no-repeat center / cover; }
 
 /* ── 타이틀 로고 (512x192 = 8:3) ──────────────────────────────
    텍스트를 지우지 않고 밀어낸다. 스크린리더는 여전히 제목을 읽는다. */

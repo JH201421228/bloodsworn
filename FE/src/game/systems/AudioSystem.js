@@ -218,7 +218,9 @@ export class AudioSystem {
     constructor(scene) {
         this.scene = scene;
         this.unlocked = false;
-        this.bgmVolume = 0.6;
+        // ★ settingsSlice.SETTINGS_INIT / 08-DATA-SCHEMA 4.3 기본값과 같아야 한다.
+        //   여기가 낮으면 설정 이벤트가 오기 전에 시작한 타이틀 BGM 이 작게 깔린다.
+        this.bgmVolume = 0.9;
         this.sfxVolume = 0.8;
 
         this.data = audioData;

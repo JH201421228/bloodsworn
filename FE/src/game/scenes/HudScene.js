@@ -64,6 +64,13 @@ const DASH_PLATE = { w: 56, h: 32 };
 const CAP_HP = 9;
 const CAP_EXP = 6;
 
+/**
+ * 고정 모드 조이스틱의 대기 알파 (10-UIUX 5.3 「상시 표시 0.22」).
+ * ★ 베이스는 a*0.85 로 그려지므로 0.26 → 0.221 이 되어 정본 값과 맞는다.
+ *   이보다 진하면 전투 화면에서 링이 시선을 끌고, 옅으면 어두운 배경에서 안 보인다.
+ */
+const JOY_IDLE_ALPHA = 0.26;
+
 export default class HudScene extends Phaser.Scene {
     constructor() {
         super({ key: SCENES.HUD, active: false });
@@ -120,7 +127,7 @@ export default class HudScene extends Phaser.Scene {
                 : null;
         this.joyBase = joy("joy-base", JOY_RADIUS, DEPTH.HUD);
         this.joyKnob = joy("joy-knob", 15, DEPTH.HUD + 1);
-        /** 조이스틱 페이드 상태. 릴리즈 150ms / 터치 80ms (5.1) */
+        /** 조이스틱 페이드 상태. 릴리즈 150ms / 터치 80ms (5.1). 고정 모드는 0 대신 대기 알파로 수렴한다 */
         this.joyAlpha = 0;
 
         // ── 대시 버튼 ──────────────────────────────────────
@@ -271,11 +278,15 @@ export default class HudScene extends Phaser.Scene {
 
     drawJoystick() {
         // 릴리즈 시 150ms 페이드 아웃 / 터치 시 80ms 페이드 인 (5.1)
-        const target = input.active ? 1 : 0;
+        // ★ 고정 모드는 상시 표시다 (10-UIUX 5.3: 대기 0.22 / 터치 중 진하게).
+        //   링이 안 보이면 새 사용자는 어디를 눌러야 하는지 알 방법이 없다 — 고정이 기본값이 된
+        //   지금은 더 그렇다. 활성 반경도 링을 중심으로 잡히므로 링 자체가 안내다.
+        //   플로팅은 손가락 댄 자리가 원점이라 대기 표시가 의미 없다 → 예전대로 0 으로 사라진다.
+        const target = input.active ? 1 : (input.floating ? 0 : JOY_IDLE_ALPHA);
         const step = input.active ? 1 / 5 : 1 / 9; // 약 80ms / 150ms @60fps
         this.joyAlpha = Phaser.Math.Linear(this.joyAlpha, target, step);
         const a = this.joyAlpha;
-        if (a < 0.02 && !input.active) {
+        if (target === 0 && a < 0.02) {
             // 다 사라졌으면 확실히 숨긴다 — 안 그러면 조이스틱이 화면에 박힌 채 남는다
             this.joyBase?.setVisible(false);
             this.joyKnob?.setVisible(false);

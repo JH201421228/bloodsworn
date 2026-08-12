@@ -46,11 +46,14 @@ function Tile({ def, level, gold, onBuy }) {
         if (maxed) return;
         if (!affordable) {
             // 비활성 버튼은 "왜 안 되는지"를 알려주지 못한다. 눌리되 흔들려서 거절을 표현한다.
+            // ★ 골드가 모자라면 여기서 끝난다 — 확인 모달도 뜨지 않는다.
+            //   "물어본 뒤에 못 산다고 하는" 흐름은 거절을 두 번 당하는 것과 같다.
             setDenied(true);
             setTimeout(() => setDenied(false), 240);
             return;
         }
-        onBuy(def.id, cost);
+        // 여기서 바로 사지 않는다 — 되돌릴 수 없는 골드 소비라 확인을 한 번 받는다.
+        onBuy(def, level, cost);
     };
 
     return (
@@ -93,11 +96,41 @@ export default function SanctumScreen() {
     const upgrades = useStore((s) => s.upgrades);
     const buyUpgrade = useStore((s) => s.buyUpgrade);
     const setScreen = useStore((s) => s.setScreen);
+    const openConfirm = useStore((s) => s.openConfirm);
+    const closeConfirm = useStore((s) => s.closeConfirm);
 
-    const buy = (id, cost) => {
-        buyUpgrade(id, cost);
-        // 저장 시점 3곳 중 하나(08-DATA-SCHEMA 4.1). 여기서 안 쓰면 앱이 죽었을 때 골드만 사라진다.
-        persistSave();
+    /**
+     * 구매 확인 (사용자 요청).
+     *
+     * ★ 새 모달을 만들지 않는다. UiLayer 의 ConfirmDialog + uiSlice.openConfirm 을 그대로 쓴다 —
+     *   런 포기가 이미 쓰는 물건이라, 확인창의 생김새와 버튼 순서가 게임 안에서 하나로 유지된다.
+     * ★ danger 는 false 다. 골드 소비는 되돌릴 수 없지만 **잃는 조작이 아니라 얻는 조작**이다.
+     *   붉은 버튼은 「런 포기」·「저장 데이터 삭제」처럼 진행이 사라지는 곳에만 쓴다.
+     *   여기까지 붉게 칠하면 그 색이 경고로 안 읽히기 시작한다.
+     * ★ 본문에 "몇 단계에서 몇 단계로", "무엇이 오르는지", "얼마를 내고 얼마가 남는지"를 넣는다.
+     *   수치는 전부 sanctum.json 에서 온다 — 화면에 숫자를 적지 않는다는 이 파일의 규약 그대로다.
+     *   desc 의 "/ 단계" 꼬리는 떼어 낸다. "3단계 → 4단계 · 최대 체력 +10 / 단계" 는
+     *   한 줄에 「단계」가 세 번 나와서 읽히지 않는다.
+     */
+    const askBuy = (def, level, cost) => {
+        const gain = def.desc.split(" / 단계")[0];
+        openConfirm({
+            title: "「" + def.name + "」 강화",
+            body:
+                level + "단계 → " + (level + 1) + "단계 · " + gain + "\n" +
+                "비용 " + cost.toLocaleString("ko-KR") + " 골드 · 남는 골드 " +
+                (gold - cost).toLocaleString("ko-KR"),
+            confirmLabel: "강화한다",
+            danger: false,
+            onConfirm: () => {
+                closeConfirm();
+                // ★ 스토어의 buyUpgrade 가 상한·잔액을 다시 검사한다. 확인창을 띄워 둔 사이에
+                //   골드가 줄어드는 경로(광고 실패 롤백 등)가 있어도 마이너스가 되지 않는다.
+                buyUpgrade(def.id, cost);
+                // 저장 시점 3곳 중 하나(08-DATA-SCHEMA 4.1). 여기서 안 쓰면 앱이 죽었을 때 골드만 사라진다.
+                persistSave();
+            },
+        });
     };
 
     return (
@@ -119,7 +152,7 @@ export default function SanctumScreen() {
                         def={def}
                         level={upgrades[def.id] ?? 0}
                         gold={gold}
-                        onBuy={buy}
+                        onBuy={askBuy}
                     />
                 ))}
             </div>
@@ -127,7 +160,11 @@ export default function SanctumScreen() {
             <div className="sanctum__foot">
                 {/* 헌납 — 하루 상한이 있고(shop.json caps.perDay) 유저가 눌러야만 뜬다.
                     ★ 성소는 "시간을 사는" 자리다. 전투력을 직접 파는 것이 아니라
-                      영구 성장을 앞당길 뿐이라 P2W 경계선(20-MONETIZATION 2)을 넘지 않는다. */}
+                      영구 성장을 앞당길 뿐이라 P2W 경계선(20-MONETIZATION 2)을 넘지 않는다.
+                    ★ 여기에는 확인창을 붙이지 않는다(사용자 요청 검토 결과).
+                      강화 확인창의 이유는 "골드를 잃는다"인데 헌납은 잃는 것이 없다 —
+                      광고를 보면 골드가 늘고, 보기 싫으면 광고 화면에서 닫으면 그만이다.
+                      잃을 것이 없는 조작에까지 확인을 붙이면 정작 강화 확인창을 안 읽게 된다. */}
                 {offer?.ready && (
                     <button className="btn" onClick={takeOffering}>
                         <GoldIcon /> 헌납한다 (+{offer.reward?.amount ?? 120})

@@ -1788,8 +1788,8 @@ visionRadius · humanity · hpDrain · areaMult
     "rerollUses": 0, "skipUses": 0, "sumGoldEarned": 0, "bossEncounters": 0
   },
   "options": {
-    "bgm": 0.6, "sfx": 0.8, "screenShake": true, "damageNumbers": true,
-    "joystickMode": "floating", "lowSpec": false, "lang": "ko"
+    "bgm": 0.9, "sfx": 0.8, "screenShake": true, "damageNumbers": true,
+    "joystickMode": "fixed", "lowSpec": false, "lang": "ko"
   },
   "lastPlayedAt": 0
 }
