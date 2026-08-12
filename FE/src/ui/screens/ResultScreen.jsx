@@ -16,7 +16,8 @@ import { requestStartRun } from "@/state/bridge";
 import { fmtTime, awakenLabel, pickEnding } from "@/ui/screens/screenUtils";
 import RunLootSummary from "@/ui/inventory/RunLootSummary";
 import GoldIcon from "@/ui/inventory/GoldIcon";
-import { resolveAdPlacement, showRewarded } from "@/monetization";
+import { showRewarded } from "@/monetization";
+import { useAdPlacement } from "@/ui/hooks/useAdPlacement";
 import { persistSave } from "@/state/store";
 
 /**
@@ -68,7 +69,8 @@ export default function ResultScreen() {
     //   결과가 바뀌는 순간 자동으로 미수령이 된다. 리셋 effect 자체가 필요 없어진다.
     const [claimedFor, setClaimedFor] = useState(null);
     const claimed = claimedFor === r;
-    const dbl = resolveAdPlacement("gold_double");
+    // ★ 훅으로 읽는다 — 렌더 시점에 한 번만 읽으면 나중에 준비된 광고를 놓친다(훅 주석 참조)
+    const dbl = useAdPlacement("gold_double");
     const claimDouble = async (e) => {
         e.stopPropagation();  // 루트가 포인터로 카운트다운을 건너뛴다 — 버블을 막는다
         if (claimed) return;

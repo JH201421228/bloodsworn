@@ -23,7 +23,8 @@ import { useStore, persistSave } from "@/state/store";
 import { SANCTUM_UPGRADES, nextCost } from "@/state/metaSlice";
 import { SCREENS } from "@/state/uiSlice";
 import { requestStartRun } from "@/state/bridge";
-import { resolveAdPlacement, showRewarded } from "@/monetization";
+import { showRewarded } from "@/monetization";
+import { useAdPlacement } from "@/ui/hooks/useAdPlacement";
 import ItemIcon from "@/ui/inventory/ItemIcon";
 import GoldIcon from "@/ui/inventory/GoldIcon";
 import { hasFrame } from "@/ui/inventory/itemAtlas";
@@ -94,7 +95,8 @@ function Tile({ def, level, gold, onBuy }) {
 
 export default function SanctumScreen() {
     const gold = useStore((s) => s.gold);
-    const offer = resolveAdPlacement("sanctum_offering");
+    // ★ 훅으로 읽는다 (ResultScreen 과 같은 이유 — useAdPlacement 주석 참조)
+    const offer = useAdPlacement("sanctum_offering");
     const takeOffering = async () => {
         const { rewarded } = await showRewarded("sanctum_offering");
         if (!rewarded) return;   // 실패는 조용히 넘어간다. 보상이 없을 뿐 진행은 막지 않는다.
