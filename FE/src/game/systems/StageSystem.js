@@ -26,9 +26,50 @@
 import { DEPTH, EVENTS } from "../constants";
 import { EventBus } from "../EventBus";
 import { clamp, dist2 } from "../utils/math";
+import { BASE_STATS, STAT_FLOORS } from "./StatSystem";
 import stagesData from "@/data/stages.json";
 import enemiesData from "@/data/enemies.json";
 import phasesData from "@/data/phases.json";
+
+/**
+ * ── 「시야」 렌더러 상수 ───────────────────────────────────────
+ *
+ * ★ 이 블록이 `vision` 스탯의 **유일한 소비처**다.
+ *   2026-08-12 이전까지 vision 은 쓰는 곳만 있고 읽는 곳이 없었다 —
+ *   「암야」BLIND 대가는 360 → 90(하한)까지 수치를 깎았는데 화면은 한 픽셀도
+ *   변하지 않았다. 대가 6종 중 하나가 통째로 무효였다는 뜻이다.
+ *   (사용자 제보: "시야가 줄어드는 카드를 선택했는데 아무것도 안 바뀐다")
+ *
+ * ★ 왜 라디얼 텍스처 1장 + 사각 4장인가 — 매 프레임 도는 연출이라 비용이 곧 프레임이다.
+ *   Phaser 의 Graphics.strokeCircle 은 WebGL 렌더러가 **매 프레임 다시 분할하면서
+ *   세그먼트마다 `new Point` 를 만든다**(GraphicsWebGLRenderer 의 ARC 분기).
+ *   링을 12겹 쌓으면 프레임당 수백 개의 객체가 생겨 GC 가 1% Low 를 갉아먹는다.
+ *   반면 fillRect 는 batchFillRect 로 바로 들어가 할당이 0 이고 스프라이트 1장은 쿼드 1개다.
+ *   그래서 「부드러운 원형 감쇠」는 텍스처에 한 번 구워 두고 그 바깥은 사각 4장으로 덮는다.
+ *   런 중 그리기 명령은 5개, 할당은 0이다.
+ */
+const VIS_TEX = "vision-vignette";
+/** 텍스처 한 변. 매끈한 그라데이션이라 확대해도 뭉개지지 않는다 — 작을수록 싸다 */
+const VIS_TEX_SIZE = 256;
+/** 텍스처 안에서 「완전히 보이는」 구멍의 반지름. 이 값이 곧 vision 픽셀에 대응한다 */
+const VIS_TEX_HOLE = VIS_TEX_SIZE / 4;
+/** 텍스처 안에서 「완전히 어두운」 반지름. 여기서부터 바깥은 알파 1 이다 */
+const VIS_TEX_FULL = VIS_TEX_SIZE / 2;
+/** 어둠 색 — haze 기믹이 쓰던 색을 그대로 이어받는다. 사각 채움용(숫자)과 캔버스용(CSS) */
+const VIS_COLOR = 0x0b0710;
+const VIS_COLOR_RGB = "11, 7, 16";
+/**
+ * 최대 알파. 1.0 이면 시야 밖이 완전한 검정이 되어 「어려운」 게 아니라
+ * 「대응할 수 없는」 상태가 된다(03-GDD 7.3 예고 하한과 같은 근거).
+ * 0.82 는 적의 실루엣이 간신히 읽히는 값이다 — 각성 「어둠의 눈」의 붉은 마커가
+ * 이 어둠 위에 얹혀야 의미가 있으므로 완전히 가려서는 안 된다.
+ */
+const VIS_MAX_ALPHA = 0.82;
+/** 화면 바깥까지 확실히 덮을 사각형 크기. 논리 최대(864x360)의 대각선보다 크다 */
+const VIS_FAR = 1400;
+/** 기본 시야(360px)와 하한(90px). StatSystem 이 정본이라 숫자를 복사하지 않는다 */
+const VIS_BASE = BASE_STATS.vision;
+const VIS_FLOOR = STAT_FLOORS.vision.v;
 
 /** 기믹 오브젝트 상한. 넘치면 화면이 읽히지 않고 프레임도 흔들린다 */
 const MAX_GIMMICK = 8;
@@ -94,7 +135,13 @@ export class StageSystem {
             mirePool: null, mireCand: null, mireN: 0, mireCx: NaN, mireCy: NaN,
             band: null,
         };
-        this.gfx = null;    // 화면 고정(HUD 좌표계) — haze 비네트
+        this.gfx = null;    // 화면 고정(HUD 좌표계) — 시야 어둠의 「바깥 채움」 사각 4장
+        /**
+         * 시야 연출 상태. r/w/h 는 마지막으로 「그린」 값이라 이 셋이 그대로면 다시 그리지 않는다.
+         * vision 은 레벨업과 기믹 단계에서만 바뀌므로 실제 재작도는 런당 수십 번뿐이고,
+         * 매 프레임 하는 일은 원점을 플레이어 화면 좌표로 옮기는 것뿐이다.
+         */
+        this.vis = { img: null, r: -1, w: 0, h: 0, on: false };
         this.gfxW = null;   // 월드 좌표계 — emberwind 띠. 카메라가 움직여도 땅에 붙어 있어야 한다
     }
 
@@ -279,6 +326,9 @@ export class StageSystem {
 
         if (!this.gfx) this.gfx = this.scene.add.graphics().setScrollFactor(0).setDepth(DEPTH.FX + 5);
         this.gfx.clear();
+        // ★ 방금 gfx 를 지웠다. 캐시를 무효화하지 않으면 시야 값이 그대로일 때
+        //   drawVision 이 "바뀐 게 없다"며 다시 안 그려서 어둠이 사라진다.
+        this.vis.r = -1;
         this.gfxW?.clear();
         this.scene.stats?.removeBySrc?.("stage:gimmick");
         this.clearPush();
@@ -354,17 +404,22 @@ export class StageSystem {
     }
 
     update(dt) {
+        if (!this.scene.player) return;
         const gm = this.current?.gimmick;
-        if (!gm || !this.scene.player) return;
-        const scale = this.gimmickScale();
-        this.g.t += dt;
-        switch (gm.type) {
-            case "sanctuary": this.gimSanctuary(dt, gm.params ?? {}, scale); break;
-            case "haze": this.gimHaze(dt, gm.params ?? {}, scale); break;
-            case "mire": this.gimMire(dt, gm.params ?? {}, scale); break;
-            case "rockfall": this.gimRockfall(dt, gm.params ?? {}, scale); break;
-            case "emberwind": this.gimEmberwind(dt, gm.params ?? {}, scale); break;
+        if (gm) {
+            const scale = this.gimmickScale();
+            this.g.t += dt;
+            switch (gm.type) {
+                case "sanctuary": this.gimSanctuary(dt, gm.params ?? {}, scale); break;
+                case "haze": this.gimHaze(dt, gm.params ?? {}, scale); break;
+                case "mire": this.gimMire(dt, gm.params ?? {}, scale); break;
+                case "rockfall": this.gimRockfall(dt, gm.params ?? {}, scale); break;
+                case "emberwind": this.gimEmberwind(dt, gm.params ?? {}, scale); break;
+            }
         }
+        // ★ 기믹이 없는 스테이지에서도 반드시 돈다. 시야는 기믹이 아니라 **스탯**이다 —
+        //   「암야」 대가·「밤눈」 축복·장비 어픽스·haze 기믹이 전부 이 한 줄로 화면에 나타난다.
+        this.drawVision();
     }
 
     /** 성수 웅덩이 — 밟으면 회복. 유일하게 플레이어에게 이로운 기믹이다 */
@@ -427,27 +482,100 @@ export class StageSystem {
             this.scene.stats?.removeBySrc?.("stage:gimmick");
             if (mul < 0.999) this.scene.stats?.add?.("vision", "toll", 1 - mul, "stage:gimmick");
         }
-        const gfx = this.gfx;
-        gfx.clear();
-        if (k <= 0.01) return;
-        // ★ 640 이 아니라 scale.width 다. 논리 가로는 기기 비율마다 640~864 로 다르다
-        //   (config.js 좌표계 주석). 굳히면 넓은 화면에서 우측 비네트가 화면 중간에 선다.
+        // ★ 여기서 직접 비네트를 그리지 않는다.
+        //   예전에는 이 기믹만 자기 사각 띠를 그렸다. 그래서 「시야가 좁아진다」는 연출이
+        //   stage2 에만 있었고, 정작 vision 스탯을 깎는 「암야」 대가는 화면에 아무것도
+        //   못 남겼다. 이제 위에서 넣은 stats 모디파이어를 drawVision() 이 읽어 그린다 —
+        //   기믹·대가·축복·장비가 **하나의 렌더러**를 공유하고, 어둠이 두 번 겹칠 일도 없다.
+    }
+
+    // ══ 「시야」 ═══════════════════════════════════════════════
+    //  vision 스탯의 **유일한 소비처**. 여기가 없으면 「암야」 대가는 숫자만 바뀌고
+    //  화면에는 아무 일도 일어나지 않는다(2026-08-12 사용자 제보로 발견).
+
+    /**
+     * 어둠의 세기를 vision 절대값이 아니라 「기본값에서 얼마나 깎였는가」로 잡는다.
+     *
+     * ★ 왜 절대 반지름으로 판단하면 안 되는가
+     *   논리 가로는 기기 비율에 따라 640~864 로 다르다(config.js). 「vision 이 화면
+     *   반대각선보다 작으면 어둡게」로 잡으면, 대가를 하나도 안 받은 기본 시야(360)에서
+     *   16:9 폰은 멀쩡한데 21:9 폰만 화면이 어두워진다. 같은 런이 기기마다 다른 난이도가 된다.
+     *   기본값에서 0, 하한에서 1 로 잡으면 어떤 비율에서도 「대가를 받아야만 어두워진다」가
+     *   성립하고, 「밤눈」 축복으로 360 을 넘기면 세기가 저절로 0 이 되어 원래 화면으로 돌아온다.
+     */
+    drawVision() {
+        const stats = this.scene.stats;
+        const pl = this.scene.player;
+        if (!stats || !pl) return;
+        const v = stats.get("vision");
         const w = this.scene.scale.width, h = this.scene.scale.height;
-        const total = (p.bandWidth ?? 18) * k * 2;
-        // ★ bands 는 "가장자리 어둠을 몇 겹으로 나눌 것인가"다. 한 겹으로 칠하면 경계가
-        //   직선으로 서서 "시야가 좁아졌다"가 아니라 "화면에 검은 테두리가 생겼다"로 읽힌다.
-        //   겹을 안쪽으로 짧게 쌓으면 알파가 누적돼 가장자리만 짙은 비네트가 된다.
-        //   16 겹에서 자르는 이유는 겹당 fillRect 4회라 그 이상은 눈에 안 보이는 드로콜이다.
-        const n = clamp(Math.round(p.bands ?? 14), 1, 16);
-        gfx.fillStyle(p.color ?? 0x0b0710, (0.55 * k) / n);
-        for (let i = 0; i < n; i++) {
-            const b = total * (1 - i / n);
-            if (b <= 0.5) continue;
-            gfx.fillRect(0, 0, w, b);
-            gfx.fillRect(0, h - b, w, b);
-            gfx.fillRect(0, 0, b, h);
-            gfx.fillRect(w - b, 0, b, h);
+        const vs = this.vis;
+        if (Math.abs(v - vs.r) > 0.5 || w !== vs.w || h !== vs.h) this.rebuildVision(v, w, h);
+        if (!vs.on) return;
+        // 카메라가 lerp(0.1)로 따라와서 플레이어는 화면 정중앙이 아니다.
+        // ★ 매 프레임 하는 일은 이 두 줄뿐이다 — 그리기 명령은 그대로 두고 원점만 옮긴다.
+        const cam = this.scene.cameras.main;
+        const sx = pl.x - cam.scrollX, sy = pl.y - cam.scrollY;
+        this.gfx.setPosition(sx, sy);
+        vs.img.setPosition(sx, sy);
+    }
+
+    /** 시야 값이나 화면 크기가 바뀐 순간에만 불린다. 그리기 명령은 여기서만 쌓는다 */
+    rebuildVision(v, w, h) {
+        const vs = this.vis;
+        vs.r = v; vs.w = w; vs.h = h;
+        this.ensureVisionObjects();
+        const strength = clamp((VIS_BASE - v) / (VIS_BASE - VIS_FLOOR), 0, 1);
+        vs.on = strength > 0.02;
+        this.gfx.clear();
+        this.gfx.setVisible(vs.on);
+        vs.img.setVisible(vs.on);
+        if (!vs.on) return;
+
+        const a = VIS_MAX_ALPHA * strength;
+        // 텍스처의 구멍 반지름이 정확히 vision 픽셀이 되도록 키운다.
+        const scale = v / VIS_TEX_HOLE;
+        vs.img.setScale(scale).setAlpha(a);
+        // ★ 텍스처의 네 모서리는 이미 알파 1 이다(그라데이션이 마지막 스톱을 바깥으로
+        //   연장하므로). 그래서 스프라이트가 차지한 정사각형 **바깥**만 같은 알파로 채우면
+        //   이음매가 생기지 않고, 겹치지 않으니 알파가 두 배로 튀지도 않는다.
+        const hs = (VIS_TEX_SIZE / 2) * scale;
+        const g = this.gfx;
+        g.fillStyle(VIS_COLOR, a);
+        g.fillRect(-VIS_FAR, -VIS_FAR, VIS_FAR * 2, VIS_FAR - hs);   // 위
+        g.fillRect(-VIS_FAR, hs, VIS_FAR * 2, VIS_FAR - hs);         // 아래
+        g.fillRect(-VIS_FAR, -hs, VIS_FAR - hs, hs * 2);             // 왼
+        g.fillRect(hs, -hs, VIS_FAR - hs, hs * 2);                   // 오
+    }
+
+    /**
+     * 텍스처와 오브젝트를 한 번만 만든다. ★ 런 중에는 여기 오지 않는다 —
+     * 재작도(rebuildVision)는 이미 만들어진 것의 scale/alpha 만 갈아끼운다.
+     */
+    ensureVisionObjects() {
+        if (!this.gfx) this.gfx = this.scene.add.graphics().setScrollFactor(0).setDepth(DEPTH.FX + 5);
+        const vs = this.vis;
+        if (vs.img?.scene) return;
+        const tex = this.scene.textures;
+        if (!tex.exists(VIS_TEX)) {
+            const cv = tex.createCanvas(VIS_TEX, VIS_TEX_SIZE, VIS_TEX_SIZE);
+            const ctx = cv.context;
+            const c = VIS_TEX_SIZE / 2;
+            // ★ 캔버스 라디얼 그라데이션은 첫 스톱 안쪽을 첫 색으로, 마지막 스톱 바깥을
+            //   마지막 색으로 연장한다. 덕분에 사각형을 한 번 칠하는 것만으로
+            //   구멍 안쪽 = 완전 투명 / 바깥과 네 모서리 = 완전 불투명이 저절로 만들어진다.
+            const grd = ctx.createRadialGradient(c, c, VIS_TEX_HOLE, c, c, VIS_TEX_FULL);
+            for (let i = 0; i <= 10; i++) {
+                const t = i / 10;
+                // t^1.6 — 선형이면 경계가 띠처럼 서서 「시야가 좁다」가 아니라
+                //         「화면에 원이 그려졌다」로 읽힌다(옛 haze 의 bands 와 같은 근거).
+                grd.addColorStop(t, `rgba(${VIS_COLOR_RGB}, ${Math.pow(t, 1.6).toFixed(4)})`);
+            }
+            ctx.fillStyle = grd;
+            ctx.fillRect(0, 0, VIS_TEX_SIZE, VIS_TEX_SIZE);
+            cv.refresh();
         }
+        vs.img = this.scene.add.image(0, 0, VIS_TEX).setScrollFactor(0).setDepth(DEPTH.FX + 5);
     }
 
     /**

@@ -94,17 +94,14 @@
                 "type": "haze",
                 "name": "향로 연기",
                 "duringBoss": "reduced",
-                "_note": "24초 주기로 시야가 320→150px 로 조여든다. 보스전에서는 절반만 조인다(reduced) — 0.6s 텔레그래프가 안 보이면 T525 위반이다.",
+                "_note": "24초 주기로 시야가 320→150px 로 조여든다. 이 값은 stats 의 vision 모디파이어로 들어가고 화면은 StageSystem.drawVision 이 그린다 — 「암야」 대가·「밤눈」 축복과 같은 렌더러를 쓴다. bands/bandWidth/color 는 이 기믹이 자기 사각 띠를 따로 그리던 시절의 키라 2026-08-12 에 제거했다. 보스전에서는 절반만 조인다(reduced).",
                 "params": {
                     "period": 24,
                     "closeSec": 6,
                     "holdSec": 6,
                     "openSec": 4,
                     "visionFrom": 320,
-                    "visionTo": 150,
-                    "bands": 14,
-                    "bandWidth": 18,
-                    "color": 722704
+                    "visionTo": 150
                 }
             },
             "waves": {

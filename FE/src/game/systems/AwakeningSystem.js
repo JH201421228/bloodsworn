@@ -350,7 +350,11 @@ export class AwakeningSystem {
             expMult: x.expMult ?? 2,
             timer: 0,
             marks: [],
-            gfx: this.scene.add.graphics().setDepth(DEPTH.FX),
+            // 시야 밖 판정 반지름의 제곱. 매 프레임 updateNyx 가 갱신한다(myopia.r2 와 같은 규약).
+            r2: 0,
+            // ★ 시야 어둠(StageSystem 의 DEPTH.FX + 5)보다 위여야 한다.
+            //   아래에 두면 「어둠 속의 적을 찍어 준다」는 각성이 그 어둠에 가려 안 보인다.
+            gfx: this.scene.add.graphics().setDepth(DEPTH.FX + 6),
         };
     }
 
@@ -425,9 +429,21 @@ export class AwakeningSystem {
     }
 
     /** 카메라 밖인가. worldView는 Phaser가 매 프레임 갱신하는 월드 좌표 사각형이다 */
+    /**
+     * 「시야 밖」인가. ★ 정본 04-PACT 5 는 카메라가 아니라 **시야**라고 적었다.
+     *
+     * ★ 왜 카메라 사각형이면 안 되는가
+     *   예전에는 worldView 밖인지를 봤다. 그런데 화면 밖의 적은 애초에 무기 사거리
+     *   밖이라 때릴 일이 거의 없다 — 「시야 밖 피해 x1.8」이 사실상 발동하지 않아
+     *   각성 하나가 값만 있고 효과가 없었다. 05-COMBAT 이 "보스는 시야 안이 많음"이라
+     *   적은 것도 반지름 기준을 전제한 문장이다.
+     *   vision 반지름으로 재면 「암야」로 시야가 90px 까지 조여든 플레이어에게만
+     *   화면 대부분이 사냥터가 된다 — 대가와 각성이 같은 축에서 맞물린다.
+     */
     isOffscreen(e) {
-        const v = this.scene.cameras.main.worldView;
-        return e.x < v.x || e.x > v.right || e.y < v.y || e.y > v.bottom;
+        const r2 = this.blind?.r2 || 0;
+        if (r2 <= 0) return false;
+        return dist2(e.x, e.y, this.player.x, this.player.y) > r2;
     }
 
     // ══ CombatSystem 콜백 ══════════════════════════════════════
@@ -619,6 +635,10 @@ export class AwakeningSystem {
     /** T415 — 화면 밖 적을 화면 테두리에 붉은 점으로 투영한다 */
     updateNyx(dt) {
         const b = this.blind;
+        // ★ 여기서 한 번만 읽는다. scaleDamage/onKill 은 적마다 불리므로 그쪽에서
+        //   stats.get 을 부르면 프레임당 수백 번이 된다(myopia.r2 와 같은 규약).
+        const v = this.stats.get("vision");
+        b.r2 = v * v;
         b.timer -= dt;
         if (b.timer <= 0) {
             b.timer += b.refreshSec;
@@ -626,14 +646,35 @@ export class AwakeningSystem {
             //   좌표는 저절로 따라오고, 마커가 끊겨 보이지 않는다
             b.marks.length = 0;
             const cands = this.combat.hash.query(this.player.x, this.player.y, b.scanRadius, this.queryBuf);
-            for (const e of cands) {
-                if (b.marks.length >= b.max) break;
-                if (e.__active && this.isOffscreen(e)) b.marks.push(e);
+            const view = this.scene.cameras.main.worldView;
+            // ★ 2패스로 고른다. max(12)는 성능 상한이고, 상한이 있는 이상
+            //   「누구를 버릴 것인가」가 곧 설계다.
+            //   1패스 = 화면 **안**인데 시야 밖(=어둠에 잠긴) 적. 지금 나를 때릴 수 있는데
+            //           보이지 않는 적이라 마커의 값이 가장 크다.
+            //   2패스 = 화면 밖 적. 남는 자리에만 넣는다.
+            //   「시야 밖」이 카메라 밖에서 vision 반지름 밖으로 바뀌면서 후보가 크게 늘었다.
+            //   순서를 안 두면 먼 화면 밖 적이 12칸을 먼저 채워, 정작 발밑의 적이 안 찍힌다.
+            //   ★ 정렬하지 않는다 — 매 0.15초마다 수십 개를 정렬하면 배열이 계속 새로 생긴다.
+            for (let pass = 0; pass < 2 && b.marks.length < b.max; pass++) {
+                for (const e of cands) {
+                    if (b.marks.length >= b.max) break;
+                    if (!e.__active || !this.isOffscreen(e)) continue;
+                    const onScreen = e.x >= view.x && e.x <= view.right && e.y >= view.y && e.y <= view.bottom;
+                    if (onScreen === (pass === 0)) b.marks.push(e);
+                }
             }
         }
         this.drawMarkers(b);
     }
 
+    /**
+     * ★ 「시야 밖」이 카메라 밖이 아니라 vision 반지름 밖이 된 뒤로 두 종류가 섞인다.
+     *   - 화면 **안**에 있지만 어둠에 잠긴 적 : 그 자리에 그대로 찍는다.
+     *     테두리로 밀어내면 화면 한복판의 적이 가장자리에 표시돼 오히려 거짓말이 된다.
+     *     정본 04-PACT 5 의 「붉은 실루엣 마커」가 뜻하는 것도 이쪽이다 —
+     *     어둠 속 적의 **위치**를 알려 주는 것이 이 각성의 값이다.
+     *   - 화면 **밖**의 적 : 예전처럼 테두리로 투영한다. 그 자리에 찍으면 안 보인다.
+     */
     drawMarkers(b) {
         const g = b.gfx;
         g.clear();
@@ -646,6 +687,10 @@ export class AwakeningSystem {
             const e = b.marks[i];
             if (!e.__active) continue;
             const dx = e.x - cx, dy = e.y - cy;
+            if (Math.abs(dx) <= hw && Math.abs(dy) <= hh) {
+                g.fillCircle(e.x, e.y, b.size);
+                continue;
+            }
             // 화면 테두리로 투영 — 가로/세로 중 먼저 벽에 닿는 쪽이 배율을 정한다
             const s = Math.min(hw / (Math.abs(dx) || 0.0001), hh / (Math.abs(dy) || 0.0001));
             g.fillCircle(cx + dx * s, cy + dy * s, b.size);
