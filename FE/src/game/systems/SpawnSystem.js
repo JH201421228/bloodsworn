@@ -339,7 +339,9 @@ export class SpawnSystem {
         EventBus.emit(EVENTS.ELITE_SPAWNED, {
             id: def.id, name: def.name, hp: e.maxHp, x: e.x, y: e.y, timeSec: Math.floor(this.elapsed),
         });
-        this.scene.cameras.main.shake(180, 0.005);
+        // 하드코딩은 180ms 0.005 였다. 09-ART 7.3 이 「엘리트 등장 300ms 0.006」을 규정하고
+        // 표의 eliteSpawn 이 그 값 그대로 임자 없이 남아 있었다 — 문서 쪽으로 맞춘다.
+        this.scene.fxSystem?.shake("eliteSpawn");
         return e;
     }
 

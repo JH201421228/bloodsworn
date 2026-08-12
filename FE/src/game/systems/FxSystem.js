@@ -39,17 +39,38 @@ const GOLD = 0xe8b44c;   // 치명타
 const BLOOD = 0x8e1220;  // 피 파티클
 const CRIMSON = 0xd6203a;
 
-/** 09-ART 7.3 흔들림 강도표. 상한 0.015 — 그 이상은 가로 화면에서 멀미를 유발한다 */
+/**
+ * 09-ART 7.3 흔들림 강도표. 상한 0.015 — 그 이상은 가로 화면에서 멀미를 유발한다.
+ *
+ * ★ 흔들림 수치는 **전부 여기에만 적는다.** 각 시스템이 cameras.main.shake(dur, int) 를 직접 부르면
+ *   「화면 흔들림 OFF」 옵션(정본 §13 / 13-QA UI-03)과 저사양 강등을 통째로 지나친다 —
+ *   멀미 때문에 옵션을 끈 사용자가 보스전·정예 등장·자폭에서 흔들림을 그대로 겪는다.
+ *   실제로 그런 직접 호출이 9곳 있었고 이 표로 전부 옮겼다. 새 연출도 여기에 이름을 만들어 쓴다.
+ * ★ 강도 오름차순으로 적는다. 새 항목을 넣을 때 "이게 기존 어느 연출보다 센가"를 강제로 판단하게 된다.
+ */
 const SHAKE = {
     dash: [60, 0.002],
     killElite: [120, 0.003],
     playerHurt: [120, 0.004],
     zoneImpact: [100, 0.004],
-    eliteSpawn: [300, 0.006],
+    // 낙석은 한 런에서 40회 넘게 반복된다(stage4 every 7.5s / runSec 330). 성수 낙하(0.004)보다
+    // 무겁고 정예 등장(0.006)보다는 가볍게 둔다 — 상한 0.015 의 1/3. 길이는 낙하물 계열(100~120ms)을 따른다.
+    rockfall: [120, 0.005],
+    // ★ 09-ART 7.3 은 300/0.006 을 적어 뒀지만 **코드의 180/0.005 를 지킨다.**
+    //   이 개조의 목적은 「흔들림 OFF 가 안 듣는 것」을 고치는 접근성 과제이고,
+    //   그 과정에서 ON 일 때의 세기가 **강해지면** 방향이 반대다(+67% 길이 / +20% 세기).
+    //   문서 쪽이 드리프트인지 코드 쪽이 드리프트인지는 별도로 판정할 일이다.
+    eliteSpawn: [180, 0.005],
+    bossPhase: [300, 0.006],
+    bossDashStart: [160, 0.006],
+    bossEnrage: [320, 0.007],
     bossHit: [200, 0.008],
+    selfDestruct: [220, 0.008],
+    bossDashHit: [280, 0.010],
+    death: [400, 0.010],
+    bossDefeat: [500, 0.010],
     bossAppear: [800, 0.012],
     awaken: [500, 0.015],
-    death: [400, 0.01],
 };
 
 /** 품질 레벨별 상한 (09-ART 7.4). 0=full 1=reduced 2=minimal */
@@ -170,6 +191,8 @@ export class FxSystem {
 
         this.hitStopToken = 0;
         this.savedTimeScale = 1;
+        // shake() 오타 경고를 이름당 한 번만 낸다. 런 중 new 금지라 여기서 만들어 둔다
+        this.warnedShake = Object.create(null);
 
         this.numbersReady = buildNumberFont(scene);
         buildDotTexture(scene);
@@ -383,11 +406,24 @@ export class FxSystem {
         while (this.fHead !== this.fTail && this.fUntil[this.fHead] <= now) this.expireOldestFlash();
     }
 
-    /** 09-ART 7.3 표에서 골라 흔든다. 옵션이 꺼져 있으면 0 (13-QA UI-03) */
+    /**
+     * 09-ART 7.3 표에서 골라 흔든다. **화면을 흔드는 유일한 통로다.**
+     * 옵션이 꺼져 있거나 품질 레벨 2 면 흔들지 않는다 (13-QA UI-03 / 09-ART 7.4).
+     *
+     * ★ 표에 없는 이름은 영구 no-op 이 된다 — 실제로 shake("rockfall") 이 그래서
+     *   stage4 낙석에 손맛이 없었다. 그래서 게이트보다 **먼저** 조회하고 이름당 한 번 경고한다.
+     *   게이트 뒤에 두면 흔들림 OFF 로 검증할 때 오타가 영영 안 드러난다.
+     */
     shake(kind) {
-        if (!this.screenShake || this.level >= 2) return;
         const s = SHAKE[kind];
-        if (!s) return;
+        if (!s) {
+            if (!this.warnedShake[kind]) {
+                this.warnedShake[kind] = 1;
+                console.warn("[FxSystem] SHAKE 표에 없는 흔들림 이름 \"" + kind + "\" — 아무 일도 일어나지 않는다");
+            }
+            return;
+        }
+        if (!this.screenShake || this.level >= 2) return;
         this.scene.cameras?.main?.shake(s[0], s[1]);
     }
 

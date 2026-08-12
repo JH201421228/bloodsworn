@@ -251,7 +251,7 @@ export class EnemyAISystem {
     }
 
     detonate(e, p, px, py) {
-        this.scene.cameras.main.shake(220, 0.008);
+        this.scene.fxSystem?.shake("selfDestruct");
         const combat = this.scene.combatSystem;
         if (!combat || combat.dead) return;
         if (dist2(e.x, e.y, px, py) > p.radius * p.radius) return;

@@ -106,6 +106,21 @@ const LEASH_NEAR2 = 340 * 340;
 const LEASH_BOOST = 3;
 
 const BOLT_R = 4;
+/**
+ * 「혼탄」 텍스처 (docs/32 §11.2 B). 16x16 칸 4프레임 맥동.
+ * ★ 없으면 예전의 단색 원으로 그대로 되돌아간다 — assets.json 에서 이 한 줄을 빼면 된다.
+ *   전수조사(docs/32 §11) 시점에는 폴백 분기 자체가 없었다. 이제 두 갈래다.
+ */
+const BOLT_TEX = "proj-soul-bolt";
+/** 맥동 애니 키. 등록은 registerAnims.js 한 곳이다(그 파일의 규약) */
+const BOLT_ANIM = "boss_soul_bolt";
+/**
+ * 그림의 대표 지름(16px 칸 안에서). 4프레임이 7 / 10 / 13 / 9 로 맥동하므로 그 중간을 잡는다.
+ * ★ 판정 반지름은 고정인데 그림은 맥동한다. 최대 프레임이 판정보다 크고 최소 프레임이
+ *   판정의 3분의 2쯤 되도록 이 값을 잡았다 — 과대 표시는 회피를 유도할 뿐이지만
+ *   과소 표시는 "안 보이는 것에 맞았다"가 되어 불공정하다(T525 와 같은 저울).
+ */
+const BOLT_ART_SPAN = 11;
 const PLAYER_R = 7;
 const TAU = Math.PI * 2;
 /**
@@ -206,9 +221,12 @@ export class BossSystem {
         this.buildPhases();
 
         // ── 풀 (런 중 new 금지. 06-TECH 5.1)
+        /** ★ 폴백 판정은 여기 한 번뿐이다. 매 프레임 textures.exists 를 부르지 않는다 */
+        this.boltArt = scene.textures.exists(BOLT_TEX);
         this.bolts = new Pool(MAX_BOLTS, () => {
-            const s = scene.add.circle(-999, -999, BOLT_R, BLOOD_BRIGHT);
-            s.setStrokeStyle(1, DANGER, 0.9);
+            const s = this.boltArt
+                ? scene.add.sprite(-999, -999, BOLT_TEX, 0)
+                : scene.add.circle(-999, -999, BOLT_R, BLOOD_BRIGHT).setStrokeStyle(1, DANGER, 0.9);
             s.setDepth(DEPTH.PROJECTILE).setVisible(false);
             return s;
         });
@@ -471,9 +489,13 @@ export class BossSystem {
         this.enterPhase(1, false);
 
         // 붉은 전체 플래시 + 흔들림 (10-UIUX 12번 "보스를 만났다" / 09-ART 등장 800ms 0.012)
+        // ★ 흔들림은 bossAppear() 안의 shake("bossAppear")(800ms 0.012) **하나로만** 낸다.
+        //   예전에는 여기서 cam.shake(800, 0.012) 를 직접 부르고 bossAppear() 가 같은 값을 또 불렀다.
+        //   Phaser 의 ShakeEffect 는 실행 중이면 두 번째 호출을 삼키므로 세기는 같았지만,
+        //   직접 호출이 앞서는 바람에 「화면 흔들림 OFF」 옵션이 통째로 무시됐다(13-QA UI-03).
+        //   cam.flash 는 색 플래시라 흔들림 옵션과 무관하다 — 그대로 둔다.
         const cam = this.scene.cameras.main;
         cam.flash(d.flashDuration * 1000, 255, 43, 43);
-        cam.shake(800, 0.012);
         this.scene.fxSystem?.bossAppear(); // 등장 SFX·BGM 전환은 BOSS_SPAWNED 구독이 처리한다
 
         EventBus.emit(EVENTS.BOSS_SPAWNED, {
@@ -550,7 +572,7 @@ export class BossSystem {
         if (withInvuln) {
             this.invulnUntil = this.scene.time.now + this.def.phaseInvuln * 1000;
             this.lockedHp = this.boss.hp;
-            this.scene.cameras.main.shake(300, 0.006);
+            this.scene.fxSystem?.shake("bossPhase");
             this.combat?.fx?.hitStop(250);      // 10-UIUX 페이즈 전환 히트스톱 250ms
         }
         this.emitHp(true);
@@ -635,7 +657,7 @@ export class BossSystem {
         if (!d.hit && dist2(b.x, b.y, this.player.x, this.player.y) <= d.r2) {
             d.hit = true;
             if (this.strike(d.damage)) {
-                this.scene.cameras.main.shake(280, 0.010);
+                this.scene.fxSystem?.shake("bossDashHit");
                 this.combat?.fx?.hitStop(90);
             }
         }
@@ -807,7 +829,9 @@ export class BossSystem {
             // 조준각은 예고 시작 시점에 고정된 aim.ang 이다. 지금 각도로 다시 재면 예고가 무의미해진다.
             if (Math.abs(Phaser.Math.Angle.Wrap(a - this.aim.ang)) <= half) {
                 if (this.strike(p.def.damage)) {
-                    this.scene.cameras.main.shake(250, 0.008); // 09-ART 낫 착탄 200ms 0.008
+                    // 하드코딩은 250ms 였지만 09-ART 7.3 과 바로 이 자리의 옛 주석이 둘 다 200ms 라고 적고 있었다.
+                    // 표의 bossHit(200ms 0.008)이 이 자리의 임자다 — 세기(0.008)는 그대로다.
+                    this.scene.fxSystem?.shake("bossHit");
                     this.combat?.fx?.hitStop(80);
                 }
             }
@@ -850,8 +874,16 @@ export class BossSystem {
         const speed = w.speed ?? 150;
         const r = w.boltRadius ?? BOLT_R;
         s.setPosition(x, y).setVisible(true).setAlpha(1);
-        s.setRadius(r);
-        s.setFillStyle(w.color ?? BLOOD_BRIGHT, 1);
+        // ★ 색은 두 갈래 모두 w.color 하나에서 나온다 — 스프라이트는 tint, 원은 fill.
+        //   시트가 핏빛으로 구워져 있어도 tint 를 곱해야 패턴별 색 구분(boss.json color)이 산다.
+        if (this.boltArt) {
+            s.setDisplaySize((r * 2 * 16) / BOLT_ART_SPAN, (r * 2 * 16) / BOLT_ART_SPAN);
+            s.setTint(w.color ?? BLOOD_BRIGHT);
+            s.play(BOLT_ANIM, true);
+        } else {
+            s.setRadius(r);
+            s.setFillStyle(w.color ?? BLOOD_BRIGHT, 1);
+        }
         s.r2 = (r + PLAYER_R) * (r + PLAYER_R);
         s.vx = Math.cos(ang) * speed;
         s.vy = Math.sin(ang) * speed;
@@ -927,6 +959,8 @@ export class BossSystem {
 
     releaseBolt(s) {
         s.splitN = 0;
+        // 안 보이는 탄이 계속 프레임을 넘기면 그만큼이 그냥 낭비다
+        if (this.boltArt) s.anims?.stop();
         s.setVisible(false).setPosition(-999, -999);
         this.bolts.release(s);
     }
@@ -1041,7 +1075,7 @@ export class BossSystem {
         d.damage = p.def.damage;
         d.r2 = (w.halfWidth + PLAYER_R) * (w.halfWidth + PLAYER_R);
         d.hit = false;
-        this.scene.cameras.main.shake(160, 0.006);
+        this.scene.fxSystem?.shake("bossDashStart");
         return w.distance / w.speed;
     }
 
@@ -1058,7 +1092,7 @@ export class BossSystem {
         this.enrageSpeed = w.speedMult ?? 1;
         this.enrageCd = w.cdMult ?? 1;
         this.enrageTint = w.tint ?? 0xff5a28;
-        this.scene.cameras.main.shake(320, 0.007);
+        this.scene.fxSystem?.shake("bossEnrage");
         this.combat?.fx?.hitStop(120);
     }
 
@@ -1243,7 +1277,7 @@ export class BossSystem {
         this.corpse.setPosition(this.lastX, this.lastY).setVisible(true).setAlpha(1);
         this.playAnim(this.corpse, "death");
         this.combat?.fx?.hitStop(300);              // 09-ART 보스 처치 히트스톱 300ms
-        this.scene.cameras.main.shake(500, 0.010);
+        this.scene.fxSystem?.shake("bossDefeat");
         EventBus.emit(EVENTS.BOSS_HP, { hp: 0, maxHp: this.def.baseHp, phase: this.phase });
 
         // 10-UIUX 6.4 보스 처치 연출 총 1.4초. dt가 아니라 벽시계로 잰다 —
