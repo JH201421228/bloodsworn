@@ -25,8 +25,13 @@ function subLine(t) {
     if (t.tier === "relic") return "✦ " + rarityName(t.rarity) + " 유물 · " + t.desc;
     if (t.tier === "equip") {
         const s = SLOT_META[t.slot];
-        return (s ? s.mark + " " + s.name : "장비") + " 장착 · " + rarityName(t.rarity);
+        const head = (s ? s.mark + " " + s.name : "장비") + " 장착 · " + rarityName(t.rarity);
+        // 교체로 밀려난 장비의 환급액. "무엇을 잃었나"까지 한 줄로 끝난다
+        return t.salvage > 0 ? head + " · 환급 +" + t.salvage : head;
     }
+    // 점수가 낮아 안 갈아입은 장비는 category 가 gold 로 와서 여기로 떨어진다.
+    // desc 가 없으므로(장비에는 desc 가 없다) 환급액이 유일한 정보다.
+    if (t.salvage > 0) return (t.desc ? t.desc + " · " : "") + "환급 +" + t.salvage + " 골드";
     return t.desc;
 }
 

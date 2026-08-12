@@ -38,6 +38,8 @@
  *   new ItemSystem(scene, { player, combat, stats, spawn })
  *   .rollDrop(enemy)         : 적 처치 시 호출. 드롭 테이블을 굴려 월드에 떨군다
  *   .update(dt)              : 자석 / 획득 / 수명 / 버프 만료 / 유물 규칙
+ *   .onHurt(amount)          : 피격 시 CombatSystem.hurt 가 호출. 숫자를 돌려주면 피해를 대체한다
+ *                              (AwakeningSystem.onHurt 와 같은 계약 — 「멈춘 모래시계」)
  *   .equip(itemId) / .unequip(slot)
  *   .inventory               : 현재 런의 보유 아이템(장비 3 + 유물 n)
  *   .clear()
@@ -60,10 +62,39 @@ import dropData from "@/data/droptables.json";
  */
 export const ITEM_EVENTS = { PICKED: EVENTS.ITEM_PICKED };
 
+/**
+ * 유물이 켜는 「규칙」 플래그의 전체 목록.
+ * ★ 이 배열에 없는 이름을 items.json 의 rule 에 적으면 그 유물은 **조용히 아무 일도 안 한다**.
+ *   실제로 그런 사고가 있었다 — secondWind / burstOnUse 는 선언되고 켜지기까지 했는데
+ *   읽는 쪽이 0곳이라 전설 유물이 실효 iframe +15% 짜리였다.
+ * ★ 그래서 목록을 내보내고 validate.js 가 items.json 의 rule 과 대조한다.
+ *   플래그를 늘리면 반드시 **읽는 쪽**을 같이 만들어라. 켜기만 하는 플래그는 거짓말이다.
+ */
+export const RELIC_RULES = ["magnetPulse", "slowAura", "secondWind", "goldSalvage", "burstOnUse"];
+
+/**
+ * applyUse() 가 실제로 분기하는 effect.type 목록.
+ * ★ 여기 없는 type 은 "먹었는데 아무 일도 안 일어나는" 아이템이 된다. validate.js 가 대조한다.
+ */
+export const USE_EFFECT_TYPES = ["heal", "healPct", "slow", "exp", "buff", "bomb"];
+
 /** 23 문서 8. 풀 64칸은 P4 정상치(≈13개)의 5배 — 엘리트/보스 폭발 대비다 */
 const MAX_DROPS = 64;
-/** 장비 3 + 유물 6 = 9. 12 는 교체 순간 새 기록과 옛 기록이 동시에 살아 있는 한 프레임 대비 */
-const MAX_RECORDS = 12;
+/**
+ * 장비/유물 기록 칸.
+ *
+ * ★ 12 → 28 (실측으로 고침). 예전 주석은 「장비 3 + 유물 6 = 9, 12 는 교체 한 프레임 대비」였는데,
+ *   **바닥에 굴러다니는 장비·유물도 기록 칸을 하나씩 쥔다**는 것을 빠뜨렸다.
+ *   실측: 유물 6개를 모으고 장비 3칸을 채운 상태에서 남는 칸이 3개뿐이라,
+ *   드롭 풀 64칸이 텅 비어 있는데도 장비가 4개째부터 **조용히 안 떨어졌다**
+ *   (place() 가 null 을 돌려주고 아무 로그도 남기지 않는다).
+ *   플레이어에게는 "후반에 갑자기 장비가 안 나온다"로만 보인다.
+ * ★ 28 의 근거: 보유 9(장비 3 + 유물 6) + 교체 한 프레임 1 + 바닥 18.
+ *   바닥 18 은 P4 기대치(0.53/s × equip·relic 비중 ≈ 0.15/s × 수명 25s ≈ 4)의 4배이고,
+ *   보스 번들(한 번에 6개)과 엘리트(3개)가 겹쳐 터지는 최악을 덮는다.
+ * ★ 비용은 부팅 시 객체 28개다. 런 중 new 는 여전히 0 이다.
+ */
+const MAX_RECORDS = 28;
 const ATLAS = "items";
 const FALLBACK_TEX = "item-fallback";
 /** 유물 아이콘은 32px, 나머지는 16px. 크기 차이가 그대로 정보 위계다(23 문서 7.2) */
@@ -81,6 +112,17 @@ const MAGNET_PULSE_EVERY = 6;
 /** 「중력의 사슬」 감속 오라 반경(px)과 배율 */
 const SLOW_AURA_R = 110;
 const SLOW_AURA_MULT = 0.7;
+/** 「멈춘 모래시계」 — 치명상을 1회 지우고 이 시간(ms) 동안 무적이 된다 */
+const SECOND_WIND_MS = 2000;
+/**
+ * 「호박 불꽃」 — 소모품을 먹을 때 터지는 반경(px)과 피해.
+ * ★ 「발화석」(55 / r90)보다 일부러 약하게 잡았다. 이쪽은 조건이 "소모품을 먹을 때마다"라
+ *   빈도가 훨씬 높다. 같은 값을 주면 유물 하나가 소모품 전체를 폭탄으로 바꿔 버린다.
+ */
+const BURST_ON_USE_R = 90;
+const BURST_ON_USE_DMG = 40;
+/** 「도굴꾼의 장갑」 환급 배율(items.json 의 desc 「환급 골드 2배」가 정본이다) */
+const SALVAGE_RELIC_MULT = 2;
 const EMPTY_ARR = [];
 
 /** 아틀라스가 아직 안 구워졌어도 게임이 죽으면 안 된다. 양피지색 점 하나로라도 굴린다 */
@@ -159,12 +201,16 @@ export class ItemSystem {
         this.resetRules();
 
         // 매 프레임 배열을 새로 만들지 않기 위한 재사용 버퍼
+        /** 이번 획득에서 환급된 골드의 합. pickup() 이 0 으로 되돌린다 */
+        this.pendingSalvage = 0;
         this.queryBuf = [];
         this.slowMarked = [];
         this.pulseT = 0;
         this.pulseUntil = 0;
         this.auraT = 0;
+        /** 「멈춘 모래시계」 — 런당 1회. 소진 여부와 무적 만료 시각 */
         this.secondWindUsed = false;
+        this.secondWindUntil = 0;
     }
 
     /** 카테고리·슬롯·유물등급별 인덱스 목록. 추첨할 때마다 filter 를 돌리지 않으려는 표다 */
@@ -241,12 +287,15 @@ export class ItemSystem {
         }
     }
 
-    /** 유물 규칙 플래그. 수치가 아니라 '규칙'을 바꾸는 것이 유물의 정체성이다(23 문서 4) */
+    /**
+     * 유물 규칙 플래그. 수치가 아니라 '규칙'을 바꾸는 것이 유물의 정체성이다(23 문서 4).
+     * ★ 객체는 생성자에서 한 번만 만들고 여기서는 값만 되돌린다 — clear() 는 런마다 불린다.
+     * ★ 키 목록이 RELIC_RULES 하나뿐이라 "선언은 했는데 읽는 쪽이 없는" 플래그를
+     *   validate.js 가 잡을 수 있다.
+     */
     resetRules() {
-        this.rule = {
-            magnetPulse: false, slowAura: false, secondWind: false,
-            goldSalvage: false, burstOnUse: false,
-        };
+        this.rule ??= Object.create(null);
+        for (const k of RELIC_RULES) this.rule[k] = false;
     }
 
     // ── 드롭 ────────────────────────────────────────────────
@@ -426,19 +475,39 @@ export class ItemSystem {
     rollAffixes(rec, baseIdx, rarityIdx) {
         const slots = this.rarities[rarityIdx]?.affixCount ?? 0;
         if (slots <= 0) return;
-        if (slots >= 1) rec.prefix = this.pickAffix(this.prefixFor[baseIdx], this.prefixes, this.prefixTotal[baseIdx]);
-        if (slots >= 2) rec.suffix = this.pickAffix(this.suffixFor[baseIdx], this.suffixes, this.suffixTotal[baseIdx]);
+        if (slots >= 1) rec.prefix = this.pickAffix(this.prefixFor[baseIdx], this.prefixes, this.prefixTotal[baseIdx], null);
+        // ★ R2 스탯 중복 금지(23 문서 5). 접두가 damage 를 올렸으면 접미의 damage 계열은 후보에서 뺀다.
+        //   「굶주린 ... 사냥의」 = damage 를 두 번 적은 아이템인데, 값 하나 큰 것과 구분이 안 되고
+        //   이름만 길어진다. 접사 2개짜리 등급(rare/epic)의 존재 이유가 통째로 흐려진다.
+        if (slots >= 2) {
+            const ban = rec.prefix >= 0 ? this.prefixes[rec.prefix].stat : null;
+            rec.suffix = this.pickAffix(this.suffixFor[baseIdx], this.suffixes, this.suffixTotal[baseIdx], ban);
+        }
     }
 
-    pickAffix(idxList, pool, total) {
+    /**
+     * 가중치 추첨. banStat 이 있으면 그 스탯을 쓰는 후보를 빼고 총합도 그만큼 줄인다.
+     * ★ 후보 배열을 새로 만들지 않는다 — 최대 16종을 두 번 훑을 뿐이고, 그마저도
+     *   접사가 붙는 등급의 장비가 떨어질 때만 돈다(런당 수십 회).
+     */
+    pickAffix(idxList, pool, total, banStat) {
         if (!idxList?.length || total <= 0) return -1;
-        let roll = Math.random() * total;
+        let t = total;
+        if (banStat) for (const k of idxList) if (pool[k].stat === banStat) t -= pool[k].weight;
+        if (t <= 0) return -1; // 후보가 전부 금지 스탯이면 접미 없이 간다. 억지로 붙이면 R2 가 깨진다
+        let roll = Math.random() * t;
         for (const k of idxList) {
+            if (banStat && pool[k].stat === banStat) continue;
             const w = pool[k].weight;
             if (roll < w) return k;
             roll -= w;
         }
-        return idxList[idxList.length - 1];
+        // 부동소수 오차로 끝까지 흘렀을 때의 폴백. 금지 스탯이 아닌 마지막 후보를 준다
+        for (let i = idxList.length - 1; i >= 0; i--) {
+            const k = idxList[i];
+            if (!banStat || pool[k].stat !== banStat) return k;
+        }
+        return -1;
     }
 
     freeRecord(i) {
@@ -519,6 +588,15 @@ export class ItemSystem {
     updateRules(dt) {
         const now = this.scene.time.now;
 
+        // ★ 「멈춘 모래시계」의 무적 2초를 여기서 되민다.
+        //   CombatSystem.hurt() 가 onHurt 직후에 hurtUntil 을 자기 값으로 덮어쓰기 때문에
+        //   onHurt 안에서 미리 넣어 봐야 지워진다. AwakeningSystem 이 부활 무적에 쓰는 방법과
+        //   같은 방법이다(AwakeningSystem.js:507). items.update 는 combat.update 다음이라
+        //   같은 프레임 안에서 되밀린다.
+        if (this.secondWindUntil > now && this.combat && this.combat.hurtUntil < this.secondWindUntil) {
+            this.combat.hurtUntil = this.secondWindUntil;
+        }
+
         if (this.rule.magnetPulse) {
             this.pulseT -= dt;
             if (this.pulseT <= 0) {
@@ -547,6 +625,35 @@ export class ItemSystem {
         }
     }
 
+    /**
+     * 치명상 가로채기 — 「멈춘 모래시계」(r_hourglass · 전설).
+     *
+     * ★ 계약은 AwakeningSystem.onHurt 와 **똑같다**: 숫자를 돌려주면 그 값으로 피해를 대체한다.
+     *   CombatSystem.hurt() 가 각성 다음 줄에서 한 번 더 부르면 그대로 붙는다.
+     *   두 시스템의 계약을 일부러 같게 맞췄다 — 다르면 붙이는 쪽이 반드시 틀린다.
+     * ★ 각성 「불사의 껍질」과 카운터를 나누지 않는다. 이쪽은 체력을 채워 주지 않고
+     *   그 한 방만 지운 뒤 2초 무적을 준다. 부활이 아니라 '유예'다 —
+     *   체력까지 채우면 전설 유물 하나가 각성 최상위와 같은 값이 된다.
+     * ★ 런당 1회. clear() 가 초기화하므로 다음 런에 새어 나가지 않는다.
+     *
+     * @param {number} amount 방어율까지 적용된 최종 피해
+     * @returns {number|undefined} 숫자면 그 값으로 대체, undefined 면 그대로
+     */
+    onHurt(amount) {
+        if (!this.rule.secondWind || this.secondWindUsed) return undefined;
+        const c = this.combat;
+        if (!c || c.hp - amount > 0) return undefined;
+
+        this.secondWindUsed = true;
+        this.secondWindUntil = this.scene.time.now + SECOND_WIND_MS;
+        this.scene.fxSystem?.hitStop?.(120);
+        this.scene.fxSystem?.burst?.(this.player.x, this.player.y, 48);
+        this.scene.audio?.sfx("pickup");
+        // ★ ITEM_PICKED 를 쏘지 않는다. 이것은 획득이 아니라 발동이고, 쏘면 런 종료 요약의
+        //   「유물 n개」가 한 개 더 세어진다. 알림은 히트스톱 + 폭발 + 2초 무적으로 충분하다.
+        return 0;
+    }
+
     // ── 획득 ────────────────────────────────────────────────
     /**
      * ★ 자동 획득·자동 장착이 원칙이다(23 문서 2). 이 게임의 조작은 조이스틱과 대시가 전부다.
@@ -557,27 +664,38 @@ export class ItemSystem {
         const b = this.bases[baseIdx];
         const rec = s.__rec;
         let taken = true;
+        // 이번 획득으로 환급된 골드의 합. 밀려난 장비와 거절된 장비를 한 숫자로 모은다
+        this.pendingSalvage = 0;
 
         // ★ 카테고리를 else 로 받으면 안 된다. gold 가 applyEquip 으로 새어 들어가
         //   equipped[undefined] 라는 유령 슬롯을 만들고, 골드는 골드대로 안 들어온다.
         //   분기는 반드시 전 카테고리를 명시해야 한다(use/gold/relic/equip).
         if (b.category === "use") this.applyUse(b);
         else if (b.category === "gold") this.applyGold(b);
-        else if (b.category === "relic") this.applyRelic(rec);
+        else if (b.category === "relic") taken = this.applyRelic(rec);
         else if (b.category === "equip") taken = this.applyEquip(rec);
         else { console.warn("[ItemSystem] 알 수 없는 카테고리:", b.category); taken = false; }
 
-        if (taken) {
+        // ★ 자동 폐기 환급(23 문서 4.2). 점수가 낮아 안 갈아입기로 했거나 유물 6칸이
+        //   찼으면 **그 자리에서 골드로 바꾼다**. 월드에 남겨 두면 같은 자리를 계속 밟아
+        //   토스트가 도배되고, 그냥 버리면 "밟았는데 아무 일도 안 일어났다"가 된다.
+        //   새 재화를 만들지 않고 골드로 주는 이유는 그대로 성소 루프에 합류하기 때문이다.
+        if (!taken && rec >= 0) this.salvage(this.records[rec].rarity);
+
+        if (taken || this.pendingSalvage > 0) {
             EventBus.emit(EVENTS.ITEM_PICKED, {
-                id: b.id, name: b.name, category: b.category,
+                id: b.id, name: b.name,
+                // 안 갈아입은 물건은 결과적으로 골드다. category 를 equip 으로 두면
+                // UI 가 장착 슬롯을 거절된 아이템으로 덮어쓴다.
+                category: taken ? b.category : "gold",
                 rarity: this.rarities[s.__rarity]?.id ?? "common",
                 label: this.labelOf(rec, baseIdx),
+                salvage: this.pendingSalvage,
             });
             this.scene.audio?.sfx("pickup");
             this.scene.fxSystem?.itemPop?.(s.x, s.y);
         }
-        // 갈아입지 않기로 했으면 기록 칸을 돌려주고 바닥에서만 치운다.
-        // 그대로 두면 같은 자리를 계속 밟아 토스트가 도배된다.
+        // 안 챙긴 물건의 기록 칸은 돌려준다. 12칸뿐이라 새면 곧 드롭이 멈춘다
         if (!taken) this.freeRecord(rec);
         s.__rec = -1;
         s.setVisible(false).setPosition(-999, -999);
@@ -585,17 +703,46 @@ export class ItemSystem {
         this.drops.release(s);
     }
 
-    /** 통화 — 런 중 골드에 더한다. 「고물상」 유물이 있으면 회수량이 는다 */
+    /**
+     * 통화 — 런 중 골드에 더한다.
+     * ★ 배율은 goldMult 스탯 하나로 모은다. 예전에는 여기서 goldSalvage 규칙을 보고 1.5배를
+     *   곱했는데, 그 규칙의 임자인 「도굴꾼의 장갑」의 설명은 「환급 골드 2배 + 골드 획득 +10%」다.
+     *   즉 규칙이 엉뚱한 기능을 하고 있었고, 설명의 +10% 는 어디에도 없었다.
+     *   지금은 +10% 가 유물의 mods(goldMult)로 들어가고, 규칙은 환급에만 쓴다.
+     * ★ CombatSystem:505(적 처치 골드)와 같은 규약이다. 배율 경로가 둘이면 반드시 어긋난다.
+     */
     applyGold(b) {
         const v = b.effect?.value ?? 0;
-        const mult = this.rule.goldSalvage ? 1.5 : 1;
-        if (this.combat) this.combat.gold += v * mult;
+        if (this.combat) this.combat.gold += v * (this.stats?.get("goldMult") ?? 1);
     }
 
-    /** 소모품 — 즉시 효과 또는 버프 갱신 */
+    /**
+     * 자동 폐기 환급. items.json 의 rarities[].salvageGold(3/7/15/30/60)가 정본이다.
+     * ★ 이 값은 encounters.json 의 상인 가격 산정 근거이기도 하다 — 실체가 없으면
+     *   "장비 하나 값" 이라는 기준 자체가 허수가 된다.
+     * ★ 「도굴꾼의 장갑」(goldSalvage)이 여기서 2배가 되고, goldMult 는 획득 골드 전반에
+     *   걸리는 배율이라 환급에도 똑같이 걸린다.
+     * @returns {number} 실제로 들어간 골드
+     */
+    salvage(rarityIdx) {
+        const g = this.rarities[rarityIdx]?.salvageGold ?? 0;
+        if (!g) return 0;
+        const v = Math.round(g * (this.rule.goldSalvage ? SALVAGE_RELIC_MULT : 1) * (this.stats?.get("goldMult") ?? 1));
+        if (this.combat) this.combat.gold += v;
+        this.pendingSalvage += v;
+        return v;
+    }
+
+    /**
+     * 소모품 — 즉시 효과 또는 버프 갱신.
+     * ★ 「호박 불꽃」(burstOnUse)이 있으면 무엇을 먹든 주변이 한 번 터진다.
+     *   effect 분기와 독립이라 앞에서 처리한다 — 분기 안에 흩어 두면 return 하나를
+     *   빠뜨리는 순간 특정 소모품에서만 안 터지는, 재현이 어려운 버그가 된다.
+     */
     applyUse(b) {
         const e = b.effect;
         if (!e) return;
+        if (this.rule.burstOnUse) this.explode(BURST_ON_USE_R, BURST_ON_USE_DMG, 16);
         // ★ 분기에 없는 type 은 "먹었는데 아무 일도 안 일어나는" 아이템이 된다.
         //   taken 은 true 라 토스트까지 떠서 플레이어는 효과가 있었다고 믿는다 —
         //   가장 조용하고 가장 나쁜 종류의 버그다. 마지막 else 에서 반드시 경고를 낸다.
@@ -641,28 +788,57 @@ export class ItemSystem {
             return;
         }
         if (e.type === "bomb") {
-            const r2 = (e.radius ?? 90) * (e.radius ?? 90);
-            const cands = this.combat?.hash?.query(this.player.x, this.player.y, e.radius ?? 90, this.queryBuf) ?? EMPTY_ARR;
-            for (const en of cands) {
-                if (dist2(en.x, en.y, this.player.x, this.player.y) > r2) continue;
-                this.combat.queueDamage(en, e.value ?? 40, e.knockback ?? 20);
-            }
-            // 폭발 연출. 피해는 이미 큐에 들어간 뒤라 연출이 없어도 결과는 같다.
-            this.scene.fxSystem?.burst?.(this.player.x, this.player.y, e.radius ?? 90);
+            this.explode(e.radius ?? 90, e.value ?? 40, e.knockback ?? 20);
             this.scene.fxSystem?.hitStop?.(40);
+            // ★ return 이 없어서 폭탄·성수를 쓸 때마다 아래 경고가 떴다.
+            //   그 경고는 "미처리 effect.type 탐지기"로 설계한 장치인데, 오탐이 상시로 뜨면
+            //   진짜 미처리 타입이 섞여도 아무도 안 본다. 탐지기를 살리는 것이 이 return 이다.
+            return;
         }
         console.warn("[ItemSystem] 처리하지 않는 effect.type:", e.type, "-", b.id);
     }
 
-    /** 유물 — 규칙 플래그를 켜고 스탯을 얹는다. 같은 유물은 두 번 나오지 않는다 */
+    /**
+     * 플레이어 중심 폭발. 「발화석」·「성수병」·「호박 불꽃」이 공유한다.
+     * ★ 피해는 반드시 combat.queueDamage 로 넣는다 — hp 를 직접 깎으면 한 프레임에
+     *   여러 소스가 때렸을 때 사망이 중복 처리되어 EXP 가 2배로 떨어진다.
+     * ★ 연출은 피해와 분리돼 있다. FxSystem 이 저사양이라 건너뛰어도 결과는 같다.
+     */
+    explode(radius, damage, knockback) {
+        const c = this.combat;
+        if (!c) return;
+        const r2 = radius * radius;
+        const px = this.player.x, py = this.player.y;
+        const cands = c.hash?.query(px, py, radius, this.queryBuf) ?? EMPTY_ARR;
+        for (const en of cands) {
+            if (dist2(en.x, en.y, px, py) > r2) continue;
+            c.queueDamage(en, damage, knockback);
+        }
+        this.scene.fxSystem?.burst?.(px, py, radius);
+    }
+
+    /**
+     * 유물 — 규칙 플래그를 켜고 스탯을 얹는다. 같은 유물은 두 번 나오지 않는다.
+     * ★ maxRelics(6)를 여기서 강제한다. 예전에는 상한이 없어 7번째부터 스탯은 붙는데
+     *   UI(EquipSlots)에는 6개까지만 그려졌다 — "안 보이는데 세지는" 상태였다.
+     *   넘치면 false 를 돌려주고 pickup 이 환급으로 넘긴다.
+     * ★ items.json 의 rule 이 RELIC_RULES 에 없는 오타면 경고를 낸다. 조용히 무시하면
+     *   유물이 아무 일도 안 하는 채로 몇 주가 지나간다(실제로 그랬다).
+     * @returns {boolean} 실제로 챙겼는가
+     */
     applyRelic(rec) {
-        if (rec < 0) return;
+        if (rec < 0) return false;
+        if (this.relics.length >= this.maxRelics) return false;
         const r = this.records[rec];
         const b = this.bases[r.base];
         this.relics.push(r);
         this.inventory.push(r);
-        if (b.rule && this.rule[b.rule] !== undefined) this.rule[b.rule] = true;
+        if (b.rule) {
+            if (this.rule[b.rule] === undefined) console.warn("[ItemSystem] 알 수 없는 유물 규칙:", b.rule, "-", b.id);
+            else this.rule[b.rule] = true;
+        }
         for (const m of b.mods ?? EMPTY_ARR) this.stats?.add(m.stat, m.op, m.value, this.srcOf[r.base]);
+        return true;
     }
 
     /**
@@ -677,26 +853,72 @@ export class ItemSystem {
         r.score = this.scoreOf(r);
         const cur = this.equipped[b.slot];
         if (cur && cur.score >= r.score) return false;
-        if (cur) this.removeRecord(cur);
+        // 밀려난 쪽도 골드로 환급한다(23 문서 4.2). 사라지는 것과 환급되는 것은 다르다
+        if (cur) { this.salvage(cur.rarity); this.removeRecord(cur); }
         this.equipped[b.slot] = r;
         this.inventory.push(r);
         this.addRecordMods(r);
         return true;
     }
 
-    /** 등급 가중치 + 접사 가중치. 절대적 세기가 아니라 '갈아입을 가치'의 비교값이다 */
+    /**
+     * 갈아입을 가치의 비교값. 정본 23 문서 4.2 —
+     *   score = Σ(mod.value × weights[stat]) + rarities[].scoreBonus
+     *
+     * ★ 예전에는 "접사가 있으면 +6" 이라는 상수를 썼다. 접사가 스탯을 주지 않던 시절에는
+     *   그 수밖에 없었지만(값을 몰랐다), 그 결과 armor +0.055 와 knockback +0.22 가
+     *   같은 6점이었다. 이제 실제 값을 알 수 있으므로 문서의 식을 그대로 쓴다.
+     * ★ 베이스 mods 도 센다. 「사슬 갑옷」(maxHp 14)과 「낡은 가죽 갑옷」(maxHp 8)이
+     *   같은 등급일 때 점수가 같으면 자동 장착이 둘을 구분하지 못한다.
+     * ★ 등급 자체의 무게는 scoreBonus(0/4/9/16/40)가 진다. 등급 인덱스 × 10 을 더하던
+     *   옛 항은 scoreBonus 와 이중 계산이라 뺐다.
+     */
     scoreOf(r) {
-        let v = (this.rarities[r.rarity]?.scoreBonus ?? 0) + r.rarity * 10;
-        if (r.prefix >= 0) v += 6;
-        if (r.suffix >= 0) v += 6;
+        const rar = this.rarities[r.rarity];
+        let v = rar?.scoreBonus ?? 0;
+        const w = this.weights;
+        for (const m of this.bases[r.base].mods ?? EMPTY_ARR) v += (m.value ?? 0) * (w[m.stat] ?? 0);
+        const tier = rar?.affixTier ?? 0;
+        if (r.prefix >= 0) v += this.affixValue(this.prefixes[r.prefix], tier) * (w[this.prefixes[r.prefix].stat] ?? 0);
+        if (r.suffix >= 0) v += this.affixValue(this.suffixes[r.suffix], tier) * (w[this.suffixes[r.suffix].stat] ?? 0);
         return v;
     }
 
+    /**
+     * 접사 한 개의 실제 수치. affixes.json 은 값을 tiers 배열로 들고,
+     * items.json 의 rarities[].affixTier 가 그 배열의 **색인**이다(tiers[0]=uncommon/rare, [1]=epic).
+     * ★ 등급이 개수(affixCount)와 수치(affixTier)를 동시에 올리는 구조라 epic 이 확실히 세다.
+     */
+    affixValue(a, tier) {
+        const t = a?.tiers;
+        if (!t) return 0;
+        return t[tier] ?? t[t.length - 1] ?? 0;
+    }
+
+    /**
+     * 장비의 스탯을 StatSystem 에 얹는다. 베이스 mods + 접두 + 접미.
+     *
+     * ★ 여기가 전수조사가 찾은 가장 큰 구멍이었다. 예전 코드는 affix.mods 를 순회했는데
+     *   affixes.json 에는 mods 가 **0건**이고 tiers 가 32건이다. 그래서 32종의 접사가
+     *   전부 이름만 붙고 스탯은 하나도 주지 않았다 — epic 장비를 주워도 베이스 mods 하나만
+     *   들어갔다. 「조합 다양성」이 통째로 이름놀이였다.
+     * ★ 접사는 {stat, op, tiers[]} 형태라 중간 객체를 만들 필요가 없다. 값만 뽑아
+     *   stats.add 에 그대로 넘긴다 — 런 중 new 0(23 문서 8)을 지키는 유일한 방법이다.
+     * ★ src 는 베이스 하나로 통일한다. 해제는 removeBySrc(src) 한 줄이면 접사까지 같이 빠진다.
+     */
     addRecordMods(r) {
         const src = this.srcOf[r.base];
+        const tier = this.rarities[r.rarity]?.affixTier ?? 0;
         for (const m of this.bases[r.base].mods ?? EMPTY_ARR) this.stats?.add(m.stat, m.op, m.value, src);
-        if (r.prefix >= 0) for (const m of this.prefixes[r.prefix].mods ?? EMPTY_ARR) this.stats?.add(m.stat, m.op, m.value, src);
-        if (r.suffix >= 0) for (const m of this.suffixes[r.suffix].mods ?? EMPTY_ARR) this.stats?.add(m.stat, m.op, m.value, src);
+        if (r.prefix >= 0) this.addAffixMod(this.prefixes[r.prefix], tier, src);
+        if (r.suffix >= 0) this.addAffixMod(this.suffixes[r.suffix], tier, src);
+    }
+
+    addAffixMod(a, tier, src) {
+        if (!a?.stat || !a.op) return;
+        const v = this.affixValue(a, tier);
+        if (!v) return; // 0 을 넣으면 mods 배열만 길어지고 recalc 비용이 는다
+        this.stats?.add(a.stat, a.op, v, src);
     }
 
     /** 해제. 반드시 removeBySrc 로 지운다 — 직접 수치를 되돌리면 계산 순서가 무너진다 */
@@ -745,5 +967,7 @@ export class ItemSystem {
         this.resetRules();
         this.pulseUntil = 0;
         this.secondWindUsed = false;
+        this.secondWindUntil = 0;
+        this.pendingSalvage = 0;
     }
 }

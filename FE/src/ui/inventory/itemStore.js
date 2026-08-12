@@ -61,7 +61,8 @@ let state = {
     relics: [],
     /** 요약용 집계. [{ key, id, label, rarity, category, icon, count }] */
     picked: [],
-    totals: { use: 0, gold: 0, equip: 0, relic: 0 },
+    /** ★ salvage 는 '개수'가 아니라 '골드 합계'다. 나머지 넷과 단위가 다르니 이름으로 구분한다 */
+    totals: { use: 0, gold: 0, equip: 0, relic: 0, salvage: 0 },
 };
 
 const listeners = new Set();
@@ -183,7 +184,15 @@ function onPicked(p) {
     const rarity = p.rarity ?? base?.rarity ?? "common";
     const label = displayLabel(p);
     const icon = base?.icon ?? null;
-    const key = category + "|" + label;
+    /**
+     * ★ 환급(23 문서 4.2). ItemSystem 은 안 갈아입기로 한 장비와 교체로 밀려난 장비를
+     *   그 자리에서 골드로 바꾸고, 그 합계를 salvage 로 실어 보낸다.
+     *   거절된 장비는 category 가 "gold" 로 와서 장착 슬롯을 덮어쓰지 않는다.
+     *   이 숫자를 안 보여 주면 플레이어에게는 "밟았는데 아무 일도 없었다"로 보인다.
+     */
+    const salvage = p.salvage > 0 ? Math.round(p.salvage) : 0;
+    // 환급된 장비는 이름이 같아도 "장착"과 다른 사건이다 — key 를 갈라 한 줄로 합쳐지지 않게 한다
+    const key = category + "|" + label + (salvage > 0 && category === "gold" ? "|s" : "");
 
     const tier = category === "relic" ? "relic" : category === "equip" ? "equip" : "minor";
     const cfg = TIER[tier];
@@ -192,8 +201,12 @@ function onPicked(p) {
 
     // 1) 상시 상태 먼저. 토스트가 사라져도 남아야 하는 값들이다.
     const patch = {
-        totals: { ...state.totals, [category]: (state.totals[category] ?? 0) + 1 },
-        picked: mergePicked(key, { key, id: p.id, label, rarity, category, icon, slot: base?.slot ?? null, count: 1 }),
+        totals: {
+            ...state.totals,
+            [category]: (state.totals[category] ?? 0) + 1,
+            salvage: state.totals.salvage + salvage,
+        },
+        picked: mergePicked(key, { key, id: p.id, label, rarity, category, icon, slot: base?.slot ?? null, salvage, count: 1 }),
     };
     if (category === "equip" && base?.slot) {
         patch.equipped = { ...state.equipped, [base.slot]: { id: p.id, label, rarity, icon, slot: base.slot } };
@@ -211,6 +224,7 @@ function onPicked(p) {
         icon,
         halo: rarity === "common" ? null : haloFrame(rarity),
         desc: category === "relic" ? (base?.desc ?? "") : descOf(base),
+        salvage,
         count: 1, bump: 0, born: t, ttl, expires: t + ttl,
     });
 }
@@ -218,7 +232,7 @@ function onPicked(p) {
 /** 런 시작 — 전부 비운다. 아이템은 런과 함께 사라지는 물건이다(23 문서 2) */
 function onRunStarted() {
     if (timer) { clearTimeout(timer); timer = 0; }
-    setState({ toasts: [], equipped: EMPTY_EQUIP, relics: [], picked: [], totals: { use: 0, gold: 0, equip: 0, relic: 0 } });
+    setState({ toasts: [], equipped: EMPTY_EQUIP, relics: [], picked: [], totals: { use: 0, gold: 0, equip: 0, relic: 0, salvage: 0 } });
 }
 
 /**

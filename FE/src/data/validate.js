@@ -540,15 +540,53 @@ function ruleItems(R, D) {
         if (b.category === "relic") {
             if (!rarityIds.includes(b.rarity ?? "rare")) R.err(`item ${b.id}: relic rarity "${b.rarity}" 가 rarities 에 없다`);
             if (b.rule && !has(RELIC_RULES, b.rule)) {
-                R.err(`item ${b.id}: rule "${b.rule}" 은 ItemSystem.js:246 에 없다 — 유물 효과가 안 켜진다`);
+                R.err(`item ${b.id}: rule "${b.rule}" 은 ItemSystem 의 RELIC_RULES 에 없다 — 유물 효과가 안 켜진다`);
+            }
+            // ★ 규칙도 없고 스탯도 없는 유물 = 주워도 아무 일이 없는 전리품이다.
+            //   실제로 「호박 불꽃」이 rule 만 켜고 읽는 쪽이 없어 이 상태였다. 크래시가 아니라
+            //   "유물을 먹었는데 안 세지네" 로만 나타나서 몇 주를 살아남았다.
+            if (!b.rule && !(b.mods ?? []).length) {
+                R.err(`item ${b.id}: relic 인데 rule 도 mods 도 없다 — 주워도 아무 일이 없다`);
             }
         }
         if (b.category === "use" && !has(USE_EFFECT_TYPES, b.effect?.type)) {
-            R.err(`item ${b.id}: effect.type "${b.effect?.type}" 은 ItemSystem.js:599~616 applyUse 가 처리하지 않는다 — 먹어도 아무 일이 없다(토스트는 뜬다)`);
+            R.err(`item ${b.id}: effect.type "${b.effect?.type}" 은 ItemSystem.applyUse 가 처리하지 않는다 — 먹어도 아무 일이 없다(토스트는 뜬다)`);
         }
         if (b.category === "gold" && !isNum(b.effect?.value)) {
-            R.err(`item ${b.id}: gold 인데 effect.value 가 없다 (ItemSystem.js:590)`);
+            R.err(`item ${b.id}: gold 인데 effect.value 가 없다 (ItemSystem.applyGold)`);
         }
+        // 장비는 mods 가 있어야 한다. 접사가 안 붙는 common 등급에서 알맹이가 0 이 된다
+        if (b.category === "equip" && !(b.mods ?? []).length) {
+            R.err(`item ${b.id}: equip 인데 mods 가 비었다 — common 으로 떨어지면 접사도 없어 완전 무효다`);
+        }
+    }
+
+    // ── 환급 (23 문서 4.2) — ItemSystem.salvage() 가 읽는다 ──
+    // ★ 이 값은 오래 사문이었다(환급 코드가 아예 없었다). 지금은 자동 폐기 · 교체로 밀려난 장비 ·
+    //   6칸이 찬 뒤의 유물이 전부 여기를 지난다. encounters.json 의 상인 가격 기준이기도 하다.
+    let prevSalvage = -1;
+    for (const r of D.items.rarities ?? []) {
+        if (!isNum(r.salvageGold) || r.salvageGold < 0) {
+            R.err(`items.rarities ${r.id}: salvageGold ${r.salvageGold} — 환급액이다. 0 이상 숫자여야 한다 (ItemSystem.salvage)`);
+            continue;
+        }
+        if (r.salvageGold <= prevSalvage) {
+            R.err(`items.rarities ${r.id}: salvageGold ${r.salvageGold} 가 하위 등급보다 크지 않다 — 좋은 것을 버릴수록 손해가 된다`);
+        }
+        prevSalvage = r.salvageGold;
+    }
+    // affixCount 와 affixTier 는 등급이 오를수록 내려가면 안 된다(23 문서 5 R3)
+    let prevCount = -1;
+    for (const r of D.items.rarities ?? []) {
+        if (r.id === "legendary") continue; // 유물 전용 등급이라 장비 접사 개수 0 이 정상이다
+        if (!isNum(r.affixCount) || !isNum(r.affixTier)) {
+            R.err(`items.rarities ${r.id}: affixCount/affixTier 누락 — ItemSystem.rollAffixes 가 0개로 읽는다`);
+            continue;
+        }
+        if (r.affixCount < prevCount) {
+            R.err(`items.rarities ${r.id}: affixCount ${r.affixCount} 가 하위 등급보다 적다 — 등급이 오르는데 접사가 줄어든다`);
+        }
+        prevCount = r.affixCount;
     }
     // 유물 최소 보증 — ItemSystem.js:283 이 boss 번들에서 "legendary" 를 직접 요구한다
     const legendary = (D.items.bases ?? []).filter((b) => b.category === "relic" && (b.rarity ?? "rare") === "legendary");
@@ -1001,13 +1039,54 @@ function ruleAffixesAndSanctum(R, D) {
             if (!(a.stat in BASE_STATS)) R.err(`affix ${a.id}: stat "${a.stat}" 이 StatSystem BASE 에 없다`);
             if (!has(STAT_OPS, a.op)) R.err(`affix ${a.id}: op "${a.op}" 를 StatSystem 이 모른다`);
             // rarities[].affixTier 가 tiers 배열의 색인이다. 짧으면 undefined 배율이 붙는다.
+            // ★ 읽는 곳: ItemSystem.affixValue() / addAffixMod(). 접사는 mods 를 갖지 않는다 —
+            //   {stat, op, tiers[affixTier]} 를 그 자리에서 stats.add 로 넘긴다.
             if (!Array.isArray(a.tiers) || a.tiers.length <= maxTier) {
                 R.err(`affix ${a.id}: tiers 가 ${a.tiers?.length}개인데 items.rarities 의 최대 affixTier 는 ${maxTier} 다`);
+                continue;
+            }
+            if (!a.tiers.every(isNum)) {
+                R.err(`affix ${a.id}: tiers 에 숫자가 아닌 값이 있다 — stats.add 에 그대로 들어가 스탯이 NaN 이 된다`);
+                continue;
+            }
+            if (a.tiers.some((v) => v === 0)) {
+                R.err(`affix ${a.id}: tiers 에 0 이 있다 — 이름만 붙고 스탯은 0 인 접사가 된다`);
+            }
+            // 상위 티어가 더 세야 한다. 부호가 반대인 스탯(dashCd)은 절대값으로 본다
+            for (let i = 1; i < a.tiers.length; i++) {
+                if (Math.abs(a.tiers[i]) <= Math.abs(a.tiers[i - 1])) {
+                    R.err(`affix ${a.id}: tiers[${i}] ${a.tiers[i]} 가 tiers[${i - 1}] ${a.tiers[i - 1]} 보다 세지 않다 — epic 이 rare 보다 약해진다`);
+                }
+            }
+            // ★ weights 에 없는 stat 은 점수 0 이다. 자동 장착이 그 접사를 '없는 것'으로 보고
+            //   더 나쁜 장비로 갈아입힌다(ItemSystem.scoreOf).
+            if (!isNum(D.affixes.weights?.[a.stat])) {
+                R.err(`affix ${a.id}: affixes.weights 에 "${a.stat}" 가 없다 — 자동 장착 점수에서 이 접사가 0 점이 된다`);
             }
         }
     }
     for (const k of Object.keys(D.affixes.weights ?? {})) {
         if (!(k in BASE_STATS)) R.err(`affixes.weights "${k}" 은 StatSystem BASE 에 없다`);
+    }
+    // 장비 베이스의 mods 도 같은 점수 식을 탄다(23 문서 4.2)
+    for (const b of D.items.bases ?? []) {
+        if (b.category !== "equip") continue;
+        for (const m of b.mods ?? []) {
+            if (!isNum(D.affixes.weights?.[m.stat])) {
+                R.err(`item ${b.id}: mods.stat "${m.stat}" 가 affixes.weights 에 없다 — 자동 장착 점수에서 0 점이 된다`);
+            }
+        }
+    }
+    // ★ R2(한 장비에 같은 스탯 중복 금지)가 성립하려면, 어느 태그 조합에서든
+    //   접미 후보가 접두의 스탯 하나로 전멸하면 안 된다. 전멸하면 접미가 통째로 사라진다.
+    for (const tag of ["offense", "defense", "utility"]) {
+        const pre = (D.affixes.prefixes ?? []).filter((a) => (a.tags ?? []).includes(tag));
+        const suf = (D.affixes.suffixes ?? []).filter((a) => (a.tags ?? []).includes(tag));
+        for (const p of pre) {
+            if (suf.length && suf.every((x) => x.stat === p.stat)) {
+                R.warn(`affix R2: 태그 "${tag}" 에서 접두 ${p.id}(${p.stat}) 가 붙으면 접미 후보가 0 이 된다 — 접미 없는 rare/epic 이 나온다`);
+            }
+        }
     }
     for (const u of D.sanctum.upgrades ?? []) {
         checkShape(R, `sanctum ${u.id}`, u, { id: isStr, name: isStr, maxLevel: isNum });

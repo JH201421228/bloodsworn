@@ -530,6 +530,11 @@ export class CombatSystem {
         // 각성이 피해를 가로챌 수 있다 (불사의 껍질 = 1회 부활, 저HP 보너스 등)
         const replaced = this.awakening?.onHurt(taken);
         if (typeof replaced === "number") taken = replaced;
+        // 유물도 같은 계약으로 피해를 가로챈다 (「멈춘 모래시계」 = 치명상 1회 방어).
+        // ★ 각성 **다음**에 두는 이유: 「불사의 껍질」이 이미 살렸으면 모래시계는 굴리지
+        //   않아야 한다. 런당 1회짜리 자원 두 개를 같은 피격에 동시에 태우면 안 된다.
+        const byItem = this.items?.onHurt(taken);
+        if (typeof byItem === "number") taken = byItem;
         this.hp = Math.max(0, this.hp - taken);
         this.hurtUntil = this.scene.time.now + PLAYER_IFRAME * this.stats.get("iframe");
         // 흔들림을 여기서 직접 하면 "화면 흔들림 OFF" 접근성 옵션이 무시된다(13-QA UI-03).

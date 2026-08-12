@@ -5,7 +5,15 @@
         "  아트가 통째로 바뀌어도 이 파일과 ItemSystem 은 한 줄도 안 바뀐다(23 문서 7.3).",
         "★ 아이템은 대가를 주지 않는다. op 는 add/mul 만 쓴다 — toll/tollAdd 는 PACT 전용이다(불변식 I-2).",
         "★ stat 키는 StatSystem BASE 키만 쓴다. 예외는 itemFind(드롭률 배율)뿐이고,",
-        "  mul 로만 쓰므로 StatSystem 에 BASE 값이 없어도 (0+1)*(1+v) 로 정상 동작한다."
+        "  mul 로만 쓰므로 StatSystem 에 BASE 값이 없어도 (0+1)*(1+v) 로 정상 동작한다.",
+        "",
+        "★ rarities[].salvageGold 는 자동 폐기 환급액이다(23 문서 4.2).",
+        "  읽는 곳: ItemSystem.salvage(). 점수가 낮아 안 갈아입은 장비, 교체로 밀려난 장비,",
+        "  6칸이 찬 뒤에 주운 유물이 이 값만큼 골드가 된다. 「도굴꾼의 장갑」이 2배로 만든다.",
+        "  encounters.json 의 상인 가격도 이 값을 기준으로 잡혀 있다 — 여기를 흔들면 상점이 흔들린다.",
+        "",
+        "★ relic 의 rule 은 ItemSystem 의 RELIC_RULES 에 있는 이름만 쓴다.",
+        "  없는 이름을 적으면 그 유물은 조용히 아무 일도 안 한다. validate.js 가 대조한다."
     ],
     "schemaVersion": 1,
     "rarities": [
@@ -82,7 +90,7 @@
         { "id": "r_shard_ice",    "name": "서리 파편",     "category": "relic", "icon": "itm_relic_shard_ice",  "rarity": "epic",      "rule": "slowAura",    "desc": "주변 적이 느려진다",                   "mods": [] },
         { "id": "r_crystal_blue", "name": "심연의 결정",   "category": "relic", "icon": "itm_relic_crystal",    "rarity": "rare",      "rule": null,          "desc": "사거리 +12%, 범위 +8%",                "mods": [{ "stat": "range", "op": "mul", "value": 0.12 }, { "stat": "area", "op": "mul", "value": 0.08 }] },
         { "id": "r_hourglass",    "name": "멈춘 모래시계", "category": "relic", "icon": "itm_relic_hourglass",  "rarity": "legendary", "rule": "secondWind",  "desc": "치명상 시 1회, 2초간 무적",            "mods": [{ "stat": "iframe", "op": "mul", "value": 0.15 }] },
-        { "id": "r_glove",        "name": "도굴꾼의 장갑", "category": "relic", "icon": "itm_relic_glove",      "rarity": "rare",      "rule": "goldSalvage", "desc": "환급 골드 2배, 골드 획득 +10%",        "mods": [] },
+        { "id": "r_glove",        "name": "도굴꾼의 장갑", "category": "relic", "icon": "itm_relic_glove",      "rarity": "rare",      "rule": "goldSalvage", "desc": "환급 골드 2배, 골드 획득 +10%",        "mods": [{ "stat": "goldMult", "op": "mul", "value": 0.1 }] },
         { "id": "r_boot",         "name": "밤의 장화",     "category": "relic", "icon": "itm_relic_boot",       "rarity": "rare",      "rule": null,          "desc": "이동속도 +8%, 대시 재사용 −12%",       "mods": [{ "stat": "moveSpeed", "op": "mul", "value": 0.08 }, { "stat": "dashCd", "op": "mul", "value": -0.12 }] },
         { "id": "r_book",         "name": "금서",          "category": "relic", "icon": "itm_relic_book",       "rarity": "epic",      "rule": null,          "desc": "경험치 +18%, 행운 +6%",                "mods": [{ "stat": "expMult", "op": "mul", "value": 0.18 }, { "stat": "luck", "op": "add", "value": 0.06 }] },
         { "id": "r_burst_amber",  "name": "호박 불꽃",     "category": "relic", "icon": "itm_relic_burst_amber","rarity": "rare",      "rule": "burstOnUse",   "desc": "소모품을 먹으면 주변이 터진다",        "mods": [] },

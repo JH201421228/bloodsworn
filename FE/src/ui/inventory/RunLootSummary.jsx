@@ -69,6 +69,8 @@ export default function RunLootSummary() {
                 <span>소모품 <b>{totals.use}</b></span>
                 <span>핏값 <b>{totals.gold}</b></span>
                 <span>장비 교체 <b>{totals.equip}</b></span>
+                {/* 환급은 개수가 아니라 골드 합계다. 자동 폐기가 얼마를 벌어 줬는지가 정보다 */}
+                {totals.salvage > 0 && <span>환급 <b>{totals.salvage}</b></span>}
             </div>
         </section>
     );
