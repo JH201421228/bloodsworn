@@ -23,12 +23,14 @@
 import shop from "@/data/shop.json";
 import { initEntitlements, hasEntitlement, getPendingGrants, ackGrant } from "./entitlements";
 import { initRemoteConfig, cfg, onConfigUpdate, remoteConfigMeta } from "./remoteConfig";
-import { initAds, isAdReady as adsReady, showRewarded as adsShow, preloadRewarded, resetRunAdCounters, adDebugState } from "./ads";
+import { initAds, isAdReady as adsReady, showRewarded as adsShow, preloadRewarded, resetRunAdCounters, adDebugState, onAdReadyChange } from "./ads";
 import { initIap, getProducts as iapGetProducts, getProductsSync, purchase as iapPurchase, restorePurchases as iapRestore, refreshProducts, iapProvider, registerIapAdapter } from "./iap";
 import { getConsentState, resetConsent } from "./consent";
 import { track, ANALYTICS_EVENTS } from "@/analytics";
 
 export { hasEntitlement, resetRunAdCounters, registerIapAdapter, getConsentState, refreshProducts, getProductsSync };
+/** 광고 준비 상태 구독. UI 가 버튼을 다시 그리게 하는 유일한 통로다 — 20-MONETIZATION §10.6. */
+export { onAdReadyChange };
 export { cfg as remoteValue, onConfigUpdate };
 
 /** 광고 배치 정의(보상·상한·문구). UI 가 이 배열을 그대로 그린다 — 수치를 화면에 하드코딩하지 않는다. */

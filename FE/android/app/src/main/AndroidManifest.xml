@@ -22,6 +22,26 @@
             android:name="android.window.PROPERTY_COMPAT_ALLOW_RESTRICTED_RESIZABILITY"
             android:value="true" />
 
+        <!--
+            ★ 「AdMob」 앱 ID — **없으면 앱이 시작하자마자 크래시한다.**
+              「Google Mobile Ads」 SDK 는 초기화 시 이 메타데이터를 직접 읽고,
+              값이 없으면 IllegalStateException 을 던지며 프로세스를 죽인다. 선택 사항이 아니다.
+
+            현재 값은 「Google」 공식 **테스트용 샘플 앱 ID** 다. 계정 없이도 테스트 광고가 나온다.
+              출처: https://developers.google.com/admob/android/quick-start
+                    ("Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713")
+
+            ⚠ 실제 ID 로 바꿀 때 (docs/20-MONETIZATION.md §10.3):
+              1) 아래 android:value 를 「AdMob」 콘솔의 **앱 ID** 로 바꾼다.
+                 형식은 ca-app-pub-XXXXXXXXXXXXXXXX~NNNNNNNNNN — **물결표(~)** 다.
+                 슬래시(/)가 들어간 값은 광고 **단위** ID 이고 여기 넣으면 크래시한다. 흔한 실수다.
+              2) 광고 단위 ID 는 여기가 아니라 src/monetization/adConfig.js 의 REAL_UNITS 에 넣는다.
+              3) 둘은 같은 계정의 같은 앱이어야 한다. 어긋나면 no_fill 로 조용히 실패한다.
+        -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713" />
+
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode|navigation"
             android:name=".MainActivity"

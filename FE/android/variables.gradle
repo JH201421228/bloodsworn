@@ -16,4 +16,12 @@ ext {
     androidxJunitVersion = '1.2.1'
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
+
+    // ── 「AdMob」 (@capacitor-community/admob 7.2.0) ──
+    // ⚠ 플러그인 기본값이 '24.7.+' 라는 **떠 있는 버전**이다. 그대로 두면 구글이 새 패치를
+    //   올리는 날 빌드 결과가 말없이 바뀐다 — 릴리스 APK 를 재현할 수 없게 된다.
+    //   아래는 2026-08-12 기준 실제로 해석된 버전을 못 박은 것이다.
+    //   올릴 때는 릴리스 노트를 읽고 assembleDebug 를 한 번 통과시킨 뒤에 올린다.
+    playServicesAdsVersion = '24.7.0'
+    userMessagingPlatformVersion = '3.2.0'
 }

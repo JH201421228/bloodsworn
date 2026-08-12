@@ -19,23 +19,32 @@ let prefsCache; // undefined=미조회 / null=사용 불가 / object=사용 가�
 
 /**
  * Capacitor Preferences 핸들. 없으면 null.
- * ★ 정적 import 금지. 미설치 환경에서 번들러가 즉시 해석 실패로 빌드를 깬다.
- *   네이티브에서는 패키지 없이도 브리지가 전역에 주입하므로 전역을 먼저 본다. (save.js 와 동일 규약)
+ *
+ * ★★ **여기서 `import("@capacitor/preferences")` 를 정적/해석 가능한 형태로 부르지 마라.** ★★
+ *   그 import 는 @capacitor/core 의 `registerPlugin()` 을 실행시키고, 그 순간
+ *   `Capacitor.Plugins.Preferences` 가 **네이티브 브리지가 심어 둔 평범한 객체에서
+ *   모든 속성 접근을 가로채는 Proxy 로 바뀐다.** 그 Proxy 는 `then` 까지 네이티브 호출로 바꾸기
+ *   때문에 thenable 로 오인되고, **그 값을 async 함수에서 그대로 return 하는 다른 파일**
+ *   (`src/save/save.js`)이 통째로 reject 된다 → 세이브 로드 실패 → **매 실행 진행도 초기화.**
+ *   실제로 이 저장소에서 한 번 그렇게 깨뜨렸다가 되돌렸다. save.js 가 고쳐지기 전까지
+ *   이 파일은 **전역을 먼저 보고, import 는 `@vite-ignore` 로 묶어 둔다.**
+ *   (save.js 패치 코드는 20-MONETIZATION.md §10.7 에 있다.)
+ * ★ 핸들은 `{ plugin }` 으로 감싸 캐시한다 — 위와 같은 thenable 사고를 이 파일에서 만들지 않기 위해서다.
  */
 async function getPreferences() {
-    if (prefsCache !== undefined) return prefsCache;
+    if (prefsCache !== undefined) return prefsCache?.plugin ?? null;
     const injected = globalThis.Capacitor?.Plugins?.Preferences;
     if (injected) {
-        prefsCache = injected;
-        return prefsCache;
+        prefsCache = { plugin: injected };
+        return prefsCache.plugin;
     }
     try {
         const m = await import(/* @vite-ignore */ PREFS_MODULE);
-        prefsCache = m?.Preferences ?? null;
+        prefsCache = m?.Preferences ? { plugin: m.Preferences } : null;
     } catch {
         prefsCache = null; // 웹/미설치. localStorage 단독으로 동작한다
     }
-    return prefsCache;
+    return prefsCache?.plugin ?? null;
 }
 
 /** 동기 읽기. 부팅 직후 Preferences 승격 전에도 최소한 이 값은 쓸 수 있다. */

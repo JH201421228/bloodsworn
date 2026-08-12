@@ -28,14 +28,18 @@
     "build:npcs": "node tools/build-npcs.mjs",
     "build:player-atk": "node tools/build-player-atk.mjs",
     "build:ui": "node tools/build-ui.mjs",
-    "build:all-assets": "npm run build:assets && npm run build:player-atk && npm run build:props && npm run build:monsters && npm run build:npcs && npm run build:projectiles && npm run build:bosses && npm run build:items",
-    "validate": "node tools/validate-data.mjs"
+    "build:all-assets": "npm run build:assets && npm run build:player-atk && npm run build:props && npm run build:monsters && npm run build:npcs && npm run build:projectiles && npm run build:bosses && npm run build:items && npm run build:decals",
+    "validate": "node tools/validate-data.mjs",
+    "build:decals": "node tools/build-decals.mjs"
   },
   "dependencies": {
+    "@capacitor-community/admob": "^7.2.0",
     "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.1.2",
     "@capacitor/core": "^7.0.0",
     "@capacitor/ios": "^7.0.0",
     "@capacitor/preferences": "^7.0.4",
+    "@capacitor/toast": "^7.0.4",
     "phaser": "^3.90.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

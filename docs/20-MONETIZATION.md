@@ -421,7 +421,125 @@ BLOODSWORN 의 유일한 차별화는 **"대가를 치르는 선택"** 이다(`0
 
 ---
 
-## 10. 관련 문서
+## 10. ★ 광고 SDK 연결 현황 — **지금 테스트 ID 로 실제 동작한다**
+
+이 절은 "코드는 다 있는데 광고가 안 뜬다" 를 끝낸 기록이다. 앞 절들이 *무엇을 팔지* 를 정했다면
+이 절은 *지금 무엇이 실제로 돌아가는지* 와 **계정을 만든 뒤 어디를 고치는지**만 다룬다.
+
+### 10.1 무엇이 연결됐나
+
+| 항목 | 값 | 근거 |
+|---|---|---|
+| 플러그인 | `@capacitor-community/admob` **7.2.0** | 이 패키지의 `@capacitor/core` 의존이 `^7.0.0`, 설치된 코어가 **7.6.0** 이라 호환. 최신 `8.0.0` 은 Capacitor 8 계열이라 **쓰지 않는다** |
+| Google Mobile Ads | `play-services-ads` **24.7.0** | `android/variables.gradle` 에 못 박았다 |
+| UMP (동의) | `user-messaging-platform` **3.2.0** | 위와 같음 |
+| minSdk | 23 | 플러그인 요구치와 일치. 올릴 필요 없다 |
+
+플러그인 기본값이 `24.7.+` 라는 **떠 있는 버전**이었다. 그대로 두면 구글이 패치를 올리는 날
+빌드 산출물이 말없이 바뀌어 릴리스 APK 를 재현할 수 없다. `variables.gradle` 에서 고정했다.
+
+> ⚠ **APK 가 4.27 MB 커진다** (debug clean 기준 15,436,648 → 19,911,124 바이트).
+> 대부분 「Google Mobile Ads」 SDK 와 UMP 다. 광고를 붙이는 값이며 줄일 방법은 없다.
+
+### 10.2 ID 를 다루는 파일은 **둘 뿐이다**
+
+| 파일 | 무엇을 담나 | 형식 |
+|---|---|---|
+| `src/monetization/adConfig.js` | **광고 단위** ID (`REAL_UNITS`) | `ca-app-pub-…**/**NNNNNNNNNN` — **슬래시** |
+| `android/app/src/main/AndroidManifest.xml` | **앱** ID (`com.google.android.gms.ads.APPLICATION_ID`) | `ca-app-pub-…**~**NNNNNNNNNN` — **물결표** |
+
+★ **이 둘은 다른 값이다.** 앱 ID 자리에 광고 단위 ID 를 넣으면 앱이 시작하자마자 크래시하고,
+반대로 넣으면 `no_fill` 로 조용히 실패한다. 구분자(`~` / `/`)로 항상 확인하라.
+
+지금은 양쪽 다 「Google」 공식 **테스트 값**이 들어 있다. 계정 없이도 진짜 광고가 뜨고,
+무효 트래픽으로 잡히지 않는다.
+
+| 용도 | 값 | 출처 (2026-08-12 확인) |
+|---|---|---|
+| 보상형 광고 단위 (Android) | `ca-app-pub-3940256099942544/5224354917` | <https://developers.google.com/admob/android/test-ads> |
+| 보상형 광고 단위 (iOS) | `ca-app-pub-3940256099942544/1712485313` | <https://developers.google.com/admob/ios/test-ads> |
+| 샘플 **앱** ID (Android) | `ca-app-pub-3940256099942544~3347511713` | <https://developers.google.com/admob/android/quick-start> |
+
+⚠ 이 값들을 기억으로 고치지 마라. 한 글자만 틀려도 `no_fill` 로 **조용히** 실패해서
+원인 추적이 지옥이 된다. 반드시 위 문서를 다시 열어 대조하라.
+
+### 10.3 ★ 계정을 만든 뒤 해야 할 일 — 순서대로
+
+1. <https://admob.google.com> 에서 앱을 등록한다. Play 에 아직 안 올렸으면 "아니요, 등록되지 않았습니다" 로 만들면 된다.
+2. 그 앱에서 **보상형(Rewarded)** 광고 단위를 하나 만든다. 이름은 아무거나(예: `revive_and_gold`).
+   배치 3개(`revive`/`gold_double`/`sanctum_offering`)가 **같은 단위 하나를 공유한다** — 분리할 이유가 없다.
+3. `src/monetization/adConfig.js` 의 `REAL_UNITS.android` 에 **광고 단위 ID**(`/`)를 붙여넣는다.
+   iOS 를 낸다면 `REAL_UNITS.ios` 도 채운다.
+4. `android/app/src/main/AndroidManifest.xml` 의 `com.google.android.gms.ads.APPLICATION_ID`
+   `android:value` 를 **앱 ID**(`~`)로 바꾼다.
+5. `npm run build && npx cap sync android` 후 빌드. 부팅 로그에
+   `[ads] 「AdMob」 초기화 완료 — testing=false unit=real` 이 찍히면 성공이다.
+   `testing=true` 가 그대로면 3번이 반영되지 않은 것이다(형식 오류면 콘솔에 경고가 찍힌다).
+
+★ **저장소에 실 ID 를 커밋하고 싶지 않다면** 3번 대신 빌드 환경변수를 쓴다.
+`src/App.jsx` 가 `VITE_ADMOB_REWARDED_ANDROID` 를 읽어 넘긴다.
+우선순위는 **환경변수 > `REAL_UNITS` > 테스트 ID** 다. 앱 ID(4번)는 매니페스트에만 있으므로
+환경변수로 대체할 수 없다.
+
+⚠ 실 ID 로 바꾼 직후 **자기 기기로 광고를 반복 클릭하지 마라.** 무효 트래픽으로 계정이 정지되고
+되돌릴 방법이 없다. 테스트가 필요하면 `initMonetization({ testingDevices: ["<기기ID>"] })` 를 쓴다.
+
+### 10.4 실패는 전부 같게 취급된다 — 설계 유지 확인
+
+`no_fill` · 네트워크 없음 · 타임아웃 · 사용자 이탈은 **모두** `{ rewarded: false, reason }` 로
+즉시 돌아온다. 예외를 던지지 않으므로 호출부는 `try/catch` 없이 써도 된다.
+`showRewarded()` 는 어떤 경우에도 게임 진행을 막지 않는다(§4.6, §8.1).
+
+★ **상한은 성공한 시청만 깎는다.** 로드에 실패한 시도는 하루치 기회를 소모하지 않는다.
+
+★ 웹(브라우저 `npm run dev`)에서는 플러그인을 **아예 건드리지 않는다.** 이 패키지의 웹 구현이
+예외를 던지지 않는 스텁이라, 그대로 두면 브라우저에서 아무 화면도 안 뜨는데 보상만 나간다.
+`ads.js` 의 `resolveAdMob(plat)` 플랫폼 게이트가 그것을 막는다. 웹은 기존대로 `provider="dev"` 다.
+
+### 10.6 ★ 「버튼이 안 보인다」 — 광고 준비 상태는 **스냅샷이 아니다**
+
+`resolveAdPlacement(id).ready` 는 **그 렌더 순간의 값**이다. 광고 로드는 비동기라 이런 일이 난다:
+
+1. 결과 화면이 그려진다 → 그 순간 광고는 아직 로드 중 → `ready=false` → 버튼을 안 그린다
+2. 2초 뒤 로드가 끝난다 → **하지만 리렌더를 유발하는 것이 아무것도 없다**
+3. 유저에게는 버튼이 **영영** 안 보인다
+
+에뮬레이터에서 실제로 재현한 증상이다. 두 가지로 막았다.
+
+**(1) 프리로드 타임아웃을 10초 → 20초로 올렸다** (`remote-defaults.json` 의 `ads.loadTimeoutMs`).
+콜드 스타트에서 「Google Mobile Ads」 SDK 초기화 + 첫 광고 로드는 저사양 기기에서 10초를
+넘기는 일이 흔하다(측정한 에뮬레이터에서 약 14초). 10초는 **성공할 로드를 우리 손으로
+끊어 버리는 값**이었다. 이 타임아웃은 화면을 잠그지 않는다 — 백그라운드 프리로드일 뿐이다.
+
+**(2) `onAdReadyChange(cb)` 구독을 열었다** (`src/monetization/index.js` 에서 내보낸다).
+광고가 준비되거나 소진되면 콜백이 불린다.
+
+★ **UI 쪽 패치가 필요하다. `src/ui/**` 는 다른 담당자 소유라 여기 코드만 남긴다.**
+`ResultScreen.jsx` 와 `SanctumScreen.jsx` 에 각각 3줄이다:
+
+```jsx
+// import 에 onAdReadyChange 를 추가하고
+import { resolveAdPlacement, showRewarded, onAdReadyChange } from "@/monetization";
+
+// 컴포넌트 안, resolveAdPlacement 호출보다 위에:
+const [, bumpAdReady] = useReducer((n) => n + 1, 0);
+useEffect(() => onAdReadyChange(bumpAdReady), []);
+```
+
+`useReducer`/`useEffect` 를 `react` 에서 import 해야 한다. 이 3줄이 들어가면 광고가 준비되는
+순간 해당 화면만 다시 그려지고 버튼이 나타난다. **넣지 않아도 게임은 정상이다** —
+버튼이 늦게/안 뜰 뿐이고, (1) 덕분에 실제로는 대부분 제때 뜬다.
+
+### 10.5 아직 남은 것
+
+- **동의(UMP) 실지역 검증.** 코드 경로(`consent.js`)는 완성돼 있으나 EEA 실기기 확인은 못 했다.
+  개발 중에는 `initMonetization({ debugGeography: "EEA" })` 로 흉내낼 수 있다.
+- **iOS.** `REAL_UNITS.ios` 와 `Info.plist` 의 `GADApplicationIdentifier` 가 비어 있다.
+  Android 소프트런치가 먼저라 미룬 것이며, 미룬 상태로도 Android 빌드는 정상이다.
+
+---
+
+## 11. 관련 문서
 
 | 문서 | 이 문서와의 관계 |
 |---|---|

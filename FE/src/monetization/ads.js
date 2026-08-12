@@ -8,22 +8,23 @@
  *      로드/표시 양쪽에 타임아웃을 걸어 스피너가 화면을 잠그는 일을 원천 차단한다.
  *   3) **상한은 성공한 시청만 깎는다.** 로드 실패로 하루치 기회가 사라지면 그건 유저 손해다.
  *
- * ★ 정적 import 금지 — `@capacitor-community/admob` 은 아직 설치되어 있지 않다(설치 명령은 보고서).
- *   네이티브에서는 브리지가 `window.Capacitor.Plugins.AdMob` 을 주입하므로 전역을 먼저 본다.
+ * ★ 플러그인은 `@capacitor-community/admob` 7.2.0 (Capacitor 7 호환 — package.json 의
+ *   `@capacitor/core` 의존이 ^7.0.0 이고 설치된 코어가 7.6.0 이다).
+ *   동적 import 로 잡되 **Vite 가 해석하게 둔다**. 전역 `Capacitor.Plugins.AdMob` 은 폴백이다.
+ * ★ **웹에서는 플러그인을 아예 건드리지 않는다.** 이 패키지의 웹 구현은 예외를 던지지 않고
+ *   console.log 만 찍는 스텁이라, 그대로 두면 브라우저에서 provider 가 "admob" 으로 잡히고
+ *   `showRewardVideoAd()` 가 즉시 빈 보상을 돌려준다 — 아무 화면도 안 뜨는데 보상만 나간다.
+ *   platform() 게이트가 그것을 막는 유일한 장치다.
  */
 import { loadJson, saveJson, readLocalJson } from "./kv";
 import { hasEntitlement } from "./entitlements";
 import { cfg } from "./remoteConfig";
 import { ensureConsent, getConsentState, PERSONALIZED_ADS } from "./consent";
+import { resolveRewardedUnit } from "./adConfig";
 
-const ADMOB_MODULE = "@capacitor-community/admob";
 const CAP_KEY = "bloodsworn.adcap.v1";
 
-/** Google 공식 테스트 광고 단위. 실 단위 ID 를 코드에 박지 않는다 — opts 로 주입한다. */
-const TEST_UNITS = {
-    android: "ca-app-pub-3940256099942544/5224354917",
-    ios: "ca-app-pub-3940256099942544/1712485313",
-};
+/* 광고 단위 ID 는 adConfig.js 가 유일한 정본이다. 이 파일에 ID 문자열을 다시 적지 마라. */
 
 /** 플러그인이 버전마다 이름을 조금씩 바꿔서, 문자열을 직접 쓰되 여러 후보를 다 건다. */
 const EV = {
@@ -38,11 +39,47 @@ let AdMob = null;
 let provider = "none"; // "admob" | "dev" | "none"
 let units = { rewarded: "" };
 let isTesting = true;
+let unitSource = "test"; // "opts" | "real" | "test" — 디버그 HUD 에서 어느 ID 를 쓰는지 확인한다
 let loadedFlag = false;
 let loadingPromise = null;
 let showing = false;
 let caps = null; // { day: "2026-08-11", perDay: {}, total: 0 }
 let runCounts = {}; // 런 스코프 — 저장하지 않는다(런은 앱 재시작을 넘지 않는다)
+
+/**
+ * 「광고 준비 상태가 바뀌었다」 구독자들.
+ *
+ * ★ 이게 없으면 실제로 이런 일이 난다: 결과 화면이 그려지는 순간엔 광고가 아직 로드 중이라
+ *   `isAdReady()` 가 false → 버튼이 안 그려진다 → 2초 뒤 로드가 끝나도 **리렌더 트리거가 없어서
+ *   버튼이 영영 안 나타난다.** 에뮬레이터에서 실제로 재현한 증상이다.
+ *   `isAdReady()` 는 렌더 시점의 스냅샷일 뿐이므로, 값이 바뀐 사실을 밖에 알려 줘야 한다.
+ */
+const readyListeners = new Set();
+
+/**
+ * 광고 준비 상태 변화를 구독한다. React 는 useEffect 에서 부르고 정리 함수로 해제하면 된다.
+ * @param {() => void} cb
+ * @returns {() => void} 해제 함수
+ */
+export function onAdReadyChange(cb) {
+    if (typeof cb !== "function") return () => {};
+    readyListeners.add(cb);
+    return () => readyListeners.delete(cb);
+}
+
+/** loadedFlag 를 바꾸는 **유일한** 통로. 직접 대입하지 마라 — 구독자가 못 듣는다. */
+function setLoaded(v) {
+    const next = Boolean(v);
+    if (loadedFlag === next) return;
+    loadedFlag = next;
+    for (const cb of readyListeners) {
+        try {
+            cb();
+        } catch {
+            /* 구독자 하나가 던져도 나머지는 받아야 한다 */
+        }
+    }
+}
 
 /** @returns {"android"|"ios"|"web"} */
 function platform() {
@@ -55,15 +92,33 @@ function platform() {
     return "web";
 }
 
-async function resolveAdMob() {
-    const injected = globalThis.Capacitor?.Plugins?.AdMob;
-    if (injected) return injected;
+/**
+ * 「AdMob」 핸들을 얻는다. **네이티브(android/ios)에서만** 시도한다.
+ * ★ 웹에서 null 을 돌려주는 것이 의도다 — 파일 상단 주석의 웹 스텁 문제를 참고하라.
+ *
+ * ★★ **반드시 { plugin } 으로 감싸서 돌려준다. 플러그인 객체를 그대로 반환하지 마라.** ★★
+ *   Capacitor 의 플러그인 핸들은 Proxy 라서 **어떤 속성 접근이든 네이티브 메서드 호출로 바꾼다.**
+ *   `then` 도 예외가 아니다 → 자바스크립트가 이 객체를 thenable 로 착각한다.
+ *   그래서 async 함수가 이걸 그대로 return 하면 Promise 해결 절차가 `AdMob.then()` 을 호출하고,
+ *   네이티브가 `"AdMob.then()" is not implemented on android` 로 거부해 **initAds 가 통째로 reject 된다.**
+ *   결과는 provider="none" — 즉 **APK 에서 광고 버튼이 영영 안 뜬다.** 실제로 이 프로젝트에서
+ *   에뮬레이터 로그로 잡아낸 사고다. 한 겹 감싸는 것이 유일한 해법이다.
+ */
+async function resolveAdMob(plat) {
+    if (plat !== "android" && plat !== "ios") return null;
     try {
-        const m = await import(/* @vite-ignore */ ADMOB_MODULE);
-        return m?.AdMob ?? null;
-    } catch {
-        return null; // 웹/미설치. 정상 경로다
+        // ★ **`@vite-ignore` 를 절대 붙이지 마라.** 붙이면 Vite 가 이 지정자를 그대로 두고,
+        //   빌드된 번들에서 WebView 가 "@capacitor-community/admob" 을 URL 로 해석해 404 가 난다.
+        //   그러면 catch 로 빠져 provider 가 영원히 "none" 이 되고 **APK 에서 광고 버튼이 안 뜬다.**
+        //   실제로 이 프로젝트에서 한 번 그렇게 실패했다. 코드 스플리팅은 Vite 에 맡긴다.
+        const m = await import("@capacitor-community/admob");
+        if (m?.AdMob) return { plugin: m.AdMob };
+    } catch (e) {
+        console.info("[ads] 플러그인 모듈 로드 실패 — 브리지 전역으로 재시도한다", e?.message ?? e);
     }
+    // 폴백: 네이티브 브리지가 주입하는 전역. 모듈 로드가 실패해도 여기서 살아날 수 있다.
+    const injected = globalThis.Capacitor?.Plugins?.AdMob;
+    return injected ? { plugin: injected } : null;
 }
 
 function todayKey() {
@@ -173,16 +228,16 @@ export function preloadRewarded() {
     if (provider !== "admob" || !consentAllowsAds()) return Promise.resolve(false);
     if (loadedFlag || loadingPromise) return loadingPromise ?? Promise.resolve(loadedFlag);
     loadingPromise = withTimeout(
-        AdMob.prepareRewardVideoAd({ adId: units.rewarded, isTesting, npa: !PERSONALIZED_ADS }),
+        AdMob.prepareRewardVideoAd({ adId: units.rewarded, isTesting, npa: !PERSONALIZED_ADS, immersiveMode: true }),
         cfg("ads.loadTimeoutMs") ?? 10000,
         "load_timeout"
     )
         .then(() => {
-            loadedFlag = true;
+            setLoaded(true);
             return true;
         })
         .catch(() => {
-            loadedFlag = false;
+            setLoaded(false);
             return false; // no_fill / 네트워크 없음 / 타임아웃 — 전부 같게 취급한다
         })
         .finally(() => {
@@ -205,7 +260,9 @@ export async function initAds(opts = {}) {
         .catch(() => {});
 
     const plat = platform();
-    AdMob = await resolveAdMob();
+    // ★ resolveAdMob 이 던져도 initAds 는 절대 던지면 안 된다(부팅이 광고에 묶이면 안 된다).
+    const box = await resolveAdMob(plat).catch(() => null);
+    AdMob = box?.plugin ?? null;
 
     if (!AdMob) {
         // 웹 브라우저 개발 환경. 보상 흐름을 눈으로 확인하려면 가짜 광고를 켠다.
@@ -214,16 +271,22 @@ export async function initAds(opts = {}) {
     }
 
     // 실 단위 ID 가 없으면 무조건 테스트 모드다. 실수로 테스트 트래픽을 실 단위에 태우면 계정이 정지된다.
-    const real = plat === "ios" ? opts.rewardedUnitIdIos : opts.rewardedUnitId;
-    isTesting = opts.testMode ?? !real;
-    units.rewarded = real || TEST_UNITS[plat === "ios" ? "ios" : "android"];
+    const picked = resolveRewardedUnit(plat, plat === "ios" ? opts.rewardedUnitIdIos : opts.rewardedUnitId);
+    isTesting = opts.testMode ?? picked.isTesting;
+    units.rewarded = picked.unitId;
+    unitSource = picked.source;
 
     try {
         await AdMob.initialize({
-            // ★ ATT 프롬프트를 SDK 가 자동으로 띄우지 못하게 막는다(consent.js 방침).
-            requestTrackingAuthorization: false,
             testingDevices: opts.testingDevices ?? [],
             initializeForTesting: isTesting,
+            // ★ 아동 대상 앱이 아니다(20-MONETIZATION §6.3 — 18+ 로 선언한다).
+            //   false 를 **명시**하는 것이 중요하다. 미지정이면 SDK 가 "선언 안 함"으로 보내고,
+            //   그러면 일부 광고 수요처가 요청을 거른다.
+            tagForChildDirectedTreatment: false,
+            tagForUnderAgeOfConsent: false,
+            // 폭력 묘사가 있는 게임이다. 광고 등급을 콘텐츠에 맞춘다.
+            maxAdContentRating: "MatureAudience",
         });
     } catch (e) {
         provider = "none";
@@ -233,7 +296,8 @@ export async function initAds(opts = {}) {
     provider = "admob";
     await ensureConsent(AdMob, { debugGeography: opts.debugGeography, testDeviceIdentifiers: opts.testingDevices });
     preloadRewarded(); // 결과를 기다리지 않는다. 부팅을 광고 로드에 묶지 않는다
-    return { provider, testing: isTesting };
+    console.info(`[ads] 「AdMob」 초기화 완료 — testing=${isTesting} unit=${unitSource}`);
+    return { provider, testing: isTesting, unitSource };
 }
 
 /**
@@ -297,7 +361,7 @@ export async function showRewarded(placement) {
             const msg = String(e?.message ?? e);
             return { rewarded: false, reason: msg === "timeout" ? "timeout" : "show_failed" };
         } finally {
-            loadedFlag = false; // 소진됐다. 성공이든 실패든 다음 것을 다시 채운다
+            setLoaded(false); // 소진됐다. 성공이든 실패든 다음 것을 다시 채운다
         }
 
         // 버전에 따라 보상 아이템을 resolve 값으로도, 이벤트로도 준다. 둘 다 본다.
@@ -326,6 +390,7 @@ export function adDebugState() {
     return {
         provider,
         isTesting,
+        unitSource,
         loaded: loadedFlag,
         showing,
         consent: getConsentState(),

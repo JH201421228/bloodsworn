@@ -20,7 +20,7 @@
     "values": {
         "ads.enabled":                        { "v": true,  "t": "bool" },
         "ads.dailyImpressionCap":             { "v": 15,    "t": "int", "min": 0,   "max": 50 },
-        "ads.loadTimeoutMs":                  { "v": 10000, "t": "int", "min": 3000, "max": 30000 },
+        "ads.loadTimeoutMs":                  { "v": 20000, "t": "int", "min": 3000, "max": 30000 },
         "ads.showTimeoutMs":                  { "v": 90000, "t": "int", "min": 15000, "max": 300000 },
 
         "ads.revive.enabled":                 { "v": true,  "t": "bool" },
