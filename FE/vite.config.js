@@ -1,10 +1,14 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import stripReceipts from "./tools/vite-plugin-strip-receipts.mjs";
 
 // T703 — 릴리스 번들 설정.
 export default defineConfig({
-    plugins: [react()],
+    // stripReceipts — public/assets/generated/ 의 작업용 수령본을 dist 에서 미리 민다.
+    //   Vite 는 public/ 을 통째로, Capacitor 는 dist/ 를 통째로 복사하기 때문에
+    //   안 쓰는 원본 4.9MB 가 그대로 APK 에 실렸다(2026-08-13 실측).
+    plugins: [react(), stripReceipts()],
     // ★ base: "./" 는 협상 대상이 아니다.
     //   Capacitor 는 WebView 를 file:// 또는 https://localhost 로 띄우고 dist 를 그대로 복사한다.
     //   기본값 "/" 로 두면 /assets/index-xxx.js 를 절대경로로 찾다가 흰 화면만 뜬다.
