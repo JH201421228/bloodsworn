@@ -61,8 +61,37 @@ const EMPTY = [];
 const EMPTY_SET = new Set();
 
 /**
- * 화살표 종류 표시. ⚠ 임시다 — docs/32 C-4 의 조우 마커 아이콘 6종이 오면
- * 이 표를 지우고 아틀라스 프레임으로 갈아 끼운다. 지금은 도형보다 글리프가 낫다(30 §7.2).
+ * 룬·상자·조우마커·성소 아이콘 38종 시트 (정본 docs/32 · 32x32 격자 12열 x 4행 = 48칸).
+ * ★ 이 파일이 쓰는 것은 룬 0~23(좌판)과 조우 마커 26~31(화살표)이다.
+ *   상자 24/25 는 SpawnSystem 이, 성소 32~37 은 React(CSS 스프라이트)가 쓴다.
+ * ★ 없으면 아래 코드가 전부 유니코드 글리프로 떨어진다. assets.json 에서 runes 한 줄을
+ *   빼는 것만으로 되돌릴 수 있어야 한다 — 이 프로젝트가 아트를 붙이는 방식이다(32 §0.2).
+ */
+const RUNE_TEX = "runes";
+/**
+ * 조우 종류 -> 마커 칸 번호 (32 §3.3). 26 상인 / 27 마녀 / 28 예언자 / 29 수상한 자 /
+ * 30 제단 / 31 필드보스. chest 만 마커 몫이 따로 없어 닫힌 궤(24)를 그대로 쓴다 —
+ * 화면 밖에 있는 것이 실제로 그 궤이므로 다른 그림을 그릴 이유가 없다.
+ */
+const KIND_FRAME = {
+    merchant: 26, witch: 27, seer: 28, shady: 29, altar: 30, fieldboss: 31, chest: 24,
+};
+/**
+ * 마커 표시 크기 — ★ 정확히 **절반(16 논리px)** 이다.
+ *
+ * 32 §2.1 은 "조우 화살표는 12 논리px" 로 적었다. 그대로 12/32 = 0.375 로 줄여 실제로 찍어 보니
+ * (헤드리스 10배 확대) 「수상한 자」의 두건과 닫힌 궤가 뭉개져 서로 구분되지 않았다.
+ * 원인은 크기가 아니라 **배율**이다 — 29 §0.3 이 이미 적어 둔 "정수배가 아닌 축소는
+ * 픽셀아트를 뭉갠다"가 여기서 그대로 재현됐다. 0.375 는 8픽셀을 3픽셀로 미는 값이라
+ * 1px 선이 통째로 사라진다.
+ * 1/2 은 화소 4개가 정확히 1개로 접히는 유일한 축소비다. 12 -> 16 은 4px 커지는 대신
+ * 실루엣이 살아난다. 32 §3.3 이 요구한 것은 "12px"이 아니라 "실루엣 하나로 구분된다"이다.
+ */
+const MARK_SCALE = 0.5;
+
+/**
+ * 화살표 종류 표시 — ★ 글리프 폴백이다. 시트가 없을 때만 그려진다.
+ *   지우지 마라(32 §0.2). 도형보다 글리프가 낫다는 판단은 그대로 남는다(30 §7.2).
  */
 const KIND_MARK = {
     merchant: "\u2696",   // 저울
@@ -148,6 +177,8 @@ export class EncounterSystem {
         this.hasNpcTex = scene.textures.exists(npcCatalog.texture);
         if (!this.hasNpcTex) console.warn("[EncounterSystem] npcs 시트가 없다 — NPC 없이 좌판만 뜬다");
         this.hasItemAtlas = scene.textures.exists("items");
+        /** 룬 아이콘 + 조우 마커 시트(docs/32). 없으면 전부 글리프 폴백이다 */
+        this.hasRuneTex = scene.textures.exists(RUNE_TEX);
 
         this.buildObjects();
         this.resetState();
@@ -181,17 +212,23 @@ export class EncounterSystem {
                 //   (RuneSystem 생성자와 같은 규약).
                 on: false, x: 0, y: 0, locked: false,
                 kind: "", label: "", price: 0, color: 0xffffff,
-                frame: null, glyphTxt: null,
+                // frame 은 items 아틀라스의 이름(문자열)일 수도, runes 시트의 칸 번호(숫자)일
+                // 수도 있다. 어느 시트인지는 frameTex 가 갖는다.
+                // ★ 칸 0(rn_w1_maw)은 유효한 값이다 — if (s.frame) 로 걸러서는 안 된다.
+                frame: null, frameTex: "", glyphTxt: null,
                 base: -1, rarity: 0, runeId: null, outcome: null,
                 circle: mkDecal(DECAL_PED, FA.BASE, this.hasPedTex),
                 // 살 수 있는 좌판에만 도는 후광. 시트가 없으면 null 이고 아무 데서도 안 쓰인다
                 halo: this.hasPedTex
                     ? s.add.sprite(-9999, -9999, DECAL_PED, FA.HALO).setDepth(DEPTH.ORB).setVisible(false)
                     : null,
-                icon: this.hasItemAtlas
-                    ? s.add.sprite(-9999, -9999, "items").setDepth(DEPTH.ORB + 1).setVisible(false)
+                // 스프라이트 하나로 두 시트를 다 그린다. 좌판에 items 와 runes 가 동시에
+                // 뜨는 조우는 없다 — 상인은 전부 아이템, 마녀는 전부 룬이다.
+                icon: (this.hasItemAtlas || this.hasRuneTex)
+                    ? s.add.sprite(-9999, -9999, this.hasItemAtlas ? "items" : RUNE_TEX)
+                        .setDepth(DEPTH.ORB + 1).setVisible(false)
                     : null,
-                // 룬 아이콘은 아직 없다 -> 유니코드 글리프 폴백(31 §7 / 30 §7.3).
+                // ★ 유니코드 글리프 폴백(31 §7 / 30 §7.3). 시트나 칸이 없으면 여기로 떨어진다.
                 // 「수상한 자」의 뒷면(?)도 같은 오브젝트를 쓴다.
                 glyph: s.add.text(-9999, -9999, "", { fontFamily: "monospace", fontSize: "15px", color: "#f2e8d5" })
                     .setOrigin(0.5, 0.5).setDepth(DEPTH.ORB + 2).setVisible(false),
@@ -233,6 +270,11 @@ export class EncounterSystem {
         // 방향 화살표 — ★ setScrollFactor(0). 매 프레임 좌표가 바뀌는 값이라 React 에 안 보낸다
         this.arrow = s.add.triangle(-9999, -9999, 0, 10, 5, -6, -5, -6, 0xc9b792)
             .setScrollFactor(0).setDepth(DEPTH.HUD).setVisible(false);
+        // 종류 표시 — 시트가 있으면 마커 아이콘(32 §3.3), 없으면 글리프. 쓰는 쪽만 만든다.
+        this.arrowIcon = this.hasRuneTex
+            ? s.add.sprite(-9999, -9999, RUNE_TEX, KIND_FRAME.merchant).setScale(MARK_SCALE)
+                .setScrollFactor(0).setDepth(DEPTH.HUD).setVisible(false)
+            : null;
         this.arrowMark = s.add.text(-9999, -9999, "", { fontFamily: "monospace", fontSize: "11px", color: "#c9b792" })
             .setOrigin(0.5, 0.5).setScrollFactor(0).setDepth(DEPTH.HUD).setVisible(false);
     }
@@ -504,6 +546,7 @@ export class EncounterSystem {
         s.label = b.name;
         s.price = this.cfg.prices.merchant[rarityId] ?? 0.12;
         s.frame = b.icon;
+        s.frameTex = "items";
         s.glyphTxt = null;
         s.color = RARITY_COLOR[rarityId] ?? RARITY_COLOR.common;
         return true;
@@ -519,8 +562,10 @@ export class EncounterSystem {
         s.runeId = r.id;
         s.label = r.name;
         s.price = this.cfg.prices.witch[String(r.tier)] ?? 0.15;
-        s.frame = r.icon ?? null;   // 룬 전용 아이콘이 오면 여기서 바로 쓰인다(31 §7)
-        s.glyphTxt = r.glyph;       // 그때까지는 유니코드 글리프 폴백
+        // 룬 전용 아이콘. runes.json 의 icon 이 runes 시트의 칸 번호다(32 §3.1 · W1 0~5 …)
+        s.frame = r.icon ?? null;
+        s.frameTex = RUNE_TEX;
+        s.glyphTxt = r.glyph;       // ★ 칸을 못 찾으면 유니코드 글리프로 떨어진다
         s.color = [0, 0x7b7488, 0x35c9b4, 0xc9a227][r.tier] ?? 0x7b7488;
         return true;
     }
@@ -536,7 +581,10 @@ export class EncounterSystem {
         s.kind = "seer";
         s.label = "예언";
         s.price = 0;
-        s.frame = null;
+        // 좌판 위에도 화살표와 같은 마커를 쓴다(32 §3.3 칸 28 — 눈을 가린 띠).
+        // 화면 밖에서 본 그림과 걸어가서 본 그림이 같아야 "그것"이라고 읽힌다.
+        s.frame = KIND_FRAME.seer;
+        s.frameTex = RUNE_TEX;
         s.glyphTxt = KIND_MARK.seer;
         s.color = 0x35c9b4;
         return true;
@@ -548,7 +596,9 @@ export class EncounterSystem {
         s.outcome = rollWeighted(this.cfg.shady.outcomes);
         s.label = "?";
         s.price = this.cfg.prices.shady ?? 0.25;
-        s.frame = null;
+        // 칸 29 — 물음표가 새겨진 두건(32 §3.3). 뒷면이라는 뜻은 그림이 이미 갖고 있다
+        s.frame = KIND_FRAME.shady;
+        s.frameTex = RUNE_TEX;
         s.glyphTxt = "?";
         s.color = 0x6b3fa0;
         return true;
@@ -608,8 +658,11 @@ export class EncounterSystem {
                 .setStrokeStyle(1, col, locked ? 0.4 : 0.9).setVisible(true).setAlpha(1);
         }
 
-        if (s.frame && s.icon && this.hasItemAtlas) {
-            s.icon.setTexture("items", s.frame).setPosition(s.x, s.y - 2)
+        // ★ != null 이다. 룬 칸 0(rn_w1_maw)이 유효한 값이라 진위 판정으로는 걸러진다.
+        //   시트가 없으면 hasTex 가 false 가 되어 그대로 글리프로 떨어진다(32 §0.2 롤백).
+        const hasTex = s.frameTex === RUNE_TEX ? this.hasRuneTex : this.hasItemAtlas;
+        if (s.frame != null && s.icon && hasTex) {
+            s.icon.setTexture(s.frameTex, s.frame).setPosition(s.x, s.y - 2)
                 .setVisible(true).setAlpha(locked ? 0.45 : 1).setScale(1);
             s.glyph.setVisible(false);
         } else {
@@ -669,6 +722,7 @@ export class EncounterSystem {
         this.altarFill.setVisible(false).setPosition(-9999, -9999);
         this.altarSigil?.setVisible(false).setPosition(-9999, -9999);
         this.arrow.setVisible(false);
+        this.arrowIcon?.setVisible(false);
         this.arrowMark.setVisible(false);
     }
 
@@ -1277,6 +1331,7 @@ export class EncounterSystem {
         const m = 22;
         if (sx > m && sx < w - m && sy > m && sy < h - m) {
             this.arrow.setVisible(false);
+            this.arrowIcon?.setVisible(false);
             this.arrowMark.setVisible(false);
             return;
         }
@@ -1290,9 +1345,19 @@ export class EncounterSystem {
         );
         const ax = cx + dx * k, ay = cy + dy * k;
         this.arrow.setPosition(ax, ay).setRotation(Math.atan2(dy, dx) - Math.PI / 2).setVisible(true);
-        // 종류를 알 수 있어야 "갈지 말지"를 정할 수 있다. 화살표만이면 정보가 반쪽이다
+        // 종류를 알 수 있어야 "갈지 말지"를 정할 수 있다. 화살표만이면 정보가 반쪽이다.
+        // ★ 마커는 돌리지 않는다. 화살표가 방향을 말하고 마커는 정체를 말한다 —
+        //   기울어진 해골은 읽는 데 시간이 더 든다(12px 에서는 더 그렇다).
+        const mx = ax - (dx / d) * 12, my = ay - (dy / d) * 12;
+        const kf = KIND_FRAME[this.act.kind];
+        if (this.arrowIcon && kf !== undefined) {
+            this.arrowIcon.setFrame(kf).setPosition(mx, my).setVisible(true);
+            this.arrowMark.setVisible(false);
+            return;
+        }
+        this.arrowIcon?.setVisible(false);
         this.arrowMark.setText(KIND_MARK[this.act.kind] ?? "?")
-            .setPosition(ax - (dx / d) * 12, ay - (dy / d) * 12).setVisible(true);
+            .setPosition(mx, my).setVisible(true);
     }
 
     // ══ 정리 ═════════════════════════════════════════════════════

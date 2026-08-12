@@ -146,20 +146,30 @@ export class SpawnSystem {
          * 보물상자 풀 (T503 → 30 §3.7). 엘리트가 죽은 자리에 남고, 밟으면 열린다.
          *
          * ★ 11x9 노란 사각형이었다. 도형은 "미완성"이 아니라 "고장"으로 읽힌다 —
-         *   30 §7.2 대로 items 아틀라스의 주머니 프레임을 임시로 빌린다.
-         *   ⚠ 전용 상자 아트(docs/32 C-1)가 오면 **encounters.json 의 chest.frameClosed 만**
-         *     갈아 끼우면 된다. 프레임 이름을 코드에 적지 않은 이유가 그것이다.
-         *   아틀라스가 아직 안 구워졌으면 옛 사각형으로 조용히 내려간다 — 상자가 아예
-         *   안 보이는 것보다 못생긴 게 낫다(ItemSystem 의 폴백과 같은 규약).
+         *   지금은 전용 상자 아트를 쓴다(docs/32 §3.2 · runes 시트 칸 24 닫힘 / 25 열림).
+         *   ⚠ 프레임 번호를 여기 적지 않는다. **encounters.json 의 chest 블록**이 정본이고
+         *     texture/frameClosed/frameOpen 만 갈아 끼우면 items 아틀라스로도 되돌아간다.
+         *   시트가 아직 없으면(매니페스트에서 뺐으면) 옛 사각형으로 조용히 내려간다 —
+         *   상자가 아예 안 보이는 것보다 못생긴 게 낫다(ItemSystem 의 폴백과 같은 규약).
+         *   ★ 이 폴백이 곧 롤백 스위치다(32 §0.2). assets.json 에서 runes 한 줄을 빼면 끝난다.
          */
         const chestArt = encData.chest ?? {};
         const chestTex = chestArt.texture ?? "items";
         this.chestArt = scene.textures.exists(chestTex) && !!scene.textures.get(chestTex)?.has(chestArt.frameClosed);
+        this.chestFrameClosed = chestArt.frameClosed;
+        // 열린 칸이 없으면(폴백 시트) 닫힘 칸을 그대로 쓴다 — 프레임이 없으면 초록 체크무늬가 뜬다
+        this.chestFrameOpen = (this.chestArt && scene.textures.get(chestTex)?.has(chestArt.frameOpen))
+            ? chestArt.frameOpen : chestArt.frameClosed;
+        /** 열린 뒤 칸 25 를 보여 주는 시간(초). 아트가 없으면 0 — 예전처럼 즉시 사라진다 */
+        this.chestDwell = this.chestArt ? (chestArt.openDwell ?? 0) : 0;
         this.chests = new Pool(MAX_CHESTS, () => {
             const c = this.chestArt
                 ? scene.add.sprite(-999, -999, chestTex, chestArt.frameClosed).setScale(chestArt.scale ?? 1.15)
                 : scene.add.rectangle(-999, -999, 11, 9, 0xd9b45a).setStrokeStyle(1, 0x6b4a12);
             c.setDepth(DEPTH.ORB + 1).setVisible(false);
+            // ★ 필드를 여기서 선언한다. 나중에 붙이면 히든클래스가 갈려 접근이 느려진다
+            c.openT = 0;
+            c.sourceId = "";
             return c;
         });
         /** 상자 맥동의 기준 배율. 아트를 쓰면 1 이 아니다 — setScale 이 이 값을 곱해야 크기가 안 튄다 */
@@ -250,7 +260,7 @@ export class SpawnSystem {
 
         this.runEvents();
         this.despawnFar();
-        this.updateChests();
+        this.updateChests(dt);
 
         if (this.suppressed) return;
 
@@ -521,15 +531,31 @@ export class SpawnSystem {
         const c = this.chests.obtain();
         if (!c) return;
         c.sourceId = sourceId;
-        c.setPosition(x, y).setVisible(true).setAlpha(1).setScale(1);
+        // ★ 풀에서 나온 상자는 직전 런에서 열린 채로 반납됐을 수 있다. 칸과 타이머를 되돌린다
+        c.openT = 0;
+        if (this.chestArt) c.setFrame(this.chestFrameClosed);
+        c.setPosition(x, y).setVisible(true).setAlpha(1).setScale(this.chestScale);
     }
 
-    updateChests() {
+    updateChests(dt) {
         const list = this.chests.active;
         if (!list.length) return;
         const t = this.scene.time.now;
         for (let i = list.length - 1; i >= 0; i--) {
             const c = list[i];
+            // ★ 열린 뒤 잠깐 머문다. 밟는 순간 그림이 그냥 사라지면 "열렸다"가 안 읽힌다.
+            //   런 중 new 금지라 delayedCall 을 쓰지 않는다 — 스프라이트에 얹은 숫자 하나로 센다.
+            if (c.openT > 0) {
+                c.openT -= dt;
+                // 열린 궤는 맥동을 멈추고 살짝 커지며 옅어진다. "가져갔다"의 잔상이다
+                const k = Math.max(0, c.openT) / this.chestDwell;
+                c.setScale(this.chestScale * (1.05 + (1 - k) * 0.25)).setAlpha(k);
+                if (c.openT <= 0) {
+                    c.setVisible(false).setPosition(-999, -999).setAlpha(1);
+                    this.chests.release(c);
+                }
+                continue;
+            }
             // 숨 쉬듯 맥동시킨다 — 묘지 바닥 소품과 구분되지 않으면 밟히지 않는다
             c.setScale(this.chestScale * (1 + Math.sin(t / 220) * 0.09));
             if (dist2(c.x, c.y, this.player.x, this.player.y) <= CHEST_PICKUP_R2) this.openChest(c);
@@ -552,6 +578,13 @@ export class SpawnSystem {
             kind: r.kind, label: r.label, blessing: r.blessing ?? null,
         });
         this.scene.cameras.main.flash(160, 220, 190, 110, false);
+        // ★ 여는 연출. 칸 25(뚜껑이 젖혀지고 붉은 빛이 새는 궤)로 바꿔 openDwell 초만큼 남긴다.
+        //   아트가 없으면 chestDwell 이 0 이라 예전처럼 그 자리에서 사라진다.
+        if (this.chestDwell > 0) {
+            c.openT = this.chestDwell;
+            c.setFrame(this.chestFrameOpen);
+            return;
+        }
         c.setVisible(false).setPosition(-999, -999);
         this.chests.release(c);
     }

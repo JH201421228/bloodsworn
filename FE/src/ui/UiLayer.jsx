@@ -24,6 +24,8 @@ import HumanityHearts from "@/ui/hud/HumanityHearts";
 import EquipSlots from "@/ui/inventory/EquipSlots";
 import ItemToasts from "@/ui/inventory/ItemToasts";
 import EncounterHud from "@/ui/encounter/EncounterHud";
+import RuneIcon from "@/ui/icons/RuneIcon";
+import { hasCell } from "@/ui/icons/runeSheet";
 import TitleScreen from "@/ui/screens/TitleScreen";
 import SanctumScreen from "@/ui/screens/SanctumScreen";
 import OptionsScreen from "@/ui/screens/OptionsScreen";
@@ -54,8 +56,13 @@ function RuneTree() {
                                 className={"rune-slot" + (r ? " rune-slot--on" : "")}
                                 title={r ? r.name + " — " + r.desc : "빈 슬롯"}
                             >
-                                {/* 아이콘이 오기 전 유니코드 글리프 폴백 (31 §6.3). runes.json 의 glyph 가 정본 */}
-                                {r ? <span className="rune-slot__g">{r.glyph}</span> : null}
+                                {/* ★ 아이콘 -> 글리프 2단 폴백. runes.json 의 icon 이 runes 시트
+                                    (docs/32 §3.1)의 칸 번호이고, 그것이 null 이거나 범위 밖이면
+                                    glyph 로 떨어진다. 31 §6.3 의 폴백을 지우지 마라 — 이 화면과
+                                    좌판(EncounterSystem)이 같은 두 값을 나눠 쓴다. */}
+                                {r && hasCell(r.icon)
+                                    ? <RuneIcon cell={r.icon} size={11} className="rune-slot__i" />
+                                    : r ? <span className="rune-slot__g">{r.glyph}</span> : null}
                                 {r ? r.name : "·"}
                             </span>
                         ))}

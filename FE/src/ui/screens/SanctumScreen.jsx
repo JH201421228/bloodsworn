@@ -10,10 +10,13 @@
  *   6종이 컬러 이모지(🛡 ⚔ 👟 📜)를 쓰고 있었다. 컬러 이모지는 **기기 서체가 그린다** —
  *   삼성·구글·애플이 각자 다른 그림을 내놓아 같은 게임이 폰마다 다르게 보였고, 알록달록한
  *   그림 6개가 피·재·검정 팔레트(09-ART) 한복판에 박혀 있었다.
- *   이미 있는 items 아틀라스(public/assets/items/items.png, 71프레임)에서 프레임을 골라
- *   ItemIcon 의 CSS 스프라이트로 그린다 — 새 에셋도, Phaser 매니페스트 변경도 필요 없다.
- *   프레임이 없으면 sanctum.json 의 `icon` 글리프로 떨어진다. 전용 아이콘(docs/32 칸 32~37)이
- *   오면 그때 갈아탄다.
+ *   지금은 전용 아이콘 6종을 쓴다(docs/32 §3.4 · runes 시트 칸 32~37).
+ *
+ * ★ 여기는 Phaser 가 아니다 — CSS 가 png 를 직접 읽는다
+ *   성소는 React(DOM) 화면이라 캔버스 텍스처가 아니라 background-image 로 그린다
+ *   (src/ui/icons/runeSheet.css). assets.json 에서 runes 를 빼도 이 화면은 그대로 그려진다.
+ *   그러므로 **이쪽의 롤백 스위치는 매니페스트가 아니라 데이터**다 — sanctum.json 의
+ *   iconCell 을 null 로 바꾸면 items 아틀라스로, 그것도 없으면 이모지로 내려간다.
  */
 import { useState } from "react";
 import { useStore, persistSave } from "@/state/store";
@@ -24,6 +27,8 @@ import { resolveAdPlacement, showRewarded } from "@/monetization";
 import ItemIcon from "@/ui/inventory/ItemIcon";
 import GoldIcon from "@/ui/inventory/GoldIcon";
 import { hasFrame } from "@/ui/inventory/itemAtlas";
+import RuneIcon from "@/ui/icons/RuneIcon";
+import { hasCell } from "@/ui/icons/runeSheet";
 
 /**
  * 타일 아이콘. 아틀라스 프레임이 있으면 픽셀 아트, 없으면 데이터의 글리프.
@@ -32,6 +37,9 @@ import { hasFrame } from "@/ui/inventory/itemAtlas";
  *   20px 이면 +7px 라 예산 안에서 버틴다. 실제 화면에서 재고 정한 값이다.
  */
 function TileIcon({ def }) {
+    // ★ 3단 폴백. 전용 아이콘 -> 빌려 쓰던 items 프레임 -> 이모지. 아래 두 줄을 지우지 마라
+    //   (32 §0.2). 이모지가 마지막에 남아 있어야 그림이 통째로 없어져도 화면이 안 빈다.
+    if (hasCell(def.iconCell)) return <RuneIcon cell={def.iconCell} size={20} />;
     if (hasFrame(def.iconFrame)) return <ItemIcon frame={def.iconFrame} size={20} />;
     return <span aria-hidden="true">{def.icon}</span>;
 }

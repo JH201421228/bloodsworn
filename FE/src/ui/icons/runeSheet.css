@@ -1,0 +1,31 @@
+/* ── 룬·조우·성소 아이콘 시트 (정본 docs/32) ────────────────────────
+   384x128 · 32x32 격자 12열 x 4행 = 48칸. 0~37 사용 / 38~47 예비(alpha 0).
+
+   ★ 왜 Phaser 매니페스트가 아니라 CSS 인가
+     성소 화면과 일시정지 룬 조망은 React(DOM)가 그린다. 캔버스가 아니다.
+     같은 그림을 GPU 텍스처로 또 올리지 않으려고 assets.json 에서 카드 프레임·인장·로고를
+     빼 둔 것과 같은 판단이다(public/assets.json 주석). 여기서는 브라우저 이미지 캐시가
+     이미 갖고 있는 파일을 그대로 읽는다 — Phaser 는 같은 파일을 캔버스용으로 따로 올린다.
+
+   ★ 경로는 **빌드 결과물 기준** 상대경로다 (inventory.css 의 .inv-icon 과 같은 규약)
+     빌드 후 CSS 는 dist/assets/index-*.css, 그림은 dist/assets/icons/runes.png 이므로
+     ../assets/icons/ 가 정확히 맞는다. 소스 폴더(src/ui/icons/) 기준이 아니다.
+     절대경로 /assets/... 는 Capacitor 의 file:// WebView 에서 루트가 달라 깨진다.
+
+   ★ image-rendering: pixelated — 32px 그림을 20~24px 로 줄여 그린다. 보간하면 뭉갠다.
+   ────────────────────────────────────────────────────────────── */
+.rune-icon {
+    display: block;
+    flex: none;
+    background-image: url(../assets/icons/runes.png);
+    background-repeat: no-repeat;
+    image-rendering: pixelated;
+}
+
+/* 아이콘 한 칸을 담는 상자. .inv-ico 와 같은 자리·같은 방식이다 */
+.rune-ico {
+    position: relative;
+    display: grid;
+    place-items: center;
+    flex: none;
+}

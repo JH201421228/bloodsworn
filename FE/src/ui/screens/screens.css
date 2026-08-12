@@ -614,3 +614,13 @@
     color: var(--gold);
 }
 .rune-slot__g { margin-right: calc(2 * var(--u)); }
+/* 룬 아이콘 (docs/32 칸 0~23). 글리프가 있던 자리에 그대로 들어간다.
+   ★ .rune-ico 는 display:grid(블록)라 글줄 안에 넣으면 줄이 하나 더 생긴다 —
+     inventory.css 의 .inv-ico.gold-ico 와 같은 이유로 inline-grid 로 바꾸고
+     베이스라인을 2px 내려 룬 이름의 밑선과 그림의 중심을 맞춘다.
+   ★ 크기는 RuneIcon 이 인라인 스타일로 정한다. 여기서 width/height 를 다시 쓰지 않는다. */
+.rune-slot__i {
+    display: inline-grid;
+    margin-right: calc(2 * var(--u));
+    vertical-align: calc(-2 * var(--u));
+}

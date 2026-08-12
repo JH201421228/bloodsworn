@@ -6,7 +6,14 @@
         "op:\"special\" — RuneSystem 안의 전용 핸들러. id 하나당 함수 하나다(awakenings.json 승계).",
         "★ 수치는 이 파일이 정본이다. 코드에 적힌 기본값은 데이터가 깨졌을 때의 폴백일 뿐이다."
     ],
-    "_glyph": "아트가 오기 전 폴백. awakenings.json 의 sigil 과 같은 방식이다. icon 은 Codex 아이콘(29 C-2)이 오면 채운다.",
+    "_glyph": [
+        "glyph = 유니코드 폴백. ★ 지우지 마라 — icon 프레임을 못 찾으면 여기로 떨어진다(32 §0.2 롤백 스위치).",
+        "icon  = runes 시트(public/assets/icons/runes.png · 32x32 격자 12열)의 0-based 프레임 번호.",
+        "        docs/32 §3.1 이 정본이다. 무기별 6칸 연속 · 순서 T1a T1b T2a T2b T3a T3b.",
+        "        W1 0~5 / W2 6~11 / W3 12~17 / W4 18~23. ★ 이 배열의 순서와 프레임 번호가 1:1 이다.",
+        "        룬 순서를 바꾸면 그림이 통째로 밀린다 — 순서를 바꿀 거면 icon 도 같이 고쳐라.",
+        "★ 그리는 곳이 둘이다: 좌판(EncounterSystem.showSlot · Phaser)과 룬 조망(UiLayer RuneTree · CSS)."
+    ],
     "_gate": "requires.weaponLevel = 게이트 G-2, requires.tier = G-3(선행 단계). G-1(보유)/G-4(빈 슬롯)는 코드가 본다.",
     "schemaVersion": 1,
     "runes": [
@@ -16,7 +23,7 @@
             "tier": 1,
             "name": "벌어진 아가리",
             "glyph": "◐",
-            "icon": null,
+            "icon": 0,
             "desc": "부채꼴 각도 +40%",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "arcMul", "value": 1.4 }]
@@ -27,7 +34,7 @@
             "tier": 1,
             "name": "긴 이빨",
             "glyph": "▶",
-            "icon": null,
+            "icon": 1,
             "desc": "사거리 +30%",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "radiusMul", "value": 1.3 }]
@@ -38,7 +45,7 @@
             "tier": 2,
             "name": "되받아치기",
             "glyph": "↺",
-            "icon": null,
+            "icon": 2,
             "desc": "벨 때마다 다음 쿨다운 −8% (최대 −40%)",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [{ "op": "special", "id": "riposte", "params": { "perHit": 0.08, "max": 0.4 } }]
@@ -49,7 +56,7 @@
             "tier": 2,
             "name": "피 빨기",
             "glyph": "♦",
-            "icon": null,
+            "icon": 3,
             "desc": "송곳니로 처치하면 최대 체력 1.5% 회복",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [{ "op": "special", "id": "lifesteal_kill", "params": { "pctMaxHp": 0.015, "cooldownSec": 0.6 } }]
@@ -60,7 +67,7 @@
             "tier": 3,
             "name": "선혈의 원",
             "glyph": "◎",
-            "icon": null,
+            "icon": 4,
             "desc": "부채꼴이 360도 전방위가 된다. 조준이 사라진다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [{ "op": "special", "id": "arc_360", "params": {} }]
@@ -71,7 +78,7 @@
             "tier": 3,
             "name": "참격 파동",
             "glyph": "≫",
-            "icon": null,
+            "icon": 5,
             "desc": "벨 때마다 전방으로 관통 파동을 날린다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [
@@ -95,7 +102,7 @@
             "tier": 1,
             "name": "쌍포",
             "glyph": "‖",
-            "icon": null,
+            "icon": 6,
             "desc": "발사 수 +1",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "countAdd", "value": 1 }]
@@ -106,7 +113,7 @@
             "tier": 1,
             "name": "꿰뚫는 불",
             "glyph": "»",
-            "icon": null,
+            "icon": 7,
             "desc": "관통 +2",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "pierceAdd", "value": 2 }]
@@ -117,7 +124,7 @@
             "tier": 2,
             "name": "작렬",
             "glyph": "✳",
-            "icon": null,
+            "icon": 8,
             "desc": "명중하면 반경 22px 소폭발 (본 피해의 40%)",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [
@@ -134,7 +141,7 @@
             "tier": 2,
             "name": "불의 눈",
             "glyph": "◉",
-            "icon": null,
+            "icon": 9,
             "desc": "투사체가 약하게 유도된다 (선회 120도/초)",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [
@@ -151,7 +158,7 @@
             "tier": 3,
             "name": "유성우",
             "glyph": "✷",
-            "icon": null,
+            "icon": 10,
             "desc": "발사할 때마다 하늘에서 3발이 더 떨어진다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [
@@ -177,7 +184,7 @@
             "tier": 3,
             "name": "연쇄 화염",
             "glyph": "◈",
-            "icon": null,
+            "icon": 11,
             "desc": "적중하면 근처 적에게 3회 튄다. 피해는 25%씩 줄어든다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [
@@ -194,7 +201,7 @@
             "tier": 1,
             "name": "더 많은 뼈",
             "glyph": "∷",
-            "icon": null,
+            "icon": 12,
             "desc": "궤도 뼈 +2",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "countAdd", "value": 2 }]
@@ -205,7 +212,7 @@
             "tier": 1,
             "name": "넓은 궤도",
             "glyph": "◯",
-            "icon": null,
+            "icon": 13,
             "desc": "궤도 반경 +35%",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "radiusMul", "value": 1.35 }]
@@ -216,7 +223,7 @@
             "tier": 2,
             "name": "역회전",
             "glyph": "↻",
-            "icon": null,
+            "icon": 14,
             "desc": "궤도가 두 겹이 되고 바깥 겹이 반대로 돈다",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [
@@ -233,7 +240,7 @@
             "tier": 2,
             "name": "뼈 파편",
             "glyph": "✱",
-            "icon": null,
+            "icon": 15,
             "desc": "재타격 간격 −30%",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [{ "op": "mod", "key": "rehitMul", "value": 0.7 }]
@@ -244,7 +251,7 @@
             "tier": 3,
             "name": "분쇄기",
             "glyph": "◍",
-            "icon": null,
+            "icon": 16,
             "desc": "궤도 반경이 2.4초 주기로 팽창·수축한다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [
@@ -261,7 +268,7 @@
             "tier": 3,
             "name": "뼈 사출",
             "glyph": "↗",
-            "icon": null,
+            "icon": 17,
             "desc": "5초마다 뼈 하나가 최근접 적에게 날아가 관통한다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [
@@ -286,7 +293,7 @@
             "tier": 1,
             "name": "넘치는 성수",
             "glyph": "⋮",
-            "icon": null,
+            "icon": 18,
             "desc": "낙하 수 +1",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "countAdd", "value": 1 }]
@@ -297,7 +304,7 @@
             "tier": 1,
             "name": "퍼지는 성수",
             "glyph": "◌",
-            "icon": null,
+            "icon": 19,
             "desc": "장판 반경 +30%",
             "requires": { "weaponLevel": 3, "tier": 0 },
             "effects": [{ "op": "mod", "key": "radiusMul", "value": 1.3 }]
@@ -308,7 +315,7 @@
             "tier": 2,
             "name": "마르지 않음",
             "glyph": "∞",
-            "icon": null,
+            "icon": 20,
             "desc": "지속 시간 +60%",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [{ "op": "mod", "key": "durationMul", "value": 1.6 }]
@@ -319,7 +326,7 @@
             "tier": 2,
             "name": "정화",
             "glyph": "≋",
-            "icon": null,
+            "icon": 21,
             "desc": "장판 안의 적 이동속도 −35%",
             "requires": { "weaponLevel": 5, "tier": 1 },
             "effects": [
@@ -336,7 +343,7 @@
             "tier": 3,
             "name": "성역",
             "glyph": "✚",
-            "icon": null,
+            "icon": 22,
             "desc": "장판이 하나로 합쳐져 따라다닌다. 반경 +80%",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [
@@ -353,7 +360,7 @@
             "tier": 3,
             "name": "낙뢰",
             "glyph": "✦",
-            "icon": null,
+            "icon": 23,
             "desc": "장판이 생길 때 중심에 즉발 대형 피해가 떨어진다",
             "requires": { "weaponLevel": 5, "tier": 2 },
             "effects": [

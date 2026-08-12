@@ -164,13 +164,19 @@
         "_comment": [
             "30 §3.7. 보물상자는 이미 있었다 — 문제는 11x9 노란 사각형이었고, CHEST_OPENED 를",
             "구독하는 코드가 0이었고, 보상이 축복 1개 고정이라 열 때마다 같았다는 것이다.",
-            "★ 아이콘은 임시다. items 아틀라스의 주머니 프레임을 빌린다(30 §7.2).",
-            "  docs/32 C-1 의 상자 2프레임이 오면 texture/frameClosed/frameOpen 만 바꾼다."
+            "★ 전용 상자 아트가 왔다(docs/32 §3.2 · runes 시트 칸 24 닫힘 / 25 열림).",
+            "  이전에는 items 아틀라스의 주머니 프레임을 빌렸다(itm_pouch / itm_relic_book).",
+            "  texture 를 \"items\" 로, 프레임을 그 이름 둘로 되돌리면 그대로 예전 상태다.",
+            "★ openDwell — 열린 뒤 이 초만큼 칸 25 를 보여 주고 사라진다. 0 이면 즉시 사라진다",
+            "  (아트가 오기 전 동작). 상자를 밟는 순간 그림이 그냥 없어지면 '열렸다'가 안 읽힌다.",
+            "★ scale 1.0 — 시트가 32x32(안쪽 그림 28x28)라 밟는 판정 반지름 18(지름 36)과",
+            "  거의 같다. items 프레임을 빌리던 시절의 1.15 를 그대로 두면 판정보다 그림이 커진다."
         ],
-        "texture": "items",
-        "frameClosed": "itm_pouch",
-        "frameOpen": "itm_relic_book",
-        "scale": 1.15,
+        "texture": "runes",
+        "frameClosed": 24,
+        "frameOpen": 25,
+        "scale": 1.0,
+        "openDwell": 0.45,
         "rewards": [
             { "kind": "blessing", "weight": 55, "label": "대가 없는 축복" },
             { "kind": "rune", "weight": 25, "label": "룬" },

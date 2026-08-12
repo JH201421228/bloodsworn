@@ -2,16 +2,23 @@
     "schemaVersion": 1,
     "_note": "성소 영구 업그레이드 6종. 정본 03-GDD-CORE 9.1 / 스키마 08-DATA-SCHEMA 3.8. 비용·효과를 여기서 임의로 바꾸지 말 것.",
     "_iconNote": [
+        "★ 아이콘은 3단 폴백이다. 위에서부터 있으면 쓰고, 없으면 다음으로 내려간다.",
+        "iconCell  = public/assets/icons/runes.png 의 0-based 칸 번호. docs/32 §3.4 가 정본이다 —",
+        "            32 강인함 / 33 예리함 / 34 신속 / 35 탐욕 / 36 각성 촉진 / 37 재계약. 이 순서다.",
+        "            ★ 성소는 React(DOM)가 그린다. Phaser 매니페스트가 아니라 CSS 가 파일을 직접 읽는다",
+        "            (src/ui/icons/runeSheet.css). 그래서 이쪽의 롤백 스위치는 이 줄을 null 로 바꾸는 것이다.",
         "iconFrame = public/assets/items/items.png 아틀라스의 프레임 이름. 좌표 사본은 src/ui/inventory/itemFrames.json.",
-        "icon      = 폴백 글리프. iconFrame 이 아틀라스에 없을 때만 그려진다 — 지우지 말 것.",
+        "            iconCell 이 오기 전 한 단계 개선이었다 — 남겨 둔다. 시트를 지워도 여기서 버틴다.",
+        "icon      = 마지막 폴백 글리프. 위 둘이 다 없을 때만 그려진다 — ★ 지우지 말 것.",
         "★ 컬러 이모지(🛡 ⚔ 👟 📜)는 삼성·구글·애플이 각자 다른 서체를 써서 같은 게임이 폰마다 다르게 보였다.",
-        "  전용 아이콘(docs/32 칸 32~37)이 오면 그쪽으로 갈아탄다. 이번 값은 그때까지의 개선이다.",
+        "  그래서 마지막 폴백으로만 남긴다. 평상시에는 iconCell 의 픽셀 아트가 그려진다.",
         "iconKey   = Phaser 쪽 예약 키. 지금은 아무 데서도 로드하지 않는다."
     ],
     "goldFormula": { "perKill": 1, "perSurvivedSecond": 0.5, "bossClear": 200 },
     "upgrades": [
         {
             "id": "meta_tough",
+            "iconCell": 32,
             "name": "강인함",
             "desc": "최대 체력 +10 / 단계",
             "icon": "🛡",
@@ -24,6 +31,7 @@
         },
         {
             "id": "meta_sharp",
+            "iconCell": 33,
             "name": "예리함",
             "desc": "공격력 +4% / 단계",
             "icon": "⚔",
@@ -36,6 +44,7 @@
         },
         {
             "id": "meta_swift",
+            "iconCell": 34,
             "name": "신속",
             "desc": "이동속도 +3% / 단계",
             "icon": "👟",
@@ -48,6 +57,7 @@
         },
         {
             "id": "meta_greed",
+            "iconCell": 35,
             "name": "탐욕",
             "desc": "골드 획득 +10% / 단계",
             "icon": "⬤",
@@ -60,6 +70,7 @@
         },
         {
             "id": "meta_awaken_boost",
+            "iconCell": 36,
             "name": "각성 촉진",
             "desc": "각성 필요 중첩 −0.2 / 단계",
             "icon": "✦",
@@ -72,6 +83,7 @@
         },
         {
             "id": "meta_recontract",
+            "iconCell": 37,
             "name": "재계약",
             "desc": "런당 리롤 +1 / 단계",
             "icon": "📜",

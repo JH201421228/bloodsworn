@@ -918,18 +918,37 @@ function ruleEncounters(R, D) {
             R.err("encounters.chest.fallback 의 마지막이 blessing 이 아니다 — 마지막은 반드시 줄 수 있는 것이어야 한다");
         }
     }
-    if (!isStr(C.texture) || !isStr(C.frameClosed)) {
+    // ★ 프레임은 문자열(items 아틀라스의 이름)일 수도, 숫자(runes 시트의 칸 번호)일 수도 있다.
+    //   docs/32 §3.2 의 상자 2종이 오면서 후자가 됐다 — 둘 다 받되 정합은 시트별로 따로 본다.
+    const frameOk = (v) => isStr(v) || isNum(v);
+    if (!isStr(C.texture) || !frameOk(C.frameClosed)) {
         R.err("encounters.chest.texture/frameClosed 누락 — SpawnSystem 이 옛 노란 사각형으로 내려간다 (30 §3.7)");
-    } else {
+    } else if (C.texture === "items") {
         // 프레임 표는 노드판에서만 읽을 수 있다(public/ 은 번들 밖). 없으면 이 검사만 건너뛴다.
         for (const [name, frames] of [["public/assets/items/items.json", D.itemAtlas], ["src/ui/inventory/itemFrames.json", D.itemFrames]]) {
-            if (!frames || C.texture !== "items") continue;
+            if (!frames) continue;
             for (const k of ["frameClosed", "frameOpen"]) {
                 if (C[k] && !(C[k] in frames)) {
                     R.err(`encounters.chest.${k} "${C[k]}" 프레임이 ${name} 에 없다 — 상자가 옛 노란 사각형으로 내려간다`);
                 }
             }
         }
+    } else if (C.texture === "runes") {
+        // ★ runes 시트는 12열 x 4행 = 48칸이고 38~47 은 비어 있다(32 §3.5).
+        //   빈 칸을 가리키면 크래시가 아니라 "상자 자리에 아무것도 없는" 형태로 나타난다.
+        for (const k of ["frameClosed", "frameOpen"]) {
+            const v = C[k];
+            if (v === undefined) continue;
+            if (!isNum(v) || v < 0 || v > 37 || (v | 0) !== v) {
+                R.err(`encounters.chest.${k} ${v} — runes 시트의 실사용 칸은 0~37 정수다 (32 §3)`);
+            }
+        }
+        if (C.frameClosed !== 24 || C.frameOpen !== 25) {
+            R.warn(`encounters.chest 프레임 ${C.frameClosed}/${C.frameOpen} — docs/32 §3.2 는 24(닫힘)/25(열림)다`);
+        }
+    }
+    if (C.openDwell !== undefined && (!isNum(C.openDwell) || C.openDwell < 0)) {
+        R.err(`encounters.chest.openDwell ${C.openDwell} — 열린 궤가 머무는 초다. 0 이상이어야 한다`);
     }
 
     // ── 필드보스 (30 §3.6) ──
