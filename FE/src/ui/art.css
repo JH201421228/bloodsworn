@@ -394,3 +394,98 @@
 /* ★ btn-normal 을 두르면 --blood 테두리가 사라져 「저장 데이터 삭제」가 평범한 버튼이 된다.
    되돌릴 수 없는 조작은 반드시 다르게 보여야 한다. 테두리 대신 글자를 피색으로 바꾼다. */
 .btn--danger { color: #8c1f18; }
+
+/* ══════════════════════════════════════════════════════════════════════
+ * PACT 하단 두 버튼 — 「↻ 다시 뽑는다 (N)」 / 「거절 (HP +25% · ⬤30)」
+ *
+ * ★ 왜 손대나
+ *   이 둘만 1px 실선 div 였다. 같은 화면에서 카드 3장은 양피지 액자인데 버튼만
+ *   선으로 그린 네모면 "덜 만든 화면"으로 읽힌다(출정지·성소에서 이미 겪었다).
+ *
+ * ★★ 두 버튼에 **같은 아트를 입히면 안 된다** — 성격이 정반대다
+ *   · 「다시 뽑는다」 = 되돌릴 수 있는 보조 조작. 런당 2회. 눌러도 잃는 게 없다
+ *   · 「거절」       = **되돌릴 수 없다**. 축복을 버리고 HP/골드를 받고 이 레벨업은 끝난다
+ *   art.css 아래쪽 .btn--danger 주석의 계약을 그대로 잇는다:
+ *     "btn-normal 을 두르면 되돌릴 수 없는 조작이 평범한 버튼이 된다. 반드시 다르게 보여야 한다."
+ *   그래서 리롤만 btn-normal(양피지) 을 두르고, 거절은 **btn-pressed(가라앉은 금속) + 피색 속**
+ *   으로 간다. 원본 그림 자체가 달라 색맹·흑백에서도 두 버튼이 갈린다(9.1).
+ *
+ * ★ 카드가 주인공이다 — 버튼이 카드보다 눈에 띄면 안 된다
+ *   테두리를 .btn 의 6 이 아니라 **4** 로 낮췄다(k≈0.67). 네 변에 같은 배율이라 모서리
+ *   리벳이 안 찌그러진다. 글자는 그대로 0.68em(≈11논리px) 이라 상자를 48 로 키운 만큼
+ *   여백이 늘어 오히려 더 조용해진다. 카드(160x240 양피지)와 면적이 1:7 이라 경쟁하지 않는다.
+ *
+ * ⚠ border-image 의 `fill` 함정 (옵션 화면 ce22fbd 에서 한 번 걸렸다)
+ *   `fill` 이 붙으면 가운데 조각이 **패딩 박스 위에 덧그려져** 그 아래의 background 와
+ *   inset 그림자를 통째로 덮는다. 그래서 안쪽 색을 우리가 칠해야 하는 상태
+ *   (리롤 눌림 / 리롤 0회 / 거절 전부)에서는 반드시 `fill` 을 뗀다.
+ *
+ * ★ 히트박스는 안 줄었다 — 오히려 늘렸다
+ *   box-sizing:border-box 라 9-slice 테두리는 상자 **안쪽**을 먹는다. 상자 자체는
+ *   PactOverlay 가 인라인으로 160x48 논리px 을 준다(예전 160x39.6). 10-UIUX 2.5.2 의
+ *   "모든 탭 대상 최소 48x48 논리px" 계약을 이제 만족한다.
+ * ════════════════════════════════════════════════════════════════════ */
+.pact-stage .pact-reroll,
+.pact-stage .pact-skip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    image-rendering: pixelated;
+    border-width: calc(4 * var(--u));
+    border-style: solid;
+    border-color: transparent;
+    border-image-repeat: stretch;
+    background: none;
+    /* 잘림 방지 — 리롤의 "(2)" 와 거절의 "HP +25% · ⬤30" 이 한 줄에 다 들어가야 한다.
+       160 − 테두리 8 = 152 논리px 안쪽에 11논리px 글자로 재는 것이 계약이다. */
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* ── 리롤 = 양피지 판. 평범한 버튼으로 보여야 맞다 ───────────────── */
+.pact-stage .pact-reroll {
+    border-image-source: url("../img/ui/btn-normal.png");
+    border-image-slice: 6 fill;
+    color: #2a1d14;
+    text-shadow: 0 calc(1 * var(--u)) 0 rgba(255, 244, 214, 0.35);
+    /* ★ 카드도 양피지다 — 같은 재질이 두 번 나오면 아래쪽이 시선을 나눠 가진다.
+       0.88 이면 카드 양피지보다 한 단 어두워져 "카드 → 버튼" 순서로 읽힌다.
+       더 낮추면 어두운 배경에 묻혀 버튼으로 안 보인다(0.80 에서 확인). */
+    opacity: 0.88;
+}
+.pact-stage .pact-reroll:active:not(:disabled) {
+    border-image-source: url("../img/ui/btn-pressed.png");
+    border-image-slice: 6;          /* fill 을 뗀다 → 아래 background 가 드러난다 */
+    background: #241708;
+    color: #f4e9c8;
+    text-shadow: 0 calc(1 * var(--u)) 0 rgba(0, 0, 0, 0.5);
+}
+/* ★ 잔여 0 = 속 빈 액자. 색이 아니라 **형태**로 읽힌다 —
+   양피지가 사라져 "더 뽑을 것이 없다"가 그림 그대로가 된다(.stagesel__card.is-locked 와 같은 수법).
+   흑백 화면에서도 갈리고, 문구의 "(0)" 이 세 번째 단서로 남는다. */
+.pact-stage .pact-reroll:disabled {
+    border-image-slice: 6;
+    background: rgba(11, 7, 16, 0.55);
+    color: var(--stone-4);
+    text-shadow: none;
+    filter: grayscale(1) brightness(0.62);
+    opacity: 1;
+}
+
+/* ── 거절 = 가라앉은 금속 판 + 피색 속. 되돌릴 수 없다 ───────────── */
+.pact-stage .pact-skip {
+    border-image-source: url("../img/ui/btn-pressed.png");
+    border-image-slice: 6;          /* fill 없음 — 속은 아래 피색이 담당한다 */
+    /* 단색 네모는 "웹 배너"로 읽힌다. 위가 밝고 아래가 어두운 띠를 넣어 금속판의 두께를 만든다 */
+    background: linear-gradient(180deg, rgba(74, 14, 19, 0.88) 0%, rgba(36, 7, 10, 0.9) 100%);
+    color: #d98f96;
+    text-shadow: 0 calc(1 * var(--u)) 0 rgba(0, 0, 0, 0.6);
+    opacity: 0.94;
+}
+.pact-stage .pact-skip:active:not(:disabled) {
+    background: rgba(101, 19, 26, 0.94);
+    color: #f2d2d5;
+}
+.pact-stage .pact-skip:disabled {
+    filter: grayscale(1) brightness(0.62);
+}

@@ -16,6 +16,26 @@ import GoldIcon from "@/ui/inventory/GoldIcon";
 
 const pct = (v, total) => (v / total) * 100 + "%";
 
+/**
+ * 하단 두 버튼의 세로 규격 (논리 640x360 기준).
+ *
+ * ★ 예전 값은 index.css 의 `height: 11%` = 39.6 논리px 이었다. 10-UIUX 2.5.2 가
+ *   "모든 탭 대상의 히트박스는 최소 48x48 논리px" 을 계약으로 못박고 있는데
+ *   그보다 8.4 작았다 — 480p 급(논리 1px = 1.00dp) 기기에서 그대로 40dp 짜리 버튼이 된다.
+ *   9-slice 테두리는 box-sizing:border-box 라 **상자 안쪽**을 먹으므로, 아트를 입히면서
+ *   상자를 안 키우면 손가락이 닿는 넓이는 그대로인데 글자만 좁아진다. 상자를 키운다.
+ *
+ * ★ 48 을 어디서 빼 오나 — 카드 아래 세로 예산은 360 − 292 = 68 뿐이다
+ *     예전: 여백 8 + 버튼 39.6 + 하단 20.4
+ *     지금: 여백 4 + 버튼 48   + 하단 16
+ *   10-UIUX 2.5.1 표가 이 버튼들의 **히트**를 176x54(= y 293~347) 로 이미 적어 두었으므로,
+ *   296~344 는 문서가 허용한 봉투 안쪽이고 오히려 더 보수적이다.
+ * ★ 인라인으로 주는 이유: 좌표 3개(left/top/width)가 이미 인라인이라 세로만 CSS 로 빼면
+ *   "이 버튼의 사각형"이 두 파일에 흩어진다. index.css 의 height:11% 는 이 값에 덮인다.
+ */
+const BTN_Y = 296;
+const BTN_H = 48;
+
 const RARITY = {
     common: { label: "COMMON", mark: "○", cls: "is-common" },
     rare: { label: "RARE", mark: "◇", cls: "is-rare" },
@@ -97,7 +117,7 @@ export default function PactOverlay() {
             <button
                 className="pact-reroll"
                 disabled={rerollLeft <= 0}
-                style={{ left: pct(136, 640), top: pct(300, 360), width: pct(160, 640) }}
+                style={{ left: pct(136, 640), top: pct(BTN_Y, 360), width: pct(160, 640), height: pct(BTN_H, 360) }}
                 onClick={() => EventBus.emit(EVENTS.CMD_PACT_REROLL)}
             >
                 ↻ 다시 뽑는다 ({rerollLeft})
@@ -107,7 +127,7 @@ export default function PactOverlay() {
             <button
                 className="pact-skip"
                 disabled={!pact.canSkip}
-                style={{ left: pct(344, 640), top: pct(300, 360), width: pct(160, 640) }}
+                style={{ left: pct(344, 640), top: pct(BTN_Y, 360), width: pct(160, 640), height: pct(BTN_H, 360) }}
                 onClick={() => EventBus.emit(EVENTS.CMD_PACT_SKIP)}
             >
                 거절 (HP +25% · <GoldIcon />30)
