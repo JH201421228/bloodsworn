@@ -113,6 +113,17 @@ body,
     user-select: none;
     /* ★ 이게 없으면 스크롤 제스처가 조이스틱 입력을 먹는다 */
     touch-action: none;
+
+    /* ★ 한국어를 음절 단위로 자르지 않는다.
+     *   CSS 기본값(word-break: normal)은 CJK 를 **어느 두 글자 사이에서든** 끊는다.
+     *   그래서 좁은 칸에서 「잿빛 성당」 클리 / 어 · 송곳 / 니 처럼 낱말이 두 동강 났다
+     *   (출정지 카드·결과 화면 전리품에서 실측, 2026-08-13).
+     *   keep-all 은 띄어쓰기에서만 끊게 한다 — 한국어 UI 의 기본값이어야 한다.
+     * ★ overflow-wrap 을 같이 두는 이유: keep-all 만 두면 칸보다 긴 낱말 하나가
+     *   **어디서도 못 끊겨** 칸 밖으로 삐져나간다. 그때만 강제로 끊는 안전판이다.
+     *   (screens.css:432 의 word-break: break-all 은 그 자리에서 의도한 것이라 둔다.) */
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 .app-root {
