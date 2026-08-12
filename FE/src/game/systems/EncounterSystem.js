@@ -81,6 +81,36 @@ const RARITY_COLOR = {
 /** 살 수 없는 좌판의 색. 30 §5 "현재 체력이 가격 이하면 좌판이 회색으로 잠긴다" */
 const LOCKED_COLOR = 0x4a4650;
 
+/**
+ * 바닥 데칼 시트 2장 (정본 docs/33 · 생성 tools/build-decals.mjs).
+ * ★ 없으면 아래 코드가 전부 예전의 반투명 원으로 떨어진다. assets.json 에서 두 줄을 빼는
+ *   것만으로 되돌릴 수 있어야 한다 — 이 프로젝트가 아트를 붙이는 방식이다(33 §0.3 / 29 §9).
+ * ★ 두 시트는 절대 같은 화면에 안 뜬다. 제단은 pedestals: 0 이고 조우는 한 번에 하나다.
+ *   그래서 텍스처 유닛을 동시에 2칸 쓰는 순간이 없다(33 §3.5).
+ */
+/**
+ * ★ 데칼 전용 잠김 색. LOCKED_COLOR(#4a4650)를 그대로 tint 로 곱하면 밝기가 29% 가 되어
+ *   실측(헤드리스 3배 확대)에서 **빗장도 균열도 안 보였다** — 잠긴 좌판이 통째로 사라졌다.
+ *   30 §5 가 요구하는 것은 "회색이다"가 아니라 "못 산다가 읽힌다"이고, 그것은 형태의 몫이다.
+ *   그래서 색은 중립 회백(29 §3.2 ASH)으로 올리고, "죽어 있음"은 프레임 자체가 말한다
+ *   (부서진 눈금 3개 · 균열 2줄 · 가로지르는 빗장). 폴백 원은 LOCKED_COLOR 그대로다.
+ */
+const LOCKED_TINT = 0x9a94a3;
+const DECAL_PED = "enc-decal-48";
+const DECAL_ALTAR = "enc-decal-72";
+/** 시트 A 칸 순서 (33 §4.1). 프레임 번호를 손으로 적는 유일한 자리다 */
+const FA = { BASE: 0, LOCKED: 1, HALO: 2, BOSS: 3, NPC: 4 };
+/** 시트 B 칸 순서 (33 §4.2) */
+const FB = { RING: 0, SIGIL: 1, FILL: 2 };
+/** 제단 그림의 기준 지름. 데이터가 radius 를 바꿔도 배율로 따라간다(33 §2.2) */
+const ALTAR_ART_D = 68;
+/**
+ * 회전 각속도 rad/s (33 §4.3). ★ 회전은 값이 싸고 효과가 크다 —
+ * 스프라이트 1개의 rotation 만 바꾸므로 프레임 예산에 잡히지 않는다.
+ * 느린 이유: 빠르면 눈이 따라가 전투를 방해한다. 바닥 장식은 전투를 가리면 안 된다.
+ */
+const SPIN = { halo: 0.25, boss: -0.35, altar: -0.15, altarFull: -0.6 };
+
 const byId = (arr, key) => Object.fromEntries(arr.map((x) => [x[key], x]));
 
 /** 가중치 추첨. weight 합이 0이면 첫 항목 */
@@ -134,7 +164,14 @@ export class EncounterSystem {
      */
     buildObjects() {
         const s = this.scene;
+        // ★ 폴백 판정은 여기 한 번뿐이다. 매 프레임 textures.exists 를 부르지 않는다.
+        this.hasPedTex = s.textures.exists(DECAL_PED);
+        this.hasAltarTex = s.textures.exists(DECAL_ALTAR);
         const mk = (x, y) => s.add.circle(x, y, 16, 0xffffff, 0.2).setDepth(DEPTH.ORB).setVisible(false);
+        /** 데칼 스프라이트 하나. 시트가 없으면 예전 원을 그대로 돌려준다 */
+        const mkDecal = (tex, frame, has) => (has
+            ? s.add.sprite(-9999, -9999, tex, frame).setDepth(DEPTH.ORB).setVisible(false)
+            : mk(-9999, -9999));
 
         /** 좌판 3칸. 칸마다 바닥 원 · 아이콘 · 글리프 폴백 · 가격 글자를 1:1 로 고정 짝지어 둔다 */
         this.slots = new Array(MAX_SLOTS);
@@ -146,7 +183,11 @@ export class EncounterSystem {
                 kind: "", label: "", price: 0, color: 0xffffff,
                 frame: null, glyphTxt: null,
                 base: -1, rarity: 0, runeId: null, outcome: null,
-                circle: mk(-9999, -9999),
+                circle: mkDecal(DECAL_PED, FA.BASE, this.hasPedTex),
+                // 살 수 있는 좌판에만 도는 후광. 시트가 없으면 null 이고 아무 데서도 안 쓰인다
+                halo: this.hasPedTex
+                    ? s.add.sprite(-9999, -9999, DECAL_PED, FA.HALO).setDepth(DEPTH.ORB).setVisible(false)
+                    : null,
                 icon: this.hasItemAtlas
                     ? s.add.sprite(-9999, -9999, "items").setDepth(DEPTH.ORB + 1).setVisible(false)
                     : null,
@@ -165,9 +206,29 @@ export class EncounterSystem {
                 .setDepth(DEPTH.ENEMY + 1).setVisible(false)
             : null;
 
-        // 「피의 제단」 — NPC 없이 바닥 원 하나(30 §3.5)
-        this.altarRing = mk(-9999, -9999);
-        this.altarFill = mk(-9999, -9999);
+        // 조우 지점 표시 2종 — ★ 둘 다 지금까지 **아무 표시도 없던 자리**다(33 §2.3).
+        //   NPC 발밑과 필드보스 발밑. 데칼이 없으면 만들지 않는다(원으로 대신할 것이 아니다).
+        this.npcMark = this.hasPedTex
+            ? s.add.sprite(-9999, -9999, DECAL_PED, FA.NPC).setDepth(DEPTH.ORB).setVisible(false)
+            : null;
+        this.bossMark = this.hasPedTex
+            ? s.add.sprite(-9999, -9999, DECAL_PED, FA.BOSS).setDepth(DEPTH.ORB).setVisible(false)
+            : null;
+
+        // 「피의 제단」 — NPC 없이 바닥 마법진(30 §3.5). 고리가 돌고 안쪽이 차오른다
+        this.altarRing = mkDecal(DECAL_ALTAR, FB.RING, this.hasAltarTex);
+        this.altarFill = mkDecal(DECAL_ALTAR, FB.FILL, this.hasAltarTex);
+        this.altarSigil = this.hasAltarTex
+            ? s.add.sprite(-9999, -9999, DECAL_ALTAR, FB.SIGIL).setDepth(DEPTH.ORB).setVisible(false)
+            : null;
+        // 발동 섬광. ★ hideAll 이 건드리지 않는다 — 제단이 사라진 **뒤에** 터져야 하기 때문이다.
+        //   스스로 꺼지는 경로를 생성자에서 한 번만 매어 둔다(런 중 리스너 등록 금지).
+        this.altarFlash = null;
+        if (this.hasAltarTex && s.anims.exists("enc_altar_flash")) {
+            this.altarFlash = s.add.sprite(-9999, -9999, DECAL_ALTAR, 3)
+                .setDepth(DEPTH.FX).setVisible(false);
+            this.altarFlash.on("animationcomplete", () => this.altarFlash.setVisible(false));
+        }
 
         // 방향 화살표 — ★ setScrollFactor(0). 매 프레임 좌표가 바뀌는 값이라 React 에 안 보낸다
         this.arrow = s.add.triangle(-9999, -9999, 0, 10, 5, -6, -5, -6, 0xc9b792)
@@ -186,6 +247,9 @@ export class EncounterSystem {
         this.witchPick = null;
         /** 제단 채널링(30 §3.5 — 3초간 서 있어야 발동. 실수로 밟는 사고를 막는다) */
         this.channel = 0;
+        /** 데칼 회전 위상(rad). 값 하나로 좌판 후광·보스 표식·마법진을 전부 돌린다 */
+        this.spin = 0;
+        this.altarSpin = 0;
         /**
          * 필드보스. 적 풀의 스프라이트를 빌려 쓰므로 토큰으로 동일성을 확인한다.
          * lastHp/engaged 는 교전 판정용이다 — tickFieldBoss 주석 참조.
@@ -360,6 +424,8 @@ export class EncounterSystem {
                 if (this.scene.anims.exists(n.anim)) this.npc.play(n.anim);
                 else this.npc.setFrame(n.frameStart);
                 this.npc.__body = n;
+                // 발밑 표식 — 그림자와 "여기가 조우 지점"을 겸한다. 지금까지 아무것도 없던 자리다
+                this.npcMark?.setPosition(at.x, at.y).setTint(0xc9b792).setAlpha(0.8).setVisible(true);
             }
         }
         if (def.kind === "altar") { this.showAltar(at); return true; }
@@ -522,12 +588,25 @@ export class EncounterSystem {
         return (this.combat?.hp ?? 0) > this.priceHp(pct);
     }
 
+    /**
+     * ★ tint 구조를 그대로 지킨다 (33 §5).
+     *   데칼은 무채색으로 구워져 있고 등급·종류·잠김 색은 전부 여기서 tint 로 곱한다.
+     *   폴백(원)의 setFillStyle 이 하던 일과 **같은 값, 같은 자리**다.
+     * ★ 잠김은 색이 아니라 **프레임**이 바뀐다. tint 가 #4a4650(밝기 30%)이라 색으로는
+     *   아무것도 전할 수 없다 — 갈라진 금과 빗장은 어두워져도 실루엣으로 남는다(30 §5).
+     */
     showSlot(s) {
         const locked = !this.canPay(s.price);
         s.locked = locked;
         const col = locked ? LOCKED_COLOR : s.color;
-        s.circle.setPosition(s.x, s.y).setRadius(16).setFillStyle(col, locked ? 0.14 : 0.26)
-            .setStrokeStyle(1, col, locked ? 0.4 : 0.9).setVisible(true).setAlpha(1);
+        if (this.hasPedTex) {
+            s.circle.setFrame(locked ? FA.LOCKED : FA.BASE).setPosition(s.x, s.y)
+                .setTint(locked ? LOCKED_TINT : col).setAlpha(locked ? 0.85 : 0.92).setVisible(true);
+            s.halo.setPosition(s.x, s.y).setTint(col).setAlpha(0.7).setVisible(!locked);
+        } else {
+            s.circle.setPosition(s.x, s.y).setRadius(16).setFillStyle(col, locked ? 0.14 : 0.26)
+                .setStrokeStyle(1, col, locked ? 0.4 : 0.9).setVisible(true).setAlpha(1);
+        }
 
         if (s.frame && s.icon && this.hasItemAtlas) {
             s.icon.setTexture("items", s.frame).setPosition(s.x, s.y - 2)
@@ -552,6 +631,7 @@ export class EncounterSystem {
     hideSlot(s) {
         s.on = false;
         s.circle.setVisible(false).setPosition(-9999, -9999);
+        s.halo?.setVisible(false).setPosition(-9999, -9999);
         s.icon?.setVisible(false).setPosition(-9999, -9999);
         s.glyph.setVisible(false).setPosition(-9999, -9999);
         s.priceTxt.setVisible(false).setPosition(-9999, -9999);
@@ -560,10 +640,23 @@ export class EncounterSystem {
     showAltar(at) {
         const d = this.act.def;
         const r = d.radius ?? 34;
+        this.altarSpin = 0;
+        if (this.hasAltarTex) {
+            // ★ 배율은 데이터에서 나온다. encounters.json 이 radius 를 바꾸면 그림이 따라간다 —
+            //   판정 반지름과 그림 반지름이 어긋나면 "밟았는데 안 차오른다"가 된다(33 §2.2).
+            const k = (r * 2) / ALTAR_ART_D;
+            this.altarRing.setPosition(at.x, at.y).setScale(k).setRotation(0)
+                .setTint(0xc4182b).setAlpha(0.9).setVisible(true);
+            this.altarSigil.setPosition(at.x, at.y).setScale(k)
+                .setTint(d.color ?? 0xa21f2d).setAlpha(0.75).setVisible(true);
+            // 안쪽 원반이 3초에 걸쳐 차오른다 = "언제 발동하는가". 낙석 예고와 같은 규약이다
+            this.altarFill.setPosition(at.x, at.y).setScale(0.02)
+                .setTint(d.color ?? 0xa21f2d).setAlpha(0.85).setVisible(true);
+            return;
+        }
         this.altarRing.setPosition(at.x, at.y).setRadius(r)
             .setFillStyle(d.color ?? 0xa21f2d, d.alpha ?? 0.3)
             .setStrokeStyle(1, 0xc4182b, 0.9).setVisible(true).setAlpha(1);
-        // 안쪽 원이 3초에 걸쳐 차오른다 = "언제 발동하는가". 낙석 예고와 같은 규약이다
         this.altarFill.setPosition(at.x, at.y).setRadius(1)
             .setFillStyle(0xc4182b, 0.45).setStrokeStyle().setVisible(true).setAlpha(1);
     }
@@ -571,8 +664,10 @@ export class EncounterSystem {
     hideAll() {
         for (const s of this.slots) this.hideSlot(s);
         this.npc?.setVisible(false).setPosition(-9999, -9999);
+        this.npcMark?.setVisible(false).setPosition(-9999, -9999);
         this.altarRing.setVisible(false).setPosition(-9999, -9999);
         this.altarFill.setVisible(false).setPosition(-9999, -9999);
+        this.altarSigil?.setVisible(false).setPosition(-9999, -9999);
         this.arrow.setVisible(false);
         this.arrowMark.setVisible(false);
     }
@@ -585,6 +680,7 @@ export class EncounterSystem {
     update(dt) {
         if (this.combat?.dead) return;
         if (!this.schedule) this.buildSchedule();
+        this.spinDecals(dt);
         this.tickDirector();
         // 필드보스는 조우가 해소된 뒤에도 살아 있을 수 있다(잡으러 갈 때까지) — 먼저 본다
         if (this.fb.on) this.tickFieldBoss(dt);
@@ -598,6 +694,20 @@ export class EncounterSystem {
         else if (this.act.kind !== "chest" && this.act.kind !== "fieldboss") this.tickSlots();
 
         this.drawArrow();
+    }
+
+    /**
+     * 바닥 데칼 회전. ★ 값이 싸다 — 보이는 스프라이트의 rotation 필드만 쓴다.
+     *   애니 프레임도, 텍스처 교체도, 새 오브젝트도 없다. 1% Low 예산에 잡히지 않는다.
+     *   ⚠ 위상 하나(this.spin)를 공유하고 각속도만 다르게 곱한다. 스프라이트마다 누적기를
+     *     두면 정지·재개에서 서로 어긋나 같은 종류의 좌판 3개가 따로 논다.
+     */
+    spinDecals(dt) {
+        if (!this.hasPedTex) return;
+        this.spin += dt;
+        const h = this.spin * SPIN.halo, b = this.spin * SPIN.boss;
+        for (const s of this.slots) if (s.on && s.halo?.visible) s.halo.setRotation(h);
+        if (this.bossMark?.visible) this.bossMark.setRotation(b);
     }
 
     tickDirector() {
@@ -628,12 +738,21 @@ export class EncounterSystem {
         if (!n || this.act.life > n) return;
         const a = 0.35 + 0.65 * Math.abs(Math.sin(this.scene.time.now * 0.011));
         this.npc?.setAlpha(a);
-        for (const s of this.slots) if (s.on) s.circle.setAlpha(a);
+        this.npcMark?.setAlpha(a * 0.8);
+        // ★ 데칼은 기본 알파가 1 이 아니다(잠김 0.6). 덮어쓰지 않고 **곱한다** —
+        //   덮어쓰면 마지막 5초 동안 잠긴 좌판이 갑자기 밝아져 "살 수 있게 됐다"로 읽힌다.
+        for (const s of this.slots) {
+            if (!s.on) continue;
+            const base = this.hasPedTex ? (s.locked ? 0.85 : 0.92) : 1;
+            s.circle.setAlpha(a * base);
+            s.halo?.setAlpha(a * 0.7);
+        }
         // 제단은 점멸이 아니라 서서히 옅어진다(30 §4.4) — 붉은 원이 깜빡이면 낙석 예고로 읽힌다
         if (this.act.kind === "altar") {
             const k = Math.max(0, this.act.life / n);
-            this.altarRing.setAlpha(k);
-            this.altarFill.setAlpha(k);
+            this.altarRing.setAlpha(k * (this.hasAltarTex ? 0.9 : 1));
+            this.altarFill.setAlpha(k * (this.hasAltarTex ? 0.85 : 1));
+            this.altarSigil?.setAlpha(k * 0.75);
         }
     }
 
@@ -665,7 +784,18 @@ export class EncounterSystem {
         const need = d.channelSec ?? 3;
         // 나가면 처음부터 — 들락거리며 조금씩 채우면 "3초를 버틴다"가 아니게 된다
         this.channel = inside ? this.channel + dt : 0;
-        this.altarFill.setRadius(Math.max(1, r * Math.min(1, this.channel / need)));
+        const p = Math.min(1, this.channel / need);
+        if (this.hasAltarTex) {
+            const k = (r * 2) / ALTAR_ART_D;
+            // 차오름 = 원반이 커진다. 한 장을 배율로 키우므로 프레임을 쓰지 않는다(33 §4.3)
+            this.altarFill.setScale(Math.max(0.02, p * k));
+            // ★ 그리고 고리가 함께 빨라진다. "차오른다"를 두 가지가 동시에 말한다 —
+            //   원반은 얼마나 찼는지를, 고리는 지금 무언가 일어나는 중이라는 것을.
+            this.altarSpin += (SPIN.altar + (SPIN.altarFull - SPIN.altar) * p) * dt;
+            this.altarRing.setRotation(this.altarSpin);
+        } else {
+            this.altarFill.setRadius(Math.max(1, r * p));
+        }
         if (this.channel < need) return;
         this.grantAltar();
     }
@@ -818,6 +948,14 @@ export class EncounterSystem {
             label: card.blessing.name + (toll ? " + " + toll.name : ""),
         });
         this.scene.cameras.main.flash(220, 190, 20, 45, false);
+        // ★ expire() 뒤에도 살아남아야 한다 — 제단이 사라진 자리에서 터지는 것이 이 연출이다.
+        //   그래서 hideAll() 이 altarFlash 를 건드리지 않고, 스스로 animationcomplete 로 꺼진다.
+        if (this.altarFlash) {
+            const r = d.radius ?? 34;
+            this.altarFlash.setPosition(this.act.x, this.act.y)
+                .setScale((r * 2) / ALTAR_ART_D).setTint(0xff5a4a).setAlpha(0.95)
+                .setVisible(true).play("enc_altar_flash");
+        }
         this.expire(true);
     }
 
@@ -945,6 +1083,9 @@ export class EncounterSystem {
         this.fb.life = this.act.def.stay ?? 60;
         this.fb.lastHp = e.hp;
         this.fb.engaged = 0;
+        // ★ 필드보스 지점 표시 — 33 §2.3. 여태 화면 안에서는 "조금 큰 적"과 구분되지 않았다.
+        //   DEPTH.ORB(20) 이라 적(30) 밑에 깔린다 — 표식이 적을 가리면 안 된다.
+        this.bossMark?.setPosition(e.x, e.y).setTint(0x8b1a1a).setAlpha(0.8).setVisible(true);
         // 죽은 이벤트를 살려 쓴다 — ELITE_SPAWNED 는 emit 되는데 구독자가 0이었다(30 §6)
         EventBus.emit(EVENTS.ELITE_SPAWNED, {
             id: def.id, name: this.act.def.name, hp: e.maxHp, x: e.x, y: e.y,
@@ -960,6 +1101,8 @@ export class EncounterSystem {
         if (e.hp <= 0) { this.defeatFieldBoss(e); return; }
         // 조우 좌표를 따라가게 한다 — 화살표가 스폰 지점을 가리키면 거짓말이 된다
         if (this.act.on && this.act.kind === "fieldboss") { this.act.x = e.x; this.act.y = e.y; }
+        // 표식도 함께 따라간다. 스폰 자리에 남으면 "여기 있었다"는 흔적이 되어 오히려 헷갈린다
+        this.bossMark?.setPosition(e.x, e.y);
         // 회피 장치 3 — 60초 후 떠난다. 언제까지나 기다려주면 "나중에 강해지고 온다"가
         // 최적해가 되어 선택이 사라진다(30 §3.6)
         //
@@ -1051,6 +1194,7 @@ export class EncounterSystem {
 
     endFieldBoss() {
         const e = this.fb.e;
+        this.bossMark?.setVisible(false).setPosition(-9999, -9999);
         if (e) { e.__leashR = 0; e.__encToken = 0; }
         this.fb.on = false;
         this.fb.e = null;
@@ -1164,6 +1308,9 @@ export class EncounterSystem {
     }
 
     clear() {
+        this.altarFlash?.stop();
+        this.altarFlash?.setVisible(false).setPosition(-9999, -9999);
+        this.bossMark?.setVisible(false).setPosition(-9999, -9999);
         if (this.fb.e) { this.fb.e.__leashR = 0; this.fb.e.__encToken = 0; }
         this.fb.on = false;
         this.fb.e = null;

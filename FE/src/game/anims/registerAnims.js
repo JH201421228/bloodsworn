@@ -167,6 +167,15 @@ export function registerAnims(scene) {
         });
     }
 
+    // ── 「피의 제단」 발동 섬광 (docs/33 §4.3)
+    //   ★ 4프레임 · 16fps · repeat 0 = 250ms. 프레임 수와 재생 규칙의 출처는 33 §4.3 하나다.
+    //   회전(고리)은 여기 없다 — 애니가 아니라 EncounterSystem 이 rotation 값만 더한다.
+    make("enc_altar_flash", "enc-decal-72", {
+        frames: scene.anims.generateFrameNumbers("enc-decal-72", { start: 3, end: 6 }),
+        frameRate: 16,
+        repeat: 0,
+    });
+
     if (skipped.length) {
         console.warn("[registerAnims] 텍스처가 없어 건너뛴 애니메이션 " + skipped.length + "개:", skipped.join(", "));
     }
